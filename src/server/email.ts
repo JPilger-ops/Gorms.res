@@ -158,7 +158,7 @@ export async function sendInternalReservationEmail(input: ReservationEmailData) 
 
   await mailer.sendMail({
     from,
-    to: env.RESERVATION_NOTIFICATION_EMAIL,
+    to: templates.reservationNotificationEmail,
     replyTo: input.email,
     subject: renderReservationSubjectTemplate(templates.internalEmailSubjectTemplate, input),
     text: formatReservationText(input),

@@ -7,6 +7,7 @@ const envSchema = z.object({
   ADMIN_APP_URL: z.string().url().default("https://login.gorms.de"),
   ADMIN_HOST: z.string().default("login.gorms.de"),
   ADMIN_SESSION_COOKIE_NAME: z.string().default("heidekoenig_admin_session"),
+  APP_NAME: z.string().default("Waldwirtschaft Heidekönig"),
   APP_ENCRYPTION_KEY: z.string().optional(),
   AUDIT_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   BACKUP_CONTAINER_PATH: z.string().default("/backups"),
@@ -32,6 +33,14 @@ const envSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url().default("https://heidekönig.gorms.de"),
   PUBLIC_ALLOWED_HOSTS: z.string().default("heidekönig.gorms.de,xn--heideknig-57a.gorms.de"),
   PUBLIC_HOST: z.string().default("heidekönig.gorms.de"),
+  IMPRINT_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  PRIVACY_CONTACT_EMAIL: z.preprocess(emptyStringToUndefined, z.string().email().optional()),
+  PRIVACY_NOTICE_TEXT: z
+    .string()
+    .default(
+      "Wir verwenden Ihre Angaben ausschließlich zur Bearbeitung Ihrer Reservierungsanfrage.",
+    ),
+  PRIVACY_POLICY_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
   RESERVATION_NOTIFICATION_EMAIL: z.string().email().default("Welcome@der-heidekoenig.de"),
   RESERVATION_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
   RUN_MIGRATIONS_ON_START: z

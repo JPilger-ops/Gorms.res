@@ -1,4 +1,5 @@
 import { ReservationForm } from "@/components/reservation/reservation-form";
+import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
   "Sonntage, Feiertage und gesperrte Tage werden automatisch blockiert.",
@@ -6,7 +7,9 @@ const facts = [
   "Ihre Daten werden nur zur Bearbeitung der Anfrage verwendet.",
 ];
 
-export function PublicReservationPage() {
+export async function PublicReservationPage() {
+  const settings = await getAdminSettings();
+
   return (
     <main className="app-shell">
       <section className="page-frame grid gap-8 py-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-start lg:py-14">
@@ -40,7 +43,14 @@ export function PublicReservationPage() {
           </div>
         </div>
 
-        <ReservationForm />
+        <ReservationForm
+          imprintUrl={settings.imprintUrl}
+          latestReservationTime={settings.latestReservationTime}
+          earliestReservationTime={settings.earliestReservationTime}
+          maxGuestsPerRequest={settings.maxGuestsPerRequest}
+          privacyNoticeText={settings.privacyNoticeText}
+          privacyPolicyUrl={settings.privacyPolicyUrl}
+        />
       </section>
     </main>
   );

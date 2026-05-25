@@ -16,7 +16,21 @@ function FieldError({ messages }: { messages?: string[] }) {
   return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
 }
 
-export function ReservationForm() {
+export function ReservationForm({
+  earliestReservationTime,
+  imprintUrl,
+  latestReservationTime,
+  maxGuestsPerRequest,
+  privacyNoticeText,
+  privacyPolicyUrl,
+}: {
+  earliestReservationTime: string;
+  imprintUrl?: string;
+  latestReservationTime: string;
+  maxGuestsPerRequest: number;
+  privacyNoticeText: string;
+  privacyPolicyUrl?: string;
+}) {
   const [state, formAction, pending] = useActionState(createReservationRequestAction, initialState);
 
   return (
@@ -68,8 +82,8 @@ export function ReservationForm() {
             className="glass-control min-h-12 w-full px-4 outline-none"
             name="time"
             type="time"
-            min="11:30"
-            max="19:00"
+            min={earliestReservationTime}
+            max={latestReservationTime}
             step="900"
             required
           />
@@ -83,7 +97,7 @@ export function ReservationForm() {
             name="guestCount"
             type="number"
             min="1"
-            max="30"
+            max={maxGuestsPerRequest}
             inputMode="numeric"
             required
           />
@@ -149,7 +163,23 @@ export function ReservationForm() {
         />
         <span className="text-sm leading-6">
           Ich habe den Datenschutzhinweis zur Verarbeitung meiner Angaben für die Bearbeitung der
-          Reservierungsanfrage zur Kenntnis genommen.
+          Reservierungsanfrage zur Kenntnis genommen. {privacyNoticeText}
+          {privacyPolicyUrl ? (
+            <>
+              {" "}
+              <a className="font-semibold underline underline-offset-4" href={privacyPolicyUrl}>
+                Datenschutz
+              </a>
+            </>
+          ) : null}
+          {imprintUrl ? (
+            <>
+              {" "}
+              <a className="font-semibold underline underline-offset-4" href={imprintUrl}>
+                Impressum
+              </a>
+            </>
+          ) : null}
         </span>
       </label>
       <FieldError messages={state.fieldErrors?.privacyAccepted} />
