@@ -9,6 +9,7 @@ const envSchema = z.object({
   ADMIN_SESSION_COOKIE_NAME: z.string().default("heidekoenig_admin_session"),
   APP_NAME: z.string().default("Waldwirtschaft Heidekönig"),
   APP_ENCRYPTION_KEY: z.string().optional(),
+  APP_ENCRYPTION_KEY_FILE: z.string().default("/app/secrets/app_encryption_key"),
   AUDIT_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   BACKUP_CONTAINER_PATH: z.string().default("/backups"),
   BACKUP_RETENTION_DAYS: z.coerce.number().int().positive().default(30),

@@ -20,6 +20,12 @@
 # production
 /build
 
+# runtime state and operator-managed data
+/uploads
+/secrets
+/backups
+/public/uploads
+
 # misc
 .DS_Store
 *.pem

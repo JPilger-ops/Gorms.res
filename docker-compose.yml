@@ -10,7 +10,8 @@ services:
       ADMIN_APP_URL: ${ADMIN_APP_URL:-https://login.gorms.de}
       ADMIN_HOST: ${ADMIN_HOST:-login.gorms.de}
       ADMIN_SESSION_COOKIE_NAME: ${ADMIN_SESSION_COOKIE_NAME:-heidekoenig_admin_session}
-      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+      APP_ENCRYPTION_KEY_FILE: ${APP_ENCRYPTION_KEY_FILE:-/app/secrets/app_encryption_key}
       AUDIT_LOG_RETENTION_DAYS: ${AUDIT_LOG_RETENTION_DAYS:-90}
       BACKUP_CONTAINER_PATH: ${BACKUP_CONTAINER_PATH:-/backups}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
@@ -48,6 +49,7 @@ services:
     ports:
       - "6043:6043"
     volumes:
+      - secrets:/app/secrets
       - uploads:${UPLOAD_DIR:-/app/uploads}
       - ${BACKUP_HOST_PATH:-/mnt/heidekoenig-backups}:${BACKUP_CONTAINER_PATH:-/backups}
     depends_on:
@@ -92,6 +94,32 @@ services:
       retries: 5
       start_period: 20s
 
+  backup:
+    image: postgres:18-alpine
+    container_name: heidekoenig-backup
+    profiles:
+      - backup
+    restart: "no"
+    environment:
+      BACKUP_CONTAINER_PATH: ${BACKUP_CONTAINER_PATH:-/backups}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-heidekoenig_app}
+      POSTGRES_DB: ${POSTGRES_DB:-heidekoenig}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads}
+    volumes:
+      - uploads:${UPLOAD_DIR:-/app/uploads}
+      - ${BACKUP_HOST_PATH:-/mnt/heidekoenig-backups}:${BACKUP_CONTAINER_PATH:-/backups}
+      - ./scripts:/scripts:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+    entrypoint: ["/bin/sh", "/scripts/backup-postgres.sh"]
+
 networks:
   app:
     name: heidekoenig_app
@@ -104,3 +132,5 @@ volumes:
     name: heidekoenig_postgres_data
   uploads:
     name: heidekoenig_uploads
+  secrets:
+    name: heidekoenig_secrets

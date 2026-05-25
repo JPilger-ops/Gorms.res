@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { domainToASCII, domainToUnicode } from "node:url";
 import { env, requiredSecretStatus } from "@/src/lib/env";
 import { checkDatabaseConnection } from "@/src/server/db";
+import { getEncryptionKeyStatus } from "@/src/server/encryption";
 import { getAdminAllowedHosts, getPublicAllowedHosts } from "@/src/server/host-guard";
 
 export type SystemCheckStatus = "ok" | "warning" | "error";
@@ -20,6 +21,27 @@ export type SystemCheckGroup = {
 };
 
 function secretStatus(name: string, minLength: number): SystemCheckItem {
+  if (name === "APP_ENCRYPTION_KEY") {
+    const value = getEncryptionKeyStatus();
+
+    if (!value.isSet) {
+      return {
+        label: name,
+        status: "error",
+        detail: `Nicht gesetzt und ${env.APP_ENCRYPTION_KEY_FILE} konnte nicht erstellt werden.`,
+      };
+    }
+
+    return {
+      label: name,
+      status: "ok",
+      detail:
+        value.source === "file"
+          ? `Automatisch in ${env.APP_ENCRYPTION_KEY_FILE} erstellt.`
+          : "Über Umgebung gesetzt.",
+    };
+  }
+
   const value = requiredSecretStatus(
     name as "APP_ENCRYPTION_KEY" | "SESSION_SECRET" | "SETUP_TOKEN",
   );

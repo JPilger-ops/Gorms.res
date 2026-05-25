@@ -112,9 +112,9 @@ export default async function ReservationsPage({
         {reservations.length ? (
           <section className="space-y-4">
             {reservations.map((reservation) => (
-              <article className="glass-panel p-5 sm:p-6" key={reservation.id}>
+              <article className="glass-panel p-4 sm:p-6" key={reservation.id}>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="text-2xl font-semibold">{reservation.guestName}</h3>
                       <span

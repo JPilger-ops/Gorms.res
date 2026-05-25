@@ -1,20 +1,17 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { setupAdminSchema } from "@/src/lib/setup-validation";
+import { recordSecurityEvent } from "@/src/server/audit-log";
 import { assertAdminHostAction } from "@/src/server/guards";
 import { checkRateLimit } from "@/src/server/rate-limit";
+import { getClientRateLimitKey } from "@/src/server/request-security";
 import { createInitialAdmin } from "@/src/server/setup";
 
 export type SetupActionState = {
   message?: string;
   fieldErrors?: Record<string, string[]>;
 };
-
-function firstForwardedFor(value: string | null) {
-  return value?.split(",")[0]?.trim() || "unknown";
-}
 
 export async function createInitialAdminAction(
   _previousState: SetupActionState,
@@ -24,10 +21,13 @@ export async function createInitialAdminAction(
     return { message: "Setup ist unter dieser Adresse nicht verfügbar." };
   }
 
-  const headerList = await headers();
-  const rateLimitKey = `setup:${firstForwardedFor(headerList.get("x-forwarded-for"))}`;
+  const rateLimitKey = await getClientRateLimitKey("setup");
 
   if (!checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)) {
+    await recordSecurityEvent({
+      action: "setup.rate_limited",
+      metadata: {},
+    });
     return { message: "Bitte später erneut versuchen." };
   }
 
@@ -49,6 +49,10 @@ export async function createInitialAdminAction(
   const result = await createInitialAdmin(parsed.data);
 
   if (!result.ok) {
+    await recordSecurityEvent({
+      action: "setup.failed",
+      metadata: {},
+    });
     return { message: result.message };
   }
 

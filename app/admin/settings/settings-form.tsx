@@ -25,12 +25,12 @@ function Section({
   title: string;
 }) {
   return (
-    <section className="rounded-3xl border border-border bg-surface/55 p-4 sm:p-5">
+    <section className="min-w-0 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5">
       <div className="mb-4">
         <h3 className="text-xl font-semibold">{title}</h3>
         <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
       </div>
-      <div className="space-y-4">{children}</div>
+      <div className="min-w-0 space-y-4">{children}</div>
     </section>
   );
 }
@@ -39,14 +39,16 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   const [state, formAction, pending] = useActionState(updateSettingsAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-5 p-5 sm:p-6">
+    <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-6">
       {state.message ? (
         <div
+          aria-live="polite"
           className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
             state.success
               ? "border-success bg-surface/80 text-success"
               : "border-border bg-surface/70"
           }`}
+          role={state.success ? "status" : "alert"}
         >
           {state.message}
         </div>
@@ -177,7 +179,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       >
         <div className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
           Unterstützte Variablen:{" "}
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-foreground break-words">
             {supportedEmailTemplateVariables.map((variable) => `{{${variable}}}`).join(", ")}
           </span>
         </div>
@@ -301,6 +303,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       <button
         className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
+        aria-busy={pending}
         type="submit"
       >
         {pending ? "Wird gespeichert..." : "Einstellungen speichern"}

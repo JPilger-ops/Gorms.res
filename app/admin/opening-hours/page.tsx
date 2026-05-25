@@ -21,7 +21,7 @@ export default async function OpeningHoursPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_0.8fr]">
           <OpeningHoursForm
             earliestReservationTime={settings.earliestReservationTime}
             latestReservationTime={settings.latestReservationTime}

@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { reservationRequestSchema } from "@/src/lib/reservation-validation";
 import {
   EmailConfigurationError,
@@ -9,6 +8,7 @@ import {
 } from "@/src/server/email";
 import { assertPublicHostAction } from "@/src/server/guards";
 import { checkRateLimit } from "@/src/server/rate-limit";
+import { getClientRateLimitKey } from "@/src/server/request-security";
 import { createReservationRequest } from "@/src/server/reservations";
 import { getSetupStatus } from "@/src/server/setup";
 
@@ -17,10 +17,6 @@ export type ReservationFormState = {
   fieldErrors?: Record<string, string[]>;
   success?: boolean;
 };
-
-function firstForwardedFor(value: string | null) {
-  return value?.split(",")[0]?.trim() || "unknown";
-}
 
 export async function createReservationRequestAction(
   _previousState: ReservationFormState,
@@ -36,8 +32,7 @@ export async function createReservationRequestAction(
     return { message: "Reservierungsanfragen sind erst nach Abschluss der Einrichtung möglich." };
   }
 
-  const headerList = await headers();
-  const rateLimitKey = `reservation:${firstForwardedFor(headerList.get("x-forwarded-for"))}`;
+  const rateLimitKey = await getClientRateLimitKey("reservation");
 
   if (!checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)) {
     return { message: "Bitte später erneut versuchen." };

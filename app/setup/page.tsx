@@ -21,7 +21,7 @@ export default async function SetupPage() {
   const systemCheckGroups = await runSetupSystemCheck();
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" id="main-content">
       <section className="page-frame grid gap-8 py-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start lg:py-14">
         <div className="space-y-6 py-8 sm:py-14">
           <p className="eyebrow">Waldwirtschaft Heidekönig</p>

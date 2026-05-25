@@ -1,13 +1,21 @@
 import { AdminShell } from "@/components/admin/admin-shell";
+import { BrandingForm } from "@/app/admin/settings/branding-form";
+import { RetentionCleanupForm } from "@/app/admin/settings/retention-cleanup-form";
 import { SettingsForm } from "@/app/admin/settings/settings-form";
+import { SmtpSettingsForm } from "@/app/admin/settings/smtp-form";
 import { requirePermission } from "@/src/server/guards";
-import { getAdminSettings } from "@/src/server/settings";
+import { getBrandingSettings } from "@/src/server/branding";
+import { getAdminSettings, getSmtpSettingsForUi } from "@/src/server/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await requirePermission("settings:manage");
-  const settings = await getAdminSettings();
+  const [branding, settings, smtpSettings] = await Promise.all([
+    getBrandingSettings(),
+    getAdminSettings(),
+    getSmtpSettingsForUi(),
+  ]);
 
   return (
     <AdminShell session={session}>
@@ -26,6 +34,9 @@ export default async function SettingsPage() {
         </div>
 
         <SettingsForm settings={settings} />
+        <RetentionCleanupForm />
+        <SmtpSettingsForm currentUserEmail={session.email} settings={smtpSettings} />
+        <BrandingForm branding={branding} />
       </div>
     </AdminShell>
   );

@@ -1,20 +1,17 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { loginSchema } from "@/src/lib/auth-validation";
+import { recordSecurityEvent } from "@/src/server/audit-log";
 import { login } from "@/src/server/auth";
 import { assertAdminHostAction } from "@/src/server/guards";
 import { checkRateLimit } from "@/src/server/rate-limit";
+import { getClientRateLimitKey } from "@/src/server/request-security";
 
 export type LoginActionState = {
   message?: string;
   fieldErrors?: Record<string, string[]>;
 };
-
-function firstForwardedFor(value: string | null) {
-  return value?.split(",")[0]?.trim() || "unknown";
-}
 
 export async function loginAction(
   _previousState: LoginActionState,
@@ -24,10 +21,13 @@ export async function loginAction(
     return { message: "Login ist unter dieser Adresse nicht verfügbar." };
   }
 
-  const headerList = await headers();
-  const rateLimitKey = `login:${firstForwardedFor(headerList.get("x-forwarded-for"))}`;
+  const rateLimitKey = await getClientRateLimitKey("login");
 
   if (!checkRateLimit(rateLimitKey, 8, 15 * 60 * 1000)) {
+    await recordSecurityEvent({
+      action: "auth.login_rate_limited",
+      metadata: {},
+    });
     return { message: "Bitte später erneut versuchen." };
   }
 
@@ -46,6 +46,10 @@ export async function loginAction(
   const ok = await login(parsed.data);
 
   if (!ok) {
+    await recordSecurityEvent({
+      action: "auth.login_failed",
+      metadata: {},
+    });
     return { message: "E-Mail oder Passwort ist ungültig." };
   }
 

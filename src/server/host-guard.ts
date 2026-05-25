@@ -28,6 +28,22 @@ function allowedHostSet(hosts: string[]) {
   );
 }
 
+function originHostAllowed(origin: string | null, hosts: string[]) {
+  if (!origin) {
+    return true;
+  }
+
+  try {
+    const originUrl = new URL(origin);
+    const normalized = normalizeHost(originUrl.host);
+    const allowed = allowedHostSet(hosts);
+
+    return allowed.has(normalized.ascii) || allowed.has(normalized.unicode);
+  } catch {
+    return false;
+  }
+}
+
 export function getAdminAllowedHosts() {
   return splitHosts(env.ADMIN_ALLOWED_HOSTS, ["login.gorms.de"]);
 }
@@ -48,11 +64,23 @@ export async function getRequestHost() {
 }
 
 export async function isAdminHostRequest() {
+  const headerList = await headers();
   const requestHost = await getRequestHost();
-  return allowedHostSet(getAdminAllowedHosts()).has(requestHost.ascii);
+  const allowedHosts = getAdminAllowedHosts();
+
+  return (
+    allowedHostSet(allowedHosts).has(requestHost.ascii) &&
+    originHostAllowed(headerList.get("origin"), allowedHosts)
+  );
 }
 
 export async function isPublicHostRequest() {
+  const headerList = await headers();
   const requestHost = await getRequestHost();
-  return allowedHostSet(getPublicAllowedHosts()).has(requestHost.ascii);
+  const allowedHosts = getPublicAllowedHosts();
+
+  return (
+    allowedHostSet(allowedHosts).has(requestHost.ascii) &&
+    originHostAllowed(headerList.get("origin"), allowedHosts)
+  );
 }

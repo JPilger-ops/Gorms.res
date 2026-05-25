@@ -27,7 +27,11 @@ export function SetupForm() {
       </div>
 
       {state.message ? (
-        <div className="rounded-2xl border border-border bg-surface/70 px-4 py-3 text-sm font-medium">
+        <div
+          aria-live="polite"
+          className="rounded-2xl border border-border bg-surface/70 px-4 py-3 text-sm font-medium"
+          role="alert"
+        >
           {state.message}
         </div>
       ) : null}
@@ -97,6 +101,8 @@ export function SetupForm() {
       <button
         className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
+        aria-busy={pending}
+        type="submit"
       >
         {pending ? "Setup wird abgeschlossen..." : "Setup abschließen"}
       </button>

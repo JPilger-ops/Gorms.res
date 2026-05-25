@@ -34,10 +34,12 @@ export function ReservationForm({
   const [state, formAction, pending] = useActionState(createReservationRequestAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-5 p-5 sm:p-7">
+    <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-7">
       <div className="space-y-2">
         <p className="eyebrow">Reservierungsanfrage</p>
-        <h2 className="text-3xl font-semibold leading-tight">Außengastronomie anfragen</h2>
+        <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
+          Außengastronomie anfragen
+        </h2>
         <p className="text-sm leading-6 text-muted">
           Bitte beachten: Dies ist noch keine Reservierungsbestätigung.
         </p>
@@ -45,11 +47,13 @@ export function ReservationForm({
 
       {state.message ? (
         <div
+          aria-live="polite"
           className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
             state.success
               ? "border-success bg-surface/80 text-success"
               : "border-border bg-surface/70"
           }`}
+          role={state.success ? "status" : "alert"}
         >
           {state.message}
         </div>
@@ -153,15 +157,15 @@ export function ReservationForm({
         <FieldError messages={state.fieldErrors?.message} />
       </label>
 
-      <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface/65 p-4">
+      <label className="flex min-w-0 items-start gap-3 rounded-2xl border border-border bg-surface/65 p-4">
         <input
-          className="mt-1 size-4 accent-primary"
+          className="mt-1 size-4 shrink-0 accent-primary"
           name="privacyAccepted"
           type="checkbox"
           value="true"
           required
         />
-        <span className="text-sm leading-6">
+        <span className="min-w-0 text-sm leading-6">
           Ich habe den Datenschutzhinweis zur Verarbeitung meiner Angaben für die Bearbeitung der
           Reservierungsanfrage zur Kenntnis genommen. {privacyNoticeText}
           {privacyPolicyUrl ? (
@@ -187,6 +191,7 @@ export function ReservationForm({
       <button
         className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
+        aria-busy={pending}
         type="submit"
       >
         {pending ? "Anfrage wird geprüft..." : "Anfrage senden"}

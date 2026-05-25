@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import { ReservationForm } from "@/components/reservation/reservation-form";
+import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
@@ -8,15 +10,27 @@ const facts = [
 ];
 
 export async function PublicReservationPage() {
-  const settings = await getAdminSettings();
+  const [branding, settings] = await Promise.all([getBrandingSettings(), getAdminSettings()]);
 
   return (
-    <main className="app-shell">
-      <section className="page-frame grid gap-8 py-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-start lg:py-14">
+    <main
+      className="app-shell"
+      id="main-content"
+      style={{ "--primary": branding.accentColor } as CSSProperties}
+    >
+      <section className="page-frame grid gap-6 py-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-start lg:gap-8 lg:py-14">
         <div className="space-y-8 lg:sticky lg:top-8">
           <div className="space-y-5">
-            <p className="eyebrow">Waldwirtschaft Heidekönig</p>
-            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.05] text-balance sm:text-6xl">
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt={settings.appName}
+                className="max-h-20 w-auto max-w-full object-contain sm:max-h-24"
+                src={branding.logoUrl}
+              />
+            ) : null}
+            <p className="eyebrow">{settings.appName}</p>
+            <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-balance sm:text-5xl xl:text-6xl">
               Anfrage für einen Platz im Grünen.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted sm:text-xl">

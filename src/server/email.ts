@@ -1,14 +1,13 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import { env } from "@/src/lib/env";
 import type { ReservationRequestInput } from "@/src/lib/reservation-validation";
 import {
   renderReservationSubjectTemplate,
   validateEmailSubjectTemplate,
 } from "@/src/server/email-templates";
 import { createReservationRequestIcs } from "@/src/server/calendar";
-import { getEmailTemplateSettings } from "@/src/server/settings";
+import { getEmailTemplateSettings, getSmtpSettings } from "@/src/server/settings";
 
 export class EmailConfigurationError extends Error {
   constructor() {
@@ -26,24 +25,24 @@ export type ReservationEmailData = ReservationRequestInput & {
   id: string;
 };
 
-let transporter: Transporter<SMTPTransport.SentMessageInfo> | undefined;
+async function getSmtpTransporter() {
+  const settings = await getSmtpSettings();
 
-function getSmtpTransporter() {
-  if (!env.SMTP_USER || !env.SMTP_PASSWORD || !env.SMTP_FROM_ADDRESS) {
+  if (!settings.user || !settings.password || !settings.fromAddress) {
     throw new EmailConfigurationError();
   }
 
-  transporter ??= nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465,
+  const mailer: Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport({
+    host: settings.host,
+    port: settings.port,
+    secure: settings.port === 465,
     auth: {
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASSWORD,
+      user: settings.user,
+      pass: settings.password,
     },
   });
 
-  return transporter;
+  return { fromAddress: settings.fromAddress, fromName: settings.fromName, mailer };
 }
 
 function formatReservationText(input: ReservationEmailData) {
@@ -142,7 +141,7 @@ function formatGuestConfirmationHtml(input: ReservationEmailData) {
 }
 
 export async function sendInternalReservationEmail(input: ReservationEmailData) {
-  const mailer = getSmtpTransporter();
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
   const templates = await getEmailTemplateSettings();
   const validation = validateEmailSubjectTemplate(templates.internalEmailSubjectTemplate);
   const calendar = createReservationRequestIcs(input);
@@ -152,8 +151,8 @@ export async function sendInternalReservationEmail(input: ReservationEmailData) 
   }
 
   const from = {
-    name: env.SMTP_FROM_NAME,
-    address: env.SMTP_FROM_ADDRESS!,
+    name: fromName,
+    address: fromAddress,
   };
 
   await mailer.sendMail({
@@ -174,7 +173,7 @@ export async function sendInternalReservationEmail(input: ReservationEmailData) 
 }
 
 export async function sendGuestReservationReceiptEmail(input: ReservationEmailData) {
-  const mailer = getSmtpTransporter();
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
   const templates = await getEmailTemplateSettings();
   const validation = validateEmailSubjectTemplate(templates.guestEmailSubjectTemplate);
 
@@ -183,8 +182,8 @@ export async function sendGuestReservationReceiptEmail(input: ReservationEmailDa
   }
 
   const from = {
-    name: env.SMTP_FROM_NAME,
-    address: env.SMTP_FROM_ADDRESS!,
+    name: fromName,
+    address: fromAddress,
   };
 
   await mailer.sendMail({
@@ -193,5 +192,23 @@ export async function sendGuestReservationReceiptEmail(input: ReservationEmailDa
     subject: renderReservationSubjectTemplate(templates.guestEmailSubjectTemplate, input),
     text: formatGuestConfirmationText(input),
     html: formatGuestConfirmationHtml(input),
+  });
+}
+
+export async function sendSmtpTestEmail(to: string) {
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+
+  await mailer.sendMail({
+    from: {
+      name: fromName,
+      address: fromAddress,
+    },
+    to,
+    subject: "SMTP-Test Waldwirtschaft Heidekönig",
+    text: [
+      "Diese Testmail wurde aus dem Adminbereich der Reservierungsanfragen-App gesendet.",
+      "",
+      "Wenn Sie diese E-Mail erhalten, ist die SMTP-Konfiguration grundsätzlich funktionsfähig.",
+    ].join("\n"),
   });
 }

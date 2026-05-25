@@ -7,7 +7,7 @@ const setupChecks = [
 
 export function SetupMaintenancePage() {
   return (
-    <main className="app-shell flex items-center">
+    <main className="app-shell flex items-center" id="main-content">
       <section className="page-frame grid gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
         <div className="space-y-8 py-8 sm:py-14">
           <div className="space-y-5">

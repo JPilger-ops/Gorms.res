@@ -3,7 +3,9 @@ import { appSettings, auditLog } from "@/db/schema";
 import { env } from "@/src/lib/env";
 import type { OpeningHoursInput } from "@/src/lib/opening-hours-validation";
 import type { AdminSettingsInput } from "@/src/lib/settings-validation";
+import type { SmtpSettingsInput } from "@/src/lib/smtp-validation";
 import { db } from "@/src/server/db";
+import { decryptSecret, encryptSecret } from "@/src/server/encryption";
 import type { AuthenticatedSession } from "@/src/server/guards";
 
 export type BusinessSettings = {
@@ -33,6 +35,19 @@ export type AdminSettings = BusinessSettings &
     reservationRetentionDays: number;
   };
 
+export type SmtpSettings = {
+  fromAddress?: string;
+  fromName: string;
+  host: string;
+  password?: string;
+  passwordSet: boolean;
+  passwordSource: "database" | "environment" | "missing";
+  port: number;
+  user?: string;
+};
+
+export type SmtpSettingsForUi = Omit<SmtpSettings, "password">;
+
 const settingKeys = [
   "block_sundays",
   "earliest_reservation_time",
@@ -61,6 +76,15 @@ const adminSettingKeys = [
   ...emailTemplateSettingKeys,
 ] as const;
 
+const smtpSettingKeys = [
+  "smtp_from_address",
+  "smtp_from_name",
+  "smtp_host",
+  "smtp_password",
+  "smtp_port",
+  "smtp_user",
+] as const;
+
 function normalizeBoolean(value: string | undefined, fallback: boolean) {
   if (value === "true") {
     return true;
@@ -76,6 +100,11 @@ function normalizeBoolean(value: string | undefined, fallback: boolean) {
 function normalizePositiveInteger(value: string | undefined, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizePort(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= 65535 ? parsed : fallback;
 }
 
 function normalizeOptionalString(value: string | undefined, fallback?: string) {
@@ -167,6 +196,57 @@ export async function getAdminSettings(): Promise<AdminSettings> {
       settings.get("reservation_retention_days"),
       env.RESERVATION_RETENTION_DAYS,
     ),
+  };
+}
+
+async function getSmtpSettingMap() {
+  const rows = await db
+    .select({ key: appSettings.key, value: appSettings.value })
+    .from(appSettings)
+    .where(inArray(appSettings.key, [...smtpSettingKeys]));
+
+  return new Map(rows.map((row) => [row.key, row.value]));
+}
+
+export async function getSmtpSettings(): Promise<SmtpSettings> {
+  const settings = await getSmtpSettingMap();
+  const encryptedPassword = settings.get("smtp_password");
+  const password = encryptedPassword ? decryptSecret(encryptedPassword) : env.SMTP_PASSWORD;
+  const passwordSource = encryptedPassword
+    ? "database"
+    : env.SMTP_PASSWORD
+      ? "environment"
+      : "missing";
+
+  return {
+    fromAddress: settings.get("smtp_from_address") || env.SMTP_FROM_ADDRESS,
+    fromName: settings.get("smtp_from_name") ?? env.SMTP_FROM_NAME,
+    host: settings.get("smtp_host") ?? env.SMTP_HOST,
+    password,
+    passwordSet: Boolean(password),
+    passwordSource,
+    port: normalizePort(settings.get("smtp_port"), env.SMTP_PORT),
+    user: settings.get("smtp_user") || env.SMTP_USER,
+  };
+}
+
+export async function getSmtpSettingsForUi(): Promise<SmtpSettingsForUi> {
+  const settings = await getSmtpSettingMap();
+  const encryptedPassword = settings.get("smtp_password");
+  const passwordSource = encryptedPassword
+    ? "database"
+    : env.SMTP_PASSWORD
+      ? "environment"
+      : "missing";
+
+  return {
+    fromAddress: settings.get("smtp_from_address") || env.SMTP_FROM_ADDRESS,
+    fromName: settings.get("smtp_from_name") ?? env.SMTP_FROM_NAME,
+    host: settings.get("smtp_host") ?? env.SMTP_HOST,
+    passwordSet: Boolean(encryptedPassword || env.SMTP_PASSWORD),
+    passwordSource,
+    port: normalizePort(settings.get("smtp_port"), env.SMTP_PORT),
+    user: settings.get("smtp_user") || env.SMTP_USER,
   };
 }
 
@@ -262,6 +342,52 @@ export async function updateAdminSettings(
       entityId: "general",
       metadata: {
         keys: rows.map(([key]) => key),
+      },
+    });
+  });
+}
+
+export async function updateSmtpSettings(input: SmtpSettingsInput, session: AuthenticatedSession) {
+  const rows = [
+    ["smtp_from_address", input.smtpFromAddress, false],
+    ["smtp_from_name", input.smtpFromName, false],
+    ["smtp_host", input.smtpHost, false],
+    ["smtp_port", String(input.smtpPort), false],
+    ["smtp_user", input.smtpUser, false],
+  ] as const;
+
+  const secretRows = input.smtpPassword
+    ? ([["smtp_password", encryptSecret(input.smtpPassword), true]] as const)
+    : [];
+
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(appSettings)
+      .values(
+        [...rows, ...secretRows].map(([key, value, isSecret]) => ({
+          key,
+          value,
+          isSecret,
+          updatedByUserId: session.userId,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: appSettings.key,
+        set: {
+          isSecret: sql<boolean>`excluded.is_secret`,
+          updatedByUserId: session.userId,
+          updatedAt: new Date(),
+          value: sql<string>`excluded.value`,
+        },
+      });
+
+    await tx.insert(auditLog).values({
+      userId: session.userId,
+      action: "smtp_settings.update",
+      entityType: "app_settings",
+      entityId: "smtp",
+      metadata: {
+        passwordReplaced: Boolean(input.smtpPassword),
       },
     });
   });

@@ -40,10 +40,10 @@ export default async function UsersPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[0.85fr_minmax(0,1.15fr)]">
           <CreateUserForm />
 
-          <section className="glass-panel p-5 sm:p-6">
+          <section className="glass-panel p-4 sm:p-6">
             <div className="mb-5">
               <p className="eyebrow">Bestehende Benutzer</p>
               <h3 className="mt-2 text-2xl font-semibold">Konten</h3>
@@ -53,11 +53,11 @@ export default async function UsersPage() {
               <div className="space-y-4">
                 {users.map((user) => (
                   <article
-                    className="rounded-3xl border border-border bg-surface/50 p-4"
+                    className="min-w-0 rounded-3xl border border-border bg-surface/50 p-4"
                     key={user.id}
                   >
                     <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
                           <h4 className="text-xl font-semibold">{user.name}</h4>
                           <span className="rounded-full border border-border bg-surface/70 px-3 py-1 text-xs font-bold text-muted">

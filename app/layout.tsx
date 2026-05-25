@@ -31,7 +31,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body>{children}</body>
+      <head>
+        <link href="/branding/favicon" rel="icon" />
+        <link href="/branding/favicon" rel="apple-touch-icon" />
+      </head>
+      <body>
+        <a className="skip-link" href="#main-content">
+          Zum Inhalt springen
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

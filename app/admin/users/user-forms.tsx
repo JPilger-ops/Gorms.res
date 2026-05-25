@@ -26,9 +26,11 @@ function FormMessage({ state }: { state: UserActionState }) {
 
   return (
     <div
+      aria-live="polite"
       className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
         state.success ? "border-success bg-surface/80 text-success" : "border-border bg-surface/70"
       }`}
+      role={state.success ? "status" : "alert"}
     >
       {state.message}
     </div>
@@ -57,7 +59,7 @@ export function CreateUserForm() {
   const [state, formAction, pending] = useActionState(createUserAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-4 p-5 sm:p-6">
+    <form action={formAction} className="glass-panel space-y-4 p-4 sm:p-6">
       <div>
         <p className="eyebrow">Neuer Benutzer</p>
         <h3 className="mt-2 text-2xl font-semibold">Zugang anlegen</h3>
@@ -123,6 +125,7 @@ export function CreateUserForm() {
       <button
         className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
+        aria-busy={pending}
         type="submit"
       >
         {pending ? "Wird erstellt..." : "Benutzer erstellen"}
@@ -151,7 +154,7 @@ export function UserEditForm({
   return (
     <form
       action={formAction}
-      className="space-y-4 rounded-2xl border border-border bg-surface/65 p-4"
+      className="min-w-0 space-y-4 rounded-2xl border border-border bg-surface/65 p-4"
     >
       <input name="id" type="hidden" value={id} />
       {isCurrentUser ? (
@@ -213,6 +216,7 @@ export function UserEditForm({
       <button
         className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
+        aria-busy={pending}
         type="submit"
       >
         {pending ? "Wird gespeichert..." : "Benutzer speichern"}
@@ -227,7 +231,7 @@ export function ResetUserPasswordForm({ id }: { id: string }) {
   return (
     <form
       action={formAction}
-      className="space-y-4 rounded-2xl border border-border bg-surface/65 p-4"
+      className="min-w-0 space-y-4 rounded-2xl border border-border bg-surface/65 p-4"
     >
       <input name="id" type="hidden" value={id} />
 
@@ -262,6 +266,7 @@ export function ResetUserPasswordForm({ id }: { id: string }) {
       <button
         className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
+        aria-busy={pending}
         type="submit"
       >
         {pending ? "Wird gesetzt..." : "Passwort setzen"}

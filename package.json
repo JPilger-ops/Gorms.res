@@ -17,8 +17,11 @@
     "check": "npm run lint && npm run typecheck && npm run format:check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:runtime": "node scripts/migrate.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "retention:cleanup:runtime": "node scripts/cleanup-reservations.mjs",
+    "retention:cleanup": "tsx scripts/cleanup-reservations.ts",
     "setup:seed-admin": "tsx db/seed.ts"
   },
   "dependencies": {
