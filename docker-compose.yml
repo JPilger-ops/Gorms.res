@@ -1,0 +1,106 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: heidekoenig-app
+    restart: unless-stopped
+    environment:
+      ADMIN_ALLOWED_HOSTS: ${ADMIN_ALLOWED_HOSTS:-login.gorms.de}
+      ADMIN_APP_URL: ${ADMIN_APP_URL:-https://login.gorms.de}
+      ADMIN_HOST: ${ADMIN_HOST:-login.gorms.de}
+      ADMIN_SESSION_COOKIE_NAME: ${ADMIN_SESSION_COOKIE_NAME:-heidekoenig_admin_session}
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
+      AUDIT_LOG_RETENTION_DAYS: ${AUDIT_LOG_RETENTION_DAYS:-90}
+      BACKUP_CONTAINER_PATH: ${BACKUP_CONTAINER_PATH:-/backups}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BLOCK_SUNDAYS: ${BLOCK_SUNDAYS:-true}
+      DATABASE_URL: postgres://${POSTGRES_APP_USER:-heidekoenig_app}:${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}@db:5432/${POSTGRES_DB:-heidekoenig}
+      EARLIEST_RESERVATION_TIME: ${EARLIEST_RESERVATION_TIME:-11:30}
+      GUEST_EMAIL_SUBJECT_TEMPLATE: ${GUEST_EMAIL_SUBJECT_TEMPLATE:-Ihre Reservierungsanfrage bei der Waldwirtschaft Heidekönig}
+      HOSTNAME: 0.0.0.0
+      HOLIDAY_COUNTRY: ${HOLIDAY_COUNTRY:-DE}
+      HOLIDAY_STATE: ${HOLIDAY_STATE:-NW}
+      INTERNAL_EMAIL_SUBJECT_TEMPLATE: ${INTERNAL_EMAIL_SUBJECT_TEMPLATE:-Neue Reservierungsanfrage}
+      LATEST_RESERVATION_TIME: ${LATEST_RESERVATION_TIME:-19:00}
+      MAX_GUESTS_PER_REQUEST: ${MAX_GUESTS_PER_REQUEST:-30}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://heidekönig.gorms.de}
+      NODE_ENV: production
+      PORT: 6043
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-heidekoenig_app}
+      POSTGRES_DB: ${POSTGRES_DB:-heidekoenig}
+      PUBLIC_ALLOWED_HOSTS: ${PUBLIC_ALLOWED_HOSTS:-heidekönig.gorms.de,xn--heideknig-57a.gorms.de}
+      PUBLIC_HOST: ${PUBLIC_HOST:-heidekönig.gorms.de}
+      RESERVATION_NOTIFICATION_EMAIL: ${RESERVATION_NOTIFICATION_EMAIL:-Welcome@der-heidekoenig.de}
+      RESERVATION_RETENTION_DAYS: ${RESERVATION_RETENTION_DAYS:-30}
+      RUN_MIGRATIONS_ON_START: ${RUN_MIGRATIONS_ON_START:-false}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      SETUP_TOKEN: ${SETUP_TOKEN:?SETUP_TOKEN is required}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Waldwirtschaft Heidekönig}
+      SMTP_HOST: ${SMTP_HOST:-smtp.ionos.de}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_PROVIDER: ${SMTP_PROVIDER:-ionos}
+      SMTP_USER: ${SMTP_USER:-}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads}
+    ports:
+      - "6043:6043"
+    volumes:
+      - uploads:${UPLOAD_DIR:-/app/uploads}
+      - ${BACKUP_HOST_PATH:-/mnt/heidekoenig-backups}:${BACKUP_CONTAINER_PATH:-/backups}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app
+      - internal
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:6043').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  db:
+    image: postgres:18-alpine
+    container_name: heidekoenig-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-heidekoenig}
+      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}
+      POSTGRES_USER: ${POSTGRES_APP_USER:-heidekoenig_app}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_APP_USER:-heidekoenig_app} -d ${POSTGRES_DB:-heidekoenig}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  app:
+    name: heidekoenig_app
+  internal:
+    name: heidekoenig_internal
+    internal: true
+
+volumes:
+  postgres_data:
+    name: heidekoenig_postgres_data
+  uploads:
+    name: heidekoenig_uploads

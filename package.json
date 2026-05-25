@@ -1,0 +1,52 @@
+{
+  "name": "heidekoenig-reservations",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "next dev -p 6043",
+    "build": "next build",
+    "start": "next start -p 6043",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run typecheck && npm run format:check",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "setup:seed-admin": "tsx db/seed.ts"
+  },
+  "dependencies": {
+    "argon2": "^0.44.0",
+    "date-holidays": "^3.30.1",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "ics": "^3.12.0",
+    "next": "16.2.6",
+    "nodemailer": "^8.0.8",
+    "pg": "^8.21.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "prettier": "^3.8.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.22.3",
+    "typescript": "^5"
+  }
+}

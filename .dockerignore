@@ -1,0 +1,14 @@
+.env
+.env.*
+.git
+.github
+.next
+coverage
+Dockerfile
+docker-compose*.yml
+docs
+node_modules
+npm-debug.log*
+out
+README.md
+tsconfig.tsbuildinfo
