@@ -4,6 +4,7 @@ export type UserRole = (typeof roles)[number];
 
 export const allPermissions = [
   "reservations:read",
+  "reservations:manage",
   "blocked-days:manage",
   "opening-hours:manage",
   "settings:manage",
@@ -18,6 +19,7 @@ export type Permission = (typeof allPermissions)[number];
 const permissions: Record<UserRole, readonly Permission[]> = {
   admin: [
     "reservations:read",
+    "reservations:manage",
     "blocked-days:manage",
     "opening-hours:manage",
     "settings:manage",

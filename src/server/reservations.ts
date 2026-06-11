@@ -1,7 +1,9 @@
 import { and, count, desc, eq, type SQL } from "drizzle-orm";
-import { reservationRequests } from "@/db/schema";
+import { auditLog, reservationRequests } from "@/db/schema";
 import type { ReservationRequestInput } from "@/src/lib/reservation-validation";
+import type { UpdateReservationStatusInput } from "@/src/lib/reservation-status-validation";
 import { db } from "@/src/server/db";
+import type { AuthenticatedSession } from "@/src/server/guards";
 import { validateReservationRules } from "@/src/server/reservation-rules";
 
 export const reservationStatuses = ["pending", "accepted", "declined", "cancelled"] as const;
@@ -120,5 +122,56 @@ export async function createReservationRequest(
       ...input,
       id: reservation.id,
     },
+  };
+}
+
+export async function updateReservationStatus(
+  input: UpdateReservationStatusInput,
+  session: AuthenticatedSession,
+) {
+  const [currentReservation] = await db
+    .select({ id: reservationRequests.id, status: reservationRequests.status })
+    .from(reservationRequests)
+    .where(eq(reservationRequests.id, input.id))
+    .limit(1);
+
+  if (!currentReservation) {
+    return {
+      ok: false as const,
+      message: "Reservierungsanfrage wurde nicht gefunden.",
+    };
+  }
+
+  if (currentReservation.status === input.status) {
+    return {
+      ok: true as const,
+      changed: false as const,
+    };
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(reservationRequests)
+      .set({
+        status: input.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(reservationRequests.id, input.id));
+
+    await tx.insert(auditLog).values({
+      userId: session.userId,
+      action: "reservation.status_update",
+      entityType: "reservation_request",
+      entityId: input.id,
+      metadata: {
+        from: currentReservation.status,
+        to: input.status,
+      },
+    });
+  });
+
+  return {
+    ok: true as const,
+    changed: true as const,
   };
 }
