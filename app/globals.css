@@ -317,23 +317,30 @@ html {
     border: 1px solid var(--border-strong);
     border-radius: 18px;
     background: color-mix(in srgb, var(--surface-strong), transparent 8%);
-    box-shadow: 0 10px 24px rgb(31 35 29 / 9%);
-    padding: 14px 16px;
+    box-shadow:
+      0 14px 30px rgb(31 35 29 / 12%),
+      inset 0 1px 0 rgb(255 255 255 / 42%);
+    padding: 15px 16px;
     color: var(--foreground);
     font-size: 0.95rem;
     font-weight: 700;
     line-height: 1.45;
+    animation: feedback-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .form-feedback-success {
     border-color: color-mix(in srgb, var(--success), transparent 55%);
-    background: color-mix(in srgb, var(--success), var(--surface-strong) 88%);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--success), transparent 88%), transparent 58%),
+      color-mix(in srgb, var(--success), var(--surface-strong) 88%);
     color: color-mix(in srgb, var(--success), black 18%);
   }
 
   .form-feedback-error {
     border-color: color-mix(in srgb, var(--danger), transparent 55%);
-    background: color-mix(in srgb, var(--danger), var(--surface-strong) 90%);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--danger), transparent 90%), transparent 58%),
+      color-mix(in srgb, var(--danger), var(--surface-strong) 90%);
     color: color-mix(in srgb, var(--danger), black 10%);
   }
 
@@ -344,6 +351,76 @@ html {
     border-radius: 999px;
     margin-top: 0.34em;
     background: currentColor;
+    box-shadow: 0 0 0 6px color-mix(in srgb, currentColor, transparent 84%);
+    animation: feedback-pulse 1400ms ease-out 1;
+  }
+
+  .form-feedback-label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0;
+    opacity: 0.78;
+    text-transform: uppercase;
+  }
+
+  .field-error {
+    border: 1px solid color-mix(in srgb, var(--danger), transparent 70%);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--danger), var(--surface-strong) 92%);
+    padding: 10px 12px;
+    color: var(--danger);
+    font-size: 0.9rem;
+    font-weight: 750;
+    line-height: 1.35;
+    animation: field-error-enter 180ms ease-out;
+  }
+
+  .event-list {
+    position: relative;
+  }
+
+  .event-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 92%), transparent 62%),
+      color-mix(in srgb, var(--surface), transparent 22%);
+    box-shadow: 0 10px 22px rgb(31 35 29 / 8%);
+    padding: 16px;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .event-card:hover {
+    border-color: color-mix(in srgb, var(--primary), transparent 56%);
+    box-shadow: 0 14px 28px rgb(31 35 29 / 12%);
+    transform: translateY(-1px);
+  }
+
+  .event-marker {
+    display: inline-flex;
+    width: 12px;
+    height: 12px;
+    flex: 0 0 auto;
+    border: 2px solid color-mix(in srgb, var(--primary), white 12%);
+    border-radius: 999px;
+    background: var(--surface-strong);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary), transparent 88%);
+  }
+
+  .event-action {
+    font-weight: 760;
+  }
+
+  .event-meta {
+    color: var(--muted);
+    font-size: 0.9rem;
   }
 
   .eyebrow {
@@ -358,6 +435,40 @@ html {
 @keyframes button-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes feedback-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes feedback-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor, transparent 70%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, currentColor, transparent 100%);
+  }
+}
+
+@keyframes field-error-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 

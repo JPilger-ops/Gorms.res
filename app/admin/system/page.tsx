@@ -141,21 +141,26 @@ export default async function SystemPage() {
           <div className="glass-panel p-5 sm:p-6">
             <p className="eyebrow">Audit Log</p>
             <h3 className="mt-2 text-2xl font-semibold">Letzte Ereignisse</h3>
-            <div className="mt-5 space-y-3">
+            <div className="event-list mt-5 space-y-3">
               {overview.recentAuditEvents.length ? (
                 overview.recentAuditEvents.map((event) => (
                   <div
-                    className="rounded-2xl border border-border bg-surface/65 p-4"
+                    className="event-card"
                     key={`${event.action}-${event.createdAt.toISOString()}`}
                   >
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="font-semibold">{event.action}</p>
-                        <p className="mt-1 text-sm text-muted">
-                          {event.entityType} · {event.userName ?? "System"}
-                        </p>
+                    <div className="flex gap-3">
+                      <span aria-hidden="true" className="event-marker mt-1.5" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="event-action">{event.action}</p>
+                            <p className="event-meta mt-1">
+                              {event.entityType} · {event.userName ?? "System"}
+                            </p>
+                          </div>
+                          <p className="event-meta">{formatDateTime(event.createdAt)}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted">{formatDateTime(event.createdAt)}</p>
                     </div>
                   </div>
                 ))

@@ -11,7 +11,7 @@ export function FieldError({ messages }: { messages?: string[] }) {
   }
 
   return (
-    <p className="rounded-xl border border-danger/25 bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">
+    <p className="field-error">
       {messages[0]}
     </p>
   );
@@ -29,7 +29,10 @@ export function FormFeedback({ state }: { state: FeedbackState }) {
       role={state.success ? "status" : "alert"}
     >
       <span aria-hidden="true" className="form-feedback-dot" />
-      <span>{state.message}</span>
+      <span className="min-w-0">
+        <span className="form-feedback-label">{state.success ? "Erfolg" : "Bitte prüfen"}</span>
+        <span className="block">{state.message}</span>
+      </span>
     </div>
   );
 }
