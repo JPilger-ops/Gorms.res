@@ -23,12 +23,14 @@ while the production host owns the actual NFS mount at:
 NAS IP:         192.100.100.152
 NAS export:     192.100.100.152:/mnt/Vault/Backups/Backup_Gorms.Res
 NAS user:       Gorms
+NFS UID/GID:    3007:3009
 Host path:      /mnt/heidekoenig-backups
 Container path: /backups
 ```
 
 The NAS-side backup permission should be restricted to the dedicated NAS user `Gorms` and to the
-production server IP. Do not store a NAS password in this repository.
+production server IP. The mounted directory is writable for UID/GID `3007:3009`; the Docker backup
+service therefore runs with that numeric user. Do not store a NAS password in this repository.
 
 ## Environment
 
@@ -94,6 +96,14 @@ ${BACKUP_HOST_PATH:-/mnt/heidekoenig-backups}:${BACKUP_CONTAINER_PATH:-/backups}
 
 The backup container writes timestamped backup directories below `/backups`. The app container also
 has the path available for setup/system checks.
+
+The backup service runs as:
+
+```yaml
+user: "3007:3009"
+```
+
+This matches the current NAS-side ownership of the NFS export.
 
 ## Manual Backup
 

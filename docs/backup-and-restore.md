@@ -6,6 +6,9 @@ Backups are created by the optional Docker Compose `backup` profile. The backup 
 the internal Docker network, connects to PostgreSQL through `db:5432`, and writes files to the
 mounted backup path.
 
+For the current NAS export, the backup container runs as numeric user `3007:3009`, matching the
+write permissions observed on the mounted NFS share.
+
 This documentation is written for the later production server. Replace `<APP_DIR>` with the
 repository path on that server, for example:
 

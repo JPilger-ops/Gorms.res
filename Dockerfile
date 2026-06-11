@@ -32,6 +32,7 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/db/migrations ./db/migrations
 COPY --from=builder /app/package.json ./package.json
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/scripts/cleanup-reservations.mjs ./scripts/cleanup-reservations.mjs
 COPY --from=builder /app/scripts/init.sh ./scripts/init.sh
 COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs

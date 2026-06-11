@@ -176,13 +176,13 @@ export async function updateBrandingAsset({
     return { ok: false as const, message: "Dateityp ist nicht erlaubt." };
   }
 
-  await mkdir(brandingDir, { recursive: true });
+  await mkdir(brandingDir, { recursive: true, mode: 0o755 });
 
   const settings = await getBrandingSettingMap();
   const previousFileName = settings.get(assetKey(kind));
   const nextFileName = `${kind}-${randomUUID()}.${detected.extension}`;
 
-  await writeFile(join(brandingDir, nextFileName), bytes, { flag: "wx", mode: 0o600 });
+  await writeFile(join(brandingDir, nextFileName), bytes, { flag: "wx", mode: 0o644 });
 
   await db.transaction(async (tx) => {
     await tx
