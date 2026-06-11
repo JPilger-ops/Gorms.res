@@ -5,7 +5,15 @@ import { updateReservationStatusSchema } from "@/src/lib/reservation-status-vali
 import { requirePermission } from "@/src/server/guards";
 import { updateReservationStatus } from "@/src/server/reservations";
 
-export async function updateReservationStatusAction(formData: FormData) {
+export type ReservationStatusActionState = {
+  message?: string;
+  success?: boolean;
+};
+
+export async function updateReservationStatusAction(
+  _previousState: ReservationStatusActionState,
+  formData: FormData,
+): Promise<ReservationStatusActionState> {
   const session = await requirePermission("reservations:manage");
   const parsed = updateReservationStatusSchema.safeParse({
     id: formData.get("id"),
@@ -13,11 +21,21 @@ export async function updateReservationStatusAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { message: "Status konnte nicht gespeichert werden." };
   }
 
-  await updateReservationStatus(parsed.data, session);
+  const result = await updateReservationStatus(parsed.data, session);
+
+  if (!result.ok) {
+    return { message: result.message };
+  }
+
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
   revalidatePath("/admin/system");
+
+  return {
+    message: result.changed ? "Status wurde gespeichert." : "Status war bereits gesetzt.",
+    success: true,
+  };
 }

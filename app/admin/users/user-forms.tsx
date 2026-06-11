@@ -7,35 +7,10 @@ import {
   updateUserAction,
   type UserActionState,
 } from "@/app/admin/users/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 import { roles, type UserRole } from "@/src/lib/permissions";
 
 const initialState: UserActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
-
-function FormMessage({ state }: { state: UserActionState }) {
-  if (!state.message) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-live="polite"
-      className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-        state.success ? "border-success bg-surface/80 text-success" : "border-border bg-surface/70"
-      }`}
-      role={state.success ? "status" : "alert"}
-    >
-      {state.message}
-    </div>
-  );
-}
 
 function RoleSelect({ defaultValue, disabled }: { defaultValue: UserRole; disabled?: boolean }) {
   return (
@@ -65,7 +40,7 @@ export function CreateUserForm() {
         <h3 className="mt-2 text-2xl font-semibold">Zugang anlegen</h3>
       </div>
 
-      <FormMessage state={state} />
+      <FormFeedback state={state} />
 
       <label className="block space-y-2">
         <span className="text-sm font-semibold">Name</span>
@@ -123,7 +98,7 @@ export function CreateUserForm() {
       </div>
 
       <button
-        className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"
@@ -164,7 +139,7 @@ export function UserEditForm({
         </>
       ) : null}
 
-      <FormMessage state={state} />
+      <FormFeedback state={state} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-2">
@@ -214,7 +189,7 @@ export function UserEditForm({
       </div>
 
       <button
-        className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="secondary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"
@@ -235,7 +210,7 @@ export function ResetUserPasswordForm({ id }: { id: string }) {
     >
       <input name="id" type="hidden" value={id} />
 
-      <FormMessage state={state} />
+      <FormFeedback state={state} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-2">
@@ -264,7 +239,7 @@ export function ResetUserPasswordForm({ id }: { id: string }) {
       </div>
 
       <button
-        className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="secondary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"

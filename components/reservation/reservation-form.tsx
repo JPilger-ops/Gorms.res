@@ -5,16 +5,9 @@ import {
   createReservationRequestAction,
   type ReservationFormState,
 } from "@/app/reservieren/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 
 const initialState: ReservationFormState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
 
 export function ReservationForm({
   earliestReservationTime,
@@ -45,19 +38,7 @@ export function ReservationForm({
         </p>
       </div>
 
-      {state.message ? (
-        <div
-          aria-live="polite"
-          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-            state.success
-              ? "border-success bg-surface/80 text-success"
-              : "border-border bg-surface/70"
-          }`}
-          role={state.success ? "status" : "alert"}
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <FormFeedback state={state} />
 
       <input
         className="hidden"
@@ -189,7 +170,7 @@ export function ReservationForm({
       <FieldError messages={state.fieldErrors?.privacyAccepted} />
 
       <button
-        className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"

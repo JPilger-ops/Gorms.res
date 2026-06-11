@@ -2,18 +2,11 @@
 
 import { useActionState } from "react";
 import { updateSettingsAction, type SettingsActionState } from "@/app/admin/settings/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 import { supportedEmailTemplateVariables } from "@/src/server/email-templates";
 import type { AdminSettings } from "@/src/server/settings";
 
 const initialState: SettingsActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
 
 function Section({
   children,
@@ -40,19 +33,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
 
   return (
     <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-6">
-      {state.message ? (
-        <div
-          aria-live="polite"
-          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-            state.success
-              ? "border-success bg-surface/80 text-success"
-              : "border-border bg-surface/70"
-          }`}
-          role={state.success ? "status" : "alert"}
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <FormFeedback state={state} />
 
       <Section
         description="Allgemeine Anzeige und öffentliche URL. Die Domain-Routing-Regeln bleiben weiterhin serverseitig geschützt."
@@ -301,7 +282,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       </Section>
 
       <button
-        className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"

@@ -5,16 +5,9 @@ import {
   createBlockedDayAction,
   type BlockedDayActionState,
 } from "@/app/admin/blocked-days/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 
 const initialState: BlockedDayActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
 
 export function BlockedDayForm() {
   const [state, formAction, pending] = useActionState(createBlockedDayAction, initialState);
@@ -26,19 +19,7 @@ export function BlockedDayForm() {
         <h3 className="mt-2 text-2xl font-semibold">Tag blockieren</h3>
       </div>
 
-      {state.message ? (
-        <div
-          aria-live="polite"
-          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-            state.success
-              ? "border-success bg-surface/80 text-success"
-              : "border-border bg-surface/70"
-          }`}
-          role={state.success ? "status" : "alert"}
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <FormFeedback state={state} />
 
       <label className="block space-y-2">
         <span className="text-sm font-semibold">Datum</span>
@@ -63,7 +44,7 @@ export function BlockedDayForm() {
       </label>
 
       <button
-        className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"

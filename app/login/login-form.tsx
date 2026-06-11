@@ -2,16 +2,9 @@
 
 import { useActionState } from "react";
 import { loginAction, type LoginActionState } from "@/app/login/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 
 const initialState: LoginActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
@@ -26,15 +19,7 @@ export function LoginForm() {
         </p>
       </div>
 
-      {state.message ? (
-        <div
-          aria-live="polite"
-          className="rounded-2xl border border-border bg-surface/70 px-4 py-3 text-sm font-medium"
-          role="alert"
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <FormFeedback state={state} />
 
       <label className="block space-y-2">
         <span className="text-sm font-semibold">E-Mail</span>
@@ -61,7 +46,7 @@ export function LoginForm() {
       </label>
 
       <button
-        className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"

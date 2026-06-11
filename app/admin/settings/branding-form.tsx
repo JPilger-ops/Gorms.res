@@ -9,35 +9,10 @@ import {
   uploadFaviconAction,
   uploadLogoAction,
 } from "@/app/admin/settings/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 import type { BrandingSettings } from "@/src/server/branding";
 
 const initialState: SettingsActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
-
-function FormMessage({ state }: { state: SettingsActionState }) {
-  if (!state.message) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-live="polite"
-      className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-        state.success ? "border-success bg-surface/80 text-success" : "border-border bg-surface/70"
-      }`}
-      role={state.success ? "status" : "alert"}
-    >
-      {state.message}
-    </div>
-  );
-}
 
 function UploadForm({
   accept,
@@ -76,7 +51,7 @@ function UploadForm({
         )}
       </div>
 
-      <FormMessage state={state} />
+      <FormFeedback state={state} />
 
       <form action={formAction} className="space-y-4">
         <label className="block space-y-2">
@@ -91,7 +66,7 @@ function UploadForm({
         </label>
 
         <button
-          className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+          className="primary-action w-full"
           disabled={pending}
           aria-busy={pending}
           type="submit"
@@ -130,7 +105,7 @@ export function BrandingForm({ branding }: { branding: BrandingSettings }) {
         action={formAction}
         className="min-w-0 space-y-4 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5"
       >
-        <FormMessage state={state} />
+      <FormFeedback state={state} />
 
         <label className="block space-y-2">
           <span className="text-sm font-semibold">Akzentfarbe</span>
@@ -155,7 +130,7 @@ export function BrandingForm({ branding }: { branding: BrandingSettings }) {
         </label>
 
         <button
-          className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+          className="secondary-action w-full"
           disabled={pending}
           aria-busy={pending}
           type="submit"

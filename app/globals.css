@@ -203,39 +203,66 @@ html {
   }
 
   .primary-action {
+    position: relative;
     display: inline-flex;
     min-height: 48px;
     align-items: center;
     justify-content: center;
+    gap: 10px;
+    border: 1px solid color-mix(in srgb, var(--primary), black 16%);
     border-radius: 999px;
-    background: var(--primary);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary), white 10%),
+      color-mix(in srgb, var(--primary), black 6%)
+    );
+    box-shadow:
+      0 12px 26px rgb(35 66 53 / 22%),
+      inset 0 1px 0 rgb(255 255 255 / 24%);
     color: var(--primary-foreground);
     padding-inline: 22px;
-    font-weight: 650;
+    font-weight: 750;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
     transition:
       transform 180ms ease,
       box-shadow 180ms ease,
-      background-color 180ms ease;
+      background-color 180ms ease,
+      filter 180ms ease;
   }
 
   .primary-action:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 34px rgb(35 66 53 / 22%);
+    box-shadow:
+      0 16px 34px rgb(35 66 53 / 28%),
+      inset 0 1px 0 rgb(255 255 255 / 28%);
+    filter: saturate(108%);
+  }
+
+  .primary-action:active {
+    transform: translateY(0);
+    box-shadow:
+      0 8px 18px rgb(35 66 53 / 18%),
+      inset 0 1px 2px rgb(0 0 0 / 18%);
   }
 
   .secondary-action {
+    position: relative;
     display: inline-flex;
     min-height: 48px;
     align-items: center;
     justify-content: center;
+    gap: 10px;
     border: 1px solid var(--border-strong);
     border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-strong), transparent 14%);
+    box-shadow:
+      0 8px 18px rgb(31 35 29 / 8%),
+      inset 0 1px 0 rgb(255 255 255 / 36%);
     color: var(--foreground);
     padding-inline: 22px;
-    font-weight: 650;
+    font-weight: 750;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
@@ -248,7 +275,75 @@ html {
   .secondary-action:hover {
     border-color: var(--primary);
     transform: translateY(-1px);
-    background: rgb(255 255 255 / 44%);
+    background: color-mix(in srgb, var(--surface-strong), var(--primary) 7%);
+    color: var(--foreground);
+    box-shadow:
+      0 12px 24px rgb(31 35 29 / 12%),
+      inset 0 1px 0 rgb(255 255 255 / 42%);
+  }
+
+  .secondary-action:active {
+    transform: translateY(0);
+    box-shadow:
+      0 6px 14px rgb(31 35 29 / 8%),
+      inset 0 1px 2px rgb(0 0 0 / 10%);
+  }
+
+  .primary-action:disabled,
+  .secondary-action:disabled,
+  .primary-action[aria-disabled="true"],
+  .secondary-action[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.72;
+    transform: none;
+    filter: grayscale(18%);
+  }
+
+  .primary-action[aria-busy="true"]::before,
+  .secondary-action[aria-busy="true"]::before {
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 999px;
+    content: "";
+    animation: button-spin 800ms linear infinite;
+  }
+
+  .form-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface-strong), transparent 8%);
+    box-shadow: 0 10px 24px rgb(31 35 29 / 9%);
+    padding: 14px 16px;
+    color: var(--foreground);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .form-feedback-success {
+    border-color: color-mix(in srgb, var(--success), transparent 55%);
+    background: color-mix(in srgb, var(--success), var(--surface-strong) 88%);
+    color: color-mix(in srgb, var(--success), black 18%);
+  }
+
+  .form-feedback-error {
+    border-color: color-mix(in srgb, var(--danger), transparent 55%);
+    background: color-mix(in srgb, var(--danger), var(--surface-strong) 90%);
+    color: color-mix(in srgb, var(--danger), black 10%);
+  }
+
+  .form-feedback-dot {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    margin-top: 0.34em;
+    background: currentColor;
   }
 
   .eyebrow {
@@ -257,6 +352,12 @@ html {
     font-weight: 750;
     letter-spacing: 0;
     text-transform: uppercase;
+  }
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -303,6 +404,14 @@ html {
 
   .secondary-action:hover {
     background: rgb(255 255 255 / 8%);
+  }
+
+  .form-feedback-success {
+    color: var(--success);
+  }
+
+  .form-feedback-error {
+    color: var(--danger);
   }
 }
 

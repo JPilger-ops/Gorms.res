@@ -5,6 +5,7 @@ import {
   runRetentionCleanupAction,
   type RetentionCleanupActionState,
 } from "@/app/admin/settings/actions";
+import { FormFeedback } from "@/components/ui/form-feedback";
 
 const initialState: RetentionCleanupActionState = {};
 
@@ -22,29 +23,17 @@ export function RetentionCleanupForm() {
         </p>
       </div>
 
-      {state.message ? (
-        <div
-          aria-live="polite"
-          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-            state.success
-              ? "border-success bg-surface/80 text-success"
-              : "border-border bg-surface/70"
-          }`}
-          role={state.success ? "status" : "alert"}
-        >
-          {state.message}
-          {state.success ? (
-            <span className="mt-1 block text-muted">
-              Reservierungsanfragen gelöscht: {state.reservationsDeleted ?? 0}. Audit-Logs gelöscht:{" "}
-              {state.auditLogsDeleted ?? 0}.
-            </span>
-          ) : null}
-        </div>
+      <FormFeedback state={state} />
+      {state.success ? (
+        <p className="rounded-2xl border border-border bg-surface/65 px-4 py-3 text-sm font-semibold text-muted">
+          Reservierungsanfragen gelöscht: {state.reservationsDeleted ?? 0}. Audit-Logs gelöscht:{" "}
+          {state.auditLogsDeleted ?? 0}.
+        </p>
       ) : null}
 
       <form action={formAction}>
         <button
-          className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+          className="secondary-action w-full"
           disabled={pending}
           aria-busy={pending}
           type="submit"

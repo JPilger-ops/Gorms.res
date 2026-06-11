@@ -2,16 +2,9 @@
 
 import { useActionState } from "react";
 import { createInitialAdminAction, type SetupActionState } from "@/app/setup/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 
 const initialState: SetupActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
 
 export function SetupForm() {
   const [state, formAction, pending] = useActionState(createInitialAdminAction, initialState);
@@ -26,15 +19,7 @@ export function SetupForm() {
         </p>
       </div>
 
-      {state.message ? (
-        <div
-          aria-live="polite"
-          className="rounded-2xl border border-border bg-surface/70 px-4 py-3 text-sm font-medium"
-          role="alert"
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <FormFeedback state={state} />
 
       <label className="block space-y-2">
         <span className="text-sm font-semibold">Setup-Token</span>
@@ -99,7 +84,7 @@ export function SetupForm() {
       </div>
 
       <button
-        className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-action w-full"
         disabled={pending}
         aria-busy={pending}
         type="submit"

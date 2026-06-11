@@ -6,35 +6,10 @@ import {
   type SettingsActionState,
   updateSmtpSettingsAction,
 } from "@/app/admin/settings/actions";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 import type { SmtpSettingsForUi } from "@/src/server/settings";
 
 const initialState: SettingsActionState = {};
-
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
-
-  return <p className="text-sm font-medium text-danger">{messages[0]}</p>;
-}
-
-function FormMessage({ state }: { state: SettingsActionState }) {
-  if (!state.message) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-live="polite"
-      className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-        state.success ? "border-success bg-surface/80 text-success" : "border-border bg-surface/70"
-      }`}
-      role={state.success ? "status" : "alert"}
-    >
-      {state.message}
-    </div>
-  );
-}
 
 function passwordSourceLabel(source: SmtpSettingsForUi["passwordSource"]) {
   if (source === "database") {
@@ -76,7 +51,7 @@ export function SmtpSettingsForm({
         action={settingsAction}
         className="min-w-0 space-y-4 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5"
       >
-        <FormMessage state={settingsState} />
+        <FormFeedback state={settingsState} />
 
         <div className="grid gap-4 md:grid-cols-[1fr_160px]">
           <label className="block space-y-2">
@@ -161,7 +136,7 @@ export function SmtpSettingsForm({
         </div>
 
         <button
-          className="primary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+          className="primary-action w-full"
           disabled={settingsPending}
           aria-busy={settingsPending}
           type="submit"
@@ -181,7 +156,7 @@ export function SmtpSettingsForm({
           </p>
         </div>
 
-        <FormMessage state={testState} />
+        <FormFeedback state={testState} />
 
         <label className="block space-y-2">
           <span className="text-sm font-semibold">Empfänger für Testmail</span>
@@ -197,7 +172,7 @@ export function SmtpSettingsForm({
         </label>
 
         <button
-          className="secondary-action w-full disabled:cursor-not-allowed disabled:opacity-60"
+          className="secondary-action w-full"
           disabled={testPending}
           aria-busy={testPending}
           type="submit"
