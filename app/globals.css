@@ -401,17 +401,17 @@ html {
     border-radius: 999px;
     overflow: hidden;
     background:
-      linear-gradient(180deg, rgb(255 255 255 / 26%), rgb(255 255 255 / 6%)),
+      linear-gradient(180deg, rgb(255 255 255 / 16%), rgb(255 255 255 / 4%)),
       radial-gradient(
         circle at 50% -34%,
-        color-mix(in srgb, var(--primary), white 32%) 0 40%,
-        transparent 76%
+        color-mix(in srgb, var(--primary), white 18%) 0 34%,
+        transparent 68%
       ),
       var(--primary);
     box-shadow:
       0 16px 38px color-mix(in srgb, var(--primary), transparent 70%),
       0 5px 14px rgb(35 66 53 / 13%),
-      inset 0 1px 0 rgb(255 255 255 / 58%),
+      inset 0 1px 0 rgb(255 255 255 / 36%),
       inset 0 -1px 0 color-mix(in srgb, var(--primary), black 18%);
     color: var(--primary-foreground);
     padding-inline: 22px;
@@ -434,30 +434,25 @@ html {
     border-radius: inherit;
     content: "";
     background:
-      linear-gradient(118deg, rgb(255 255 255 / 58%), transparent 34%),
-      radial-gradient(circle at 18% 0%, rgb(255 255 255 / 50%), transparent 28%),
-      radial-gradient(
-        circle at 86% 120%,
-        color-mix(in srgb, var(--primary), transparent 48%),
-        transparent 42%
-      );
+      linear-gradient(118deg, rgb(255 255 255 / 26%), transparent 32%),
+      radial-gradient(circle at 18% 0%, rgb(255 255 255 / 24%), transparent 24%);
   }
 
   .primary-action:hover {
     transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--primary), black 18%);
     background:
-      linear-gradient(180deg, rgb(255 255 255 / 22%), rgb(255 255 255 / 4%)),
+      linear-gradient(180deg, rgb(255 255 255 / 14%), rgb(255 255 255 / 3%)),
       radial-gradient(
         circle at 50% -36%,
-        color-mix(in srgb, var(--primary), white 22%) 0 42%,
-        transparent 74%
+        color-mix(in srgb, var(--primary), white 12%) 0 34%,
+        transparent 66%
       ),
       color-mix(in srgb, var(--primary), black 5%);
     box-shadow:
       0 20px 48px color-mix(in srgb, var(--primary), transparent 58%),
       0 7px 18px rgb(35 66 53 / 15%),
-      inset 0 1px 0 rgb(255 255 255 / 62%),
+      inset 0 1px 0 rgb(255 255 255 / 40%),
       inset 0 -1px 0 color-mix(in srgb, var(--primary), black 22%);
     color: var(--primary-foreground);
     filter: saturate(138%);
