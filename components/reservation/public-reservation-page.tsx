@@ -19,8 +19,8 @@ export async function PublicReservationPage() {
       style={{ "--primary": branding.accentColor } as CSSProperties}
     >
       <section className="page-frame grid gap-6 py-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-start lg:gap-8 lg:py-14">
-        <div className="space-y-8 lg:sticky lg:top-8">
-          <div className="space-y-5">
+        <div className="space-y-6 lg:sticky lg:top-8">
+          <div className="intro-panel space-y-5 p-5 sm:p-7">
             {branding.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -41,7 +41,7 @@ export async function PublicReservationPage() {
 
           <div className="glass-panel space-y-3 p-5 sm:p-6" aria-label="Wichtige Hinweise">
             {facts.map((fact) => (
-              <div className="flex gap-3" key={fact}>
+              <div className="soft-card flex gap-3 px-4 py-3" key={fact}>
                 <span
                   className="mt-2 size-2.5 shrink-0 rounded-full bg-success"
                   aria-hidden="true"
@@ -51,7 +51,7 @@ export async function PublicReservationPage() {
             ))}
           </div>
 
-          <div className="rounded-3xl border border-border bg-surface/65 p-5 text-sm leading-6 text-muted">
+          <div className="soft-card p-5 text-sm font-semibold leading-6 text-muted">
             Vielen Dank für Ihre Anfrage. Die Reservierung ist erst nach unserer persönlichen
             Bestätigung gültig.
           </div>
