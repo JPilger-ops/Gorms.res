@@ -138,7 +138,7 @@ export function ReservationForm({
         <FieldError messages={state.fieldErrors?.message} />
       </label>
 
-      <label className="flex min-w-0 items-start gap-3 rounded-2xl border border-border bg-surface/65 p-4">
+      <label className="glass-tile flex min-w-0 items-start gap-3 p-4">
         <input
           className="mt-1 size-4 shrink-0 accent-primary"
           name="privacyAccepted"

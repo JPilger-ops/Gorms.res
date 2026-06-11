@@ -59,7 +59,7 @@ export async function AdminShell({
           >
             {navItems.map((item) => (
               <Link
-                className="shrink-0 whitespace-nowrap rounded-2xl border border-transparent bg-white/35 px-3 py-2 text-sm font-semibold text-muted shadow-[inset_0_1px_0_rgb(255_255_255_/_45%)] transition-colors hover:border-border hover:bg-surface-strong hover:text-foreground lg:whitespace-normal"
+                className="glass-nav-link text-sm font-semibold lg:whitespace-normal"
                 href={item.href}
                 key={item.href}
               >
