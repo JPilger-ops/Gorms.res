@@ -19,13 +19,7 @@ const statusLabels: Record<ReservationStatus, string> = {
 
 const statusItems: ReservationStatus[] = ["pending", "accepted", "declined", "cancelled"];
 
-export function ReservationStatusForm({
-  id,
-  status,
-}: {
-  id: string;
-  status: ReservationStatus;
-}) {
+export function ReservationStatusForm({ id, status }: { id: string; status: ReservationStatus }) {
   const [state, formAction, pending] = useActionState(updateReservationStatusAction, initialState);
 
   return (

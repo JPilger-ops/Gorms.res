@@ -105,7 +105,7 @@ export function BrandingForm({ branding }: { branding: BrandingSettings }) {
         action={formAction}
         className="min-w-0 space-y-4 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5"
       >
-      <FormFeedback state={state} />
+        <FormFeedback state={state} />
 
         <label className="block space-y-2">
           <span className="text-sm font-semibold">Akzentfarbe</span>

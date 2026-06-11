@@ -106,7 +106,10 @@ export default async function SystemPage() {
                 <h4 className="font-semibold">{group.title}</h4>
                 <div className="mt-4 space-y-3">
                   {group.items.map((item) => (
-                    <div className="rounded-xl border border-border bg-background/50 p-3" key={item.label}>
+                    <div
+                      className="rounded-xl border border-border bg-background/50 p-3"
+                      key={item.label}
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold">{item.label}</p>
                         <span
@@ -133,7 +136,10 @@ export default async function SystemPage() {
               <StatCard label="Aktive Benutzer" value={overview.stats.activeUsers} />
               <StatCard label="Aktive Admins" value={overview.stats.activeAdmins} />
               <StatCard label="Anfragen gesamt" value={overview.stats.totalReservations} />
-              <StatCard label="Anfragen löschen nach" value={`${overview.reservationRetentionDays} Tage`} />
+              <StatCard
+                label="Anfragen löschen nach"
+                value={`${overview.reservationRetentionDays} Tage`}
+              />
               <StatCard label="Audit löschen nach" value={`${overview.auditRetentionDays} Tage`} />
             </div>
           </div>

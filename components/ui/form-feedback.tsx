@@ -10,11 +10,7 @@ export function FieldError({ messages }: { messages?: string[] }) {
     return null;
   }
 
-  return (
-    <p className="field-error">
-      {messages[0]}
-    </p>
-  );
+  return <p className="field-error">{messages[0]}</p>;
 }
 
 export function FormFeedback({ state }: { state: FeedbackState }) {
