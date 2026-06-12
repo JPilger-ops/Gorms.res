@@ -52,6 +52,7 @@ Core documents:
 - [Compatibility](docs/compatibility.md)
 - [Backup and restore](docs/backup-and-restore.md)
 - [NFS backup](docs/nfs-backup.md)
+- [Operations runbook](docs/operations-runbook.md)
 - [Final project report](docs/final-project-report.md)
 
 ## Quickstart With Docker Compose

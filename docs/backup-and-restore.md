@@ -130,6 +130,17 @@ Recommended cadence:
 Use a separate test host or a separate compose project name. Never run a restore test directly over
 a working production instance unless downtime and data overwrite are intended.
 
+The verified 2026-06-12 restore test used backup timestamp:
+
+```text
+20260612T112745Z
+```
+
+The test restored the database into a temporary PostgreSQL container and extracted the upload archive
+into a temporary container path. It did not modify the production `heidekoenig-db` container.
+
+See [Operations Runbook](operations-runbook.md) for the exact tested commands.
+
 ## Security
 
 Backups contain personal reservation data. Restrict access to:

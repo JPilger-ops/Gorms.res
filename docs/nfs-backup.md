@@ -69,8 +69,8 @@ sudo mount -t nfs 192.100.100.152:/mnt/Vault/Backups/Backup_Gorms.Res /mnt/heide
 Verify write access:
 
 ```bash
-sudo touch /mnt/heidekoenig-backups/.write-test
-sudo rm /mnt/heidekoenig-backups/.write-test
+sudo setpriv --reuid=3007 --regid=3009 --clear-groups touch /mnt/heidekoenig-backups/.write-test
+sudo setpriv --reuid=3007 --regid=3009 --clear-groups rm /mnt/heidekoenig-backups/.write-test
 ```
 
 Persist the mount in `/etc/fstab` only after a manual mount and backup test succeeded. Example:
@@ -113,6 +113,15 @@ Run from the production app directory:
 cd <APP_DIR>
 docker compose --profile backup run --rm backup
 ```
+
+The verified 2026-06-12 backup created:
+
+```text
+/backups/20260612T112745Z
+```
+
+See [Operations Runbook](operations-runbook.md) for the full backup and non-production restore test
+commands.
 
 ## Scheduled Backup
 

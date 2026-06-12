@@ -83,6 +83,14 @@ Container path: /backups
 
 Backups contain personal reservation data and must be access-restricted.
 
+Verified on 2026-06-12:
+
+- NFS mount active at `/mnt/heidekoenig-backups`.
+- Manual backup succeeded at `/backups/20260612T112745Z`.
+- Backup files `postgres.dump`, `uploads.tar.gz` and `manifest.txt` were present.
+- Non-production restore test succeeded against a temporary PostgreSQL container.
+- Upload archive extraction succeeded with two branding files.
+
 ## Verification Performed
 
 - Required documentation files exist.
@@ -106,15 +114,12 @@ scripts/restore-postgres.sh
 
 ## Remaining Production Tasks
 
-- Create the NAS export and mount it on the production Docker host.
 - Configure Unifi firewall rules for reverse-proxy IP to app-host TCP `6043`.
 - Configure production reverse-proxy host routing and TLS certificates.
 - Run migrations on the production database.
 - Complete setup wizard on `https://login.gorms.de/setup`.
 - Configure SMTP credentials and send a test mail.
 - Submit a test reservation request through the public host.
-- Run a manual backup.
-- Run a restore test on a non-production copy.
 - Perform browser smoke tests on iOS Safari, Android Chrome, desktop Chrome, Firefox, Edge and
   Safari.
 
