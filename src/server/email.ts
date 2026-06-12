@@ -6,7 +6,10 @@ import {
   renderReservationSubjectTemplate,
   validateEmailSubjectTemplate,
 } from "@/src/server/email-templates";
-import { createReservationRequestIcs } from "@/src/server/calendar";
+import {
+  createAcceptedReservationInternalIcs,
+  createReservationRequestIcs,
+} from "@/src/server/calendar";
 import { getEmailTemplateSettings, getSmtpSettings } from "@/src/server/settings";
 
 export class EmailConfigurationError extends Error {
@@ -31,6 +34,25 @@ export type ReservationDecisionEmailData = {
   guestName: string;
   replyTo?: string;
   subject: string;
+};
+
+export type ReservationAcceptedInternalEmailData = {
+  acceptedByName: string;
+  date: string;
+  email: string;
+  guestCount: number;
+  guestName: string;
+  id: string;
+  message?: string | null;
+  phone: string;
+  time: string;
+};
+
+export type InternalReservationAcceptedEmailContent = {
+  html: string;
+  recipient: string;
+  subject: string;
+  text: string;
 };
 
 async function getSmtpTransporter() {
@@ -161,6 +183,64 @@ function textToHtml(value: string) {
   return escapeHtml(value).replaceAll("\n", "<br>");
 }
 
+export function buildInternalReservationAcceptedEmailContent(
+  input: ReservationAcceptedInternalEmailData,
+  recipient: string,
+): InternalReservationAcceptedEmailContent {
+  const subject = `Reservierung bestätigt: ${input.date} um ${input.time} - ${input.guestName} - ${input.guestCount} Personen`;
+  const text = [
+    "Reservierung wurde bestätigt",
+    "",
+    "Diese interne Nachricht dokumentiert die bestätigte Reservierung.",
+    "",
+    `Datum: ${input.date}`,
+    `Uhrzeit: ${input.time}`,
+    `Personen: ${input.guestCount}`,
+    `Name: ${input.guestName}`,
+    `E-Mail: ${input.email}`,
+    `Telefon: ${input.phone}`,
+    input.message ? `Nachricht: ${input.message}` : "Nachricht: -",
+    `Bestätigt durch: ${input.acceptedByName}`,
+    "",
+    `Anfrage-ID: ${input.id}`,
+  ].join("\n");
+  const rows = [
+    ["Datum", input.date],
+    ["Uhrzeit", input.time],
+    ["Personen", String(input.guestCount)],
+    ["Name", input.guestName],
+    ["E-Mail", input.email],
+    ["Telefon", input.phone],
+    ["Nachricht", input.message || "-"],
+    ["Bestätigt durch", input.acceptedByName],
+    ["Anfrage-ID", input.id],
+  ];
+
+  return {
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #171712;">
+        <h1 style="font-size: 20px;">Reservierung wurde bestätigt</h1>
+        <p>Diese interne Nachricht dokumentiert die bestätigte Reservierung.</p>
+        <table cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+          ${rows
+            .map(
+              ([label, value]) => `
+                <tr>
+                  <th align="left" style="border-bottom: 1px solid #ddd;">${escapeHtml(label)}</th>
+                  <td style="border-bottom: 1px solid #ddd;">${escapeHtml(value)}</td>
+                </tr>
+              `,
+            )
+            .join("")}
+        </table>
+      </div>
+    `,
+    recipient,
+    subject,
+    text,
+  };
+}
+
 export async function sendInternalReservationEmail(input: ReservationEmailData) {
   const { fromAddress, fromName, mailer } = await getSmtpTransporter();
   const templates = await getEmailTemplateSettings();
@@ -188,6 +268,33 @@ export async function sendInternalReservationEmail(input: ReservationEmailData) 
         content: calendar,
         contentType: "text/calendar; charset=utf-8; method=PUBLISH",
         filename: `reservierungsanfrage-${input.date}-${input.time.replace(":", "")}.ics`,
+      },
+    ],
+  });
+}
+
+export async function sendInternalReservationAcceptedEmail(
+  input: ReservationAcceptedInternalEmailData,
+  content: InternalReservationAcceptedEmailContent,
+) {
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+  const calendar = createAcceptedReservationInternalIcs(input);
+
+  await mailer.sendMail({
+    from: {
+      name: fromName,
+      address: fromAddress,
+    },
+    to: content.recipient,
+    replyTo: input.email,
+    subject: content.subject,
+    text: content.text,
+    html: content.html,
+    attachments: [
+      {
+        content: calendar,
+        contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+        filename: `reservierung-bestaetigt-${input.date}-${input.time.replace(":", "")}.ics`,
       },
     ],
   });

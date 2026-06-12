@@ -5,17 +5,26 @@ import type {
   ReservationDecisionType,
 } from "@/src/lib/reservation-decision-validation";
 import { db } from "@/src/server/db";
-import { sendGuestReservationDecisionEmail } from "@/src/server/email";
+import {
+  buildInternalReservationAcceptedEmailContent,
+  sendGuestReservationDecisionEmail,
+  sendInternalReservationAcceptedEmail,
+} from "@/src/server/email";
 import type { AuthenticatedSession } from "@/src/server/guards";
 import { recordReservationOutgoingEmail } from "@/src/server/reservation-outgoing-emails";
 import type { ReservationStatus } from "@/src/server/reservations";
+import { getEmailTemplateSettings } from "@/src/server/settings";
 
 type DecisionDraftReservation = {
   guestCount: number;
   guestEmail: string;
   guestName: string;
+  guestPhone: string;
+  id: string;
+  message: string | null;
   requestedDate: string;
   requestedTime: string;
+  status: ReservationStatus;
 };
 
 const decisionConfig: Record<
@@ -64,6 +73,65 @@ function sanitizeSmtpError(error: unknown) {
   }
 
   return "SMTP-Versand fehlgeschlagen.";
+}
+
+function toInternalReservationEmailData(
+  reservation: DecisionDraftReservation,
+  session: AuthenticatedSession,
+) {
+  return {
+    acceptedByName: session.name,
+    date: reservation.requestedDate,
+    email: reservation.guestEmail,
+    guestCount: reservation.guestCount,
+    guestName: reservation.guestName,
+    id: reservation.id,
+    message: reservation.message ?? undefined,
+    phone: reservation.guestPhone,
+    time: reservation.requestedTime.slice(0, 5),
+  };
+}
+
+async function sendInternalAcceptanceNotification(
+  reservation: DecisionDraftReservation,
+  session: AuthenticatedSession,
+) {
+  const templates = await getEmailTemplateSettings();
+  const emailData = toInternalReservationEmailData(reservation, session);
+  const internalEmail = buildInternalReservationAcceptedEmailContent(
+    emailData,
+    templates.reservationNotificationEmail,
+  );
+
+  try {
+    await sendInternalReservationAcceptedEmail(emailData, internalEmail);
+  } catch (error) {
+    await recordReservationOutgoingEmail({
+      body: internalEmail.text,
+      recipient: internalEmail.recipient,
+      reservationRequestId: reservation.id,
+      sentByUserId: session.userId,
+      smtpError: sanitizeSmtpError(error),
+      smtpStatus: "failed",
+      subject: internalEmail.subject,
+      type: "staff_acceptance_notification",
+    });
+
+    return false;
+  }
+
+  await recordReservationOutgoingEmail({
+    body: internalEmail.text,
+    recipient: internalEmail.recipient,
+    reservationRequestId: reservation.id,
+    sentAt: new Date(),
+    sentByUserId: session.userId,
+    smtpStatus: "sent",
+    subject: internalEmail.subject,
+    type: "staff_acceptance_notification",
+  });
+
+  return true;
 }
 
 export function buildReservationDecisionDraft(
@@ -127,9 +195,14 @@ export async function sendReservationDecision(
 ) {
   const [reservation] = await db
     .select({
+      guestCount: reservationRequests.guestCount,
       guestEmail: reservationRequests.guestEmail,
       guestName: reservationRequests.guestName,
+      guestPhone: reservationRequests.guestPhone,
       id: reservationRequests.id,
+      message: reservationRequests.message,
+      requestedDate: reservationRequests.requestedDate,
+      requestedTime: reservationRequests.requestedTime,
       status: reservationRequests.status,
     })
     .from(reservationRequests)
@@ -232,6 +305,18 @@ export async function sendReservationDecision(
     subject: input.subject,
     type: config.emailType,
   });
+
+  if (result.ok && input.decision === "accept") {
+    const internalNotificationSent = await sendInternalAcceptanceNotification(reservation, session);
+
+    if (!internalNotificationSent) {
+      return {
+        ok: true as const,
+        message:
+          "Zusage wurde gesendet und der Status wurde auf angenommen gesetzt. Die interne Bestätigungs-E-Mail konnte nicht gesendet werden.",
+      };
+    }
+  }
 
   return result;
 }
