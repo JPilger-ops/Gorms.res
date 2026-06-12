@@ -358,13 +358,20 @@ export default async function ReservationDetailPage({
         <DetailCard eyebrow="KI-Assistenz" title="Lokale Assistenz vorbereitet">
           <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
             {aiStatus.uiMessage} KI darf keine Zusage, Absage, Rückfrage, E-Mail, ICS-Datei oder
-            Statusänderung automatisch auslösen.
+            Statusänderung automatisch auslösen. Erzeugte Texte werden nur als editierbare Vorlage
+            in die Antwortfelder eingefügt.
           </p>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <DisabledAiAction label="Anfrage zusammenfassen" />
-            <DisabledAiAction label="Zusage entwerfen" />
-            <DisabledAiAction label="Absage entwerfen" />
-            <DisabledAiAction label="Rückfrage entwerfen" />
+            <DisabledAiAction
+              label={aiStatus.enabled ? "Zusage im Antwortbereich" : "Zusage entwerfen"}
+            />
+            <DisabledAiAction
+              label={aiStatus.enabled ? "Absage im Antwortbereich" : "Absage entwerfen"}
+            />
+            <DisabledAiAction
+              label={aiStatus.enabled ? "Rückfrage im Antwortbereich" : "Rückfrage entwerfen"}
+            />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <DataTile label="Status" value={aiStatus.statusLabel} />
@@ -383,6 +390,7 @@ export default async function ReservationDetailPage({
               <div className="grid gap-4 xl:grid-cols-3">
                 {decisionDrafts.map((draft) => (
                   <ReservationDecisionForm
+                    aiEnabled={aiStatus.enabled}
                     draft={draft}
                     expectedStatus={reservation.status}
                     key={draft.decision}
