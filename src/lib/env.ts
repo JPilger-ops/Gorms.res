@@ -14,7 +14,7 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
-  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
   AUDIT_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   BACKUP_CONTAINER_PATH: z.string().default("/backups"),
   BACKUP_RETENTION_DAYS: z.coerce.number().int().positive().default(30),

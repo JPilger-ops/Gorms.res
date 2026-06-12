@@ -21,7 +21,7 @@ operational path.
 AI_ENABLED=false
 OLLAMA_BASE_URL=http://vault.local:11434
 OLLAMA_MODEL=qwen3:8b
-AI_TIMEOUT_MS=30000
+AI_TIMEOUT_MS=120000
 ```
 
 `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are operational settings, not secrets. They are still kept
@@ -42,6 +42,9 @@ The prepared server modules are deliberately narrow:
 
 The prompt input schema intentionally omits e-mail address, phone number, session data, SMTP
 settings and audit internals.
+
+`AI_TIMEOUT_MS` defaults to 120 seconds because the first local model load can be noticeably slower
+than warm follow-up requests.
 
 ## Admin Workflow
 
