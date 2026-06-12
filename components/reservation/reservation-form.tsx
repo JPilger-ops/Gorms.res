@@ -121,6 +121,8 @@ export function ReservationForm({
   }, [date, guestCount]);
 
   const selectableSlots = slots.filter((slot) => !slot.hardBlocked);
+  const blockedDateReason = slots.find((slot) => slot.hardBlocked && slot.reasons.length > 0)
+    ?.reasons[0];
 
   return (
     <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-7">
@@ -210,7 +212,7 @@ export function ReservationForm({
           slots.length > 0 &&
           selectableSlots.length === 0 ? (
             <p className="text-sm leading-6 text-danger">
-              Für dieses Datum sind keine Reservierungsanfragen möglich.
+              {blockedDateReason ?? "Für dieses Datum sind keine Reservierungsanfragen möglich."}
             </p>
           ) : null}
           {selectedSlot && selectedSlot.status !== "bookable" ? (

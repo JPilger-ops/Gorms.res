@@ -50,6 +50,11 @@ These files contain guest contact data and are intended for internal use only.
 Admins and employees can add or remove blocked days. Blocked days are enforced server-side for
 public reservation requests.
 
+The same area also manages music and event days. Event days are blocked for normal public
+reservation requests by default. The public note is shown in the guest form when the selected date
+is unavailable. Enable "Normale Reservierungsanfragen erlauben" only when the event should not
+block normal requests.
+
 ## Opening Hours
 
 Admins and employees can update earliest/latest reservation times.

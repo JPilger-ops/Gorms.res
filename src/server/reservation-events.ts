@@ -1,14 +1,11 @@
 import { and, desc, eq } from "drizzle-orm";
 import { auditLog, reservationEvents } from "@/db/schema";
+import type { CreateReservationEventInput } from "@/src/lib/reservation-events-validation";
 import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
 
-export type ReservationEventInput = {
-  date: string;
-  publicNote?: string;
-  reservationsAllowed: boolean;
-  title: string;
-};
+const defaultBlockingPublicNote =
+  "An diesem Tag sind keine normalen Reservierungsanfragen möglich. Bei Interesse am Event wenden Sie sich bitte direkt an uns.";
 
 export async function listReservationEvents() {
   return db.query.reservationEvents.findMany({
@@ -23,15 +20,18 @@ export async function listBlockingReservationEventsForDate(date: string) {
 }
 
 export async function createReservationEvent(
-  input: ReservationEventInput,
+  input: CreateReservationEventInput,
   session: AuthenticatedSession,
 ) {
+  const publicNote =
+    input.publicNote ?? (input.reservationsAllowed ? undefined : defaultBlockingPublicNote);
+
   const [event] = await db
     .insert(reservationEvents)
     .values({
       createdByUserId: session.userId,
       date: input.date,
-      publicNote: input.publicNote,
+      publicNote,
       reservationsAllowed: input.reservationsAllowed,
       title: input.title,
     })
