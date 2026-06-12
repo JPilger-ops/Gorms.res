@@ -2,12 +2,17 @@
 
 import { reservationRequestSchema } from "@/src/lib/reservation-validation";
 import {
+  buildGuestReservationReceiptEmailContent,
+  buildInternalReservationEmailContent,
   EmailConfigurationError,
   sendGuestReservationReceiptEmail,
   sendInternalReservationEmail,
+  type ReservationOutgoingEmailContent,
 } from "@/src/server/email";
 import { assertPublicHostAction } from "@/src/server/guards";
 import { checkRateLimit } from "@/src/server/rate-limit";
+import { recordReservationOutgoingEmail } from "@/src/server/reservation-outgoing-emails";
+import type { ReservationOutgoingEmailType } from "@/src/server/reservation-outgoing-emails";
 import { getClientRateLimitKey } from "@/src/server/request-security";
 import { createReservationRequest } from "@/src/server/reservations";
 import { getSetupStatus } from "@/src/server/setup";
@@ -17,6 +22,41 @@ export type ReservationFormState = {
   fieldErrors?: Record<string, string[]>;
   success?: boolean;
 };
+
+function sanitizeSmtpError(error: unknown) {
+  if (error instanceof Error && error.message) {
+    return error.message.slice(0, 240);
+  }
+
+  return "SMTP-Versand fehlgeschlagen.";
+}
+
+async function recordInitialOutgoingEmail({
+  content,
+  error,
+  reservationRequestId,
+  type,
+}: {
+  content: ReservationOutgoingEmailContent;
+  error?: unknown;
+  reservationRequestId: string;
+  type: Extract<ReservationOutgoingEmailType, "guest_receipt" | "staff_notification">;
+}) {
+  try {
+    await recordReservationOutgoingEmail({
+      body: content.text,
+      recipient: content.recipient,
+      reservationRequestId,
+      sentAt: error ? undefined : new Date(),
+      smtpError: error ? sanitizeSmtpError(error) : undefined,
+      smtpStatus: error ? "failed" : "sent",
+      subject: content.subject,
+      type,
+    });
+  } catch {
+    console.error("Outgoing email history write failed.");
+  }
+}
 
 export async function createReservationRequestAction(
   _previousState: ReservationFormState,
@@ -65,17 +105,54 @@ export async function createReservationRequestAction(
     };
   }
 
+  let internalEmailContent: ReservationOutgoingEmailContent | null = null;
+
   try {
-    await sendInternalReservationEmail(result.emailData, result.availability);
+    internalEmailContent = await buildInternalReservationEmailContent(
+      result.emailData,
+      result.availability,
+    );
+    await sendInternalReservationEmail(result.emailData, result.availability, internalEmailContent);
+    await recordInitialOutgoingEmail({
+      content: internalEmailContent,
+      reservationRequestId: result.id,
+      type: "staff_notification",
+    });
   } catch (error) {
+    if (internalEmailContent) {
+      await recordInitialOutgoingEmail({
+        content: internalEmailContent,
+        error,
+        reservationRequestId: result.id,
+        type: "staff_notification",
+      });
+    }
+
     if (!(error instanceof EmailConfigurationError)) {
       console.error("Internal reservation email failed.");
     }
   }
 
+  let guestEmailContent: ReservationOutgoingEmailContent | null = null;
+
   try {
-    await sendGuestReservationReceiptEmail(result.emailData);
+    guestEmailContent = await buildGuestReservationReceiptEmailContent(result.emailData);
+    await sendGuestReservationReceiptEmail(result.emailData, guestEmailContent);
+    await recordInitialOutgoingEmail({
+      content: guestEmailContent,
+      reservationRequestId: result.id,
+      type: "guest_receipt",
+    });
   } catch (error) {
+    if (guestEmailContent) {
+      await recordInitialOutgoingEmail({
+        content: guestEmailContent,
+        error,
+        reservationRequestId: result.id,
+        type: "guest_receipt",
+      });
+    }
+
     if (!(error instanceof EmailConfigurationError)) {
       console.error("Guest reservation receipt email failed.");
     }

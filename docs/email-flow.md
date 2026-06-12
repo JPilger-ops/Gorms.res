@@ -25,6 +25,10 @@ The internal e-mail includes:
 - clear note that this is only a request
 - `.ics` calendar attachment
 
+The initial internal notification is recorded in the reservation mail history as
+`staff_notification`. The guest receipt is recorded as `guest_receipt`. Failed SMTP attempts are
+stored as `failed` when the message content could be built.
+
 ## Guest Receipt
 
 The guest receives an automatic receipt e-mail. It must not sound like a confirmed reservation. It

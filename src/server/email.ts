@@ -65,6 +65,13 @@ export type InternalReservationAcceptedEmailContent = {
   text: string;
 };
 
+export type ReservationOutgoingEmailContent = {
+  html: string;
+  recipient: string;
+  subject: string;
+  text: string;
+};
+
 async function getSmtpTransporter() {
   const settings = await getSmtpSettings();
 
@@ -256,6 +263,49 @@ function formatGuestConfirmationHtml(input: ReservationEmailData) {
   `;
 }
 
+export async function buildInternalReservationEmailContent(
+  input: ReservationEmailData,
+  availability: AvailabilityCheckResult,
+): Promise<ReservationOutgoingEmailContent> {
+  const templates = await getEmailTemplateSettings();
+  const validation = validateEmailSubjectTemplate(templates.internalEmailSubjectTemplate);
+
+  if (!validation.valid) {
+    throw new EmailTemplateError();
+  }
+
+  const internalInput: InternalReservationEmailData = {
+    ...input,
+    adminUrl: buildAdminReservationUrl(input.id),
+    availability,
+  };
+
+  return {
+    html: formatReservationHtml(internalInput),
+    recipient: templates.reservationNotificationEmail,
+    subject: renderReservationSubjectTemplate(templates.internalEmailSubjectTemplate, input),
+    text: formatReservationText(internalInput),
+  };
+}
+
+export async function buildGuestReservationReceiptEmailContent(
+  input: ReservationEmailData,
+): Promise<ReservationOutgoingEmailContent> {
+  const templates = await getEmailTemplateSettings();
+  const validation = validateEmailSubjectTemplate(templates.guestEmailSubjectTemplate);
+
+  if (!validation.valid) {
+    throw new EmailTemplateError();
+  }
+
+  return {
+    html: formatGuestConfirmationHtml(input),
+    recipient: input.email,
+    subject: renderReservationSubjectTemplate(templates.guestEmailSubjectTemplate, input),
+    text: formatGuestConfirmationText(input),
+  };
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -330,10 +380,10 @@ export function buildInternalReservationAcceptedEmailContent(
 export async function sendInternalReservationEmail(
   input: ReservationEmailData,
   availability: AvailabilityCheckResult,
+  content?: ReservationOutgoingEmailContent,
 ) {
+  const emailContent = content ?? (await buildInternalReservationEmailContent(input, availability));
   const { fromAddress, fromName, mailer } = await getSmtpTransporter();
-  const templates = await getEmailTemplateSettings();
-  const validation = validateEmailSubjectTemplate(templates.internalEmailSubjectTemplate);
   const internalInput: InternalReservationEmailData = {
     ...input,
     adminUrl: buildAdminReservationUrl(input.id),
@@ -343,10 +393,6 @@ export async function sendInternalReservationEmail(
     ...internalInput,
   });
 
-  if (!validation.valid) {
-    throw new EmailTemplateError();
-  }
-
   const from = {
     name: fromName,
     address: fromAddress,
@@ -354,11 +400,11 @@ export async function sendInternalReservationEmail(
 
   await mailer.sendMail({
     from,
-    to: templates.reservationNotificationEmail,
+    to: emailContent.recipient,
     replyTo: input.email,
-    subject: renderReservationSubjectTemplate(templates.internalEmailSubjectTemplate, input),
-    text: formatReservationText(internalInput),
-    html: formatReservationHtml(internalInput),
+    subject: emailContent.subject,
+    text: emailContent.text,
+    html: emailContent.html,
     attachments: [
       {
         content: calendar,
@@ -367,6 +413,8 @@ export async function sendInternalReservationEmail(
       },
     ],
   });
+
+  return emailContent;
 }
 
 export async function sendInternalReservationAcceptedEmail(
@@ -396,14 +444,12 @@ export async function sendInternalReservationAcceptedEmail(
   });
 }
 
-export async function sendGuestReservationReceiptEmail(input: ReservationEmailData) {
+export async function sendGuestReservationReceiptEmail(
+  input: ReservationEmailData,
+  content?: ReservationOutgoingEmailContent,
+) {
+  const emailContent = content ?? (await buildGuestReservationReceiptEmailContent(input));
   const { fromAddress, fromName, mailer } = await getSmtpTransporter();
-  const templates = await getEmailTemplateSettings();
-  const validation = validateEmailSubjectTemplate(templates.guestEmailSubjectTemplate);
-
-  if (!validation.valid) {
-    throw new EmailTemplateError();
-  }
 
   const from = {
     name: fromName,
@@ -412,11 +458,13 @@ export async function sendGuestReservationReceiptEmail(input: ReservationEmailDa
 
   await mailer.sendMail({
     from,
-    to: input.email,
-    subject: renderReservationSubjectTemplate(templates.guestEmailSubjectTemplate, input),
-    text: formatGuestConfirmationText(input),
-    html: formatGuestConfirmationHtml(input),
+    to: emailContent.recipient,
+    subject: emailContent.subject,
+    text: emailContent.text,
+    html: emailContent.html,
   });
+
+  return emailContent;
 }
 
 export async function sendGuestReservationDecisionEmail(input: ReservationDecisionEmailData) {
