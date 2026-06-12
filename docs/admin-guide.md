@@ -45,6 +45,10 @@ The detail page also provides internal `.ics` downloads:
 
 These files contain guest contact data and are intended for internal use only.
 
+The KI-Assistenz area is a disabled placeholder for a future local Ollama assistant. It currently
+does not generate text, does not call an AI service and cannot trigger e-mails, calendar files or
+status changes.
+
 ## Blocked Days
 
 Admins and employees can add or remove blocked days. Blocked days are enforced server-side for

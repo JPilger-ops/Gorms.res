@@ -10,6 +10,11 @@ const envSchema = z.object({
   APP_NAME: z.string().default("Waldwirtschaft Heidekönig"),
   APP_ENCRYPTION_KEY: z.string().optional(),
   APP_ENCRYPTION_KEY_FILE: z.string().default("/app/secrets/app_encryption_key"),
+  AI_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
   AUDIT_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   BACKUP_CONTAINER_PATH: z.string().default("/backups"),
   BACKUP_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
@@ -47,6 +52,8 @@ const envSchema = z.object({
   MANUAL_REVIEW_GUEST_THRESHOLD: z.coerce.number().int().positive().default(30),
   MAX_GUESTS_PER_REQUEST: z.coerce.number().int().positive().default(70),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("https://heidekönig.gorms.de"),
+  OLLAMA_BASE_URL: z.string().url().default("http://vault.local:11434"),
+  OLLAMA_MODEL: z.string().default("qwen3:8b"),
   PUBLIC_ALLOWED_HOSTS: z.string().default("heidekönig.gorms.de,xn--heideknig-57a.gorms.de"),
   PUBLIC_HOST: z.string().default("heidekönig.gorms.de"),
   IMPRINT_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),

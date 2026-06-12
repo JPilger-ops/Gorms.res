@@ -53,6 +53,7 @@ Core documents:
 - [Backup and restore](docs/backup-and-restore.md)
 - [NFS backup](docs/nfs-backup.md)
 - [Operations runbook](docs/operations-runbook.md)
+- [AI assistant preparation](docs/ai-assistant.md)
 - [Final project report](docs/final-project-report.md)
 
 ## Quickstart With Docker Compose
@@ -197,10 +198,17 @@ Common operational values:
 - `SMTP_HOST`
 - `SMTP_PORT`
 - `BACKUP_HOST_PATH`
+- `AI_ENABLED`
+- `OLLAMA_BASE_URL`
+- `OLLAMA_MODEL`
 
 `APP_ENCRYPTION_KEY` can be left empty for the setup flow. In that case the app creates a persistent
 key in the `heidekoenig_secrets` Docker volume. See
 [settings and secrets](docs/settings-and-secrets.md).
+
+The local AI assistant preparation is disabled by default with `AI_ENABLED=false`. It is only a
+documented placeholder in the admin reservation detail page and does not send guest data to Ollama
+or generate response text in this version. See [AI assistant preparation](docs/ai-assistant.md).
 
 ## Admin Setup And Roles
 

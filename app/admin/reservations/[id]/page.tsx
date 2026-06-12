@@ -6,6 +6,7 @@ import {
 } from "@/app/admin/reservations/[id]/decision-form";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { hasPermission } from "@/src/lib/permissions";
+import { getAiAssistantStatus } from "@/src/server/ai/config";
 import { requirePermission } from "@/src/server/guards";
 import { buildReservationDecisionDraft } from "@/src/server/reservation-decisions";
 import { getAdminReservationDetail } from "@/src/server/reservation-detail";
@@ -146,6 +147,17 @@ function IcsDownloadTile({
   );
 }
 
+function DisabledAiAction({ label }: { label: string }) {
+  return (
+    <span
+      aria-disabled="true"
+      className="secondary-action inline-flex min-h-12 w-full items-center justify-center text-center"
+    >
+      {label}
+    </span>
+  );
+}
+
 export default async function ReservationDetailPage({
   params,
 }: {
@@ -159,6 +171,7 @@ export default async function ReservationDetailPage({
     notFound();
   }
 
+  const aiStatus = getAiAssistantStatus();
   const { availabilityCheck, outgoingEmails, reservation } = detail;
   const canRespond = hasPermission(session.role, "reservations:respond");
   const decisionDrafts: ReservationDecisionDraft[] = [
@@ -339,6 +352,24 @@ export default async function ReservationDetailPage({
               }
               title="Bestätigungs-ICS"
             />
+          </div>
+        </DetailCard>
+
+        <DetailCard eyebrow="KI-Assistenz" title="Lokale Assistenz vorbereitet">
+          <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
+            {aiStatus.uiMessage} KI darf keine Zusage, Absage, Rückfrage, E-Mail, ICS-Datei oder
+            Statusänderung automatisch auslösen.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <DisabledAiAction label="Anfrage zusammenfassen" />
+            <DisabledAiAction label="Zusage entwerfen" />
+            <DisabledAiAction label="Absage entwerfen" />
+            <DisabledAiAction label="Rückfrage entwerfen" />
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <DataTile label="Status" value={aiStatus.statusLabel} />
+            <DataTile label="Geplantes Modell" value={aiStatus.model} />
+            <DataTile label="Timeout" value={`${aiStatus.timeoutMs} ms`} />
           </div>
         </DetailCard>
 
