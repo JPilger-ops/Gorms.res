@@ -31,8 +31,19 @@ Employees see:
 
 ## Reservation Requests
 
-The reservation overview shows incoming requests and contact details for manual follow-up. Version
-1 does not require staff to confirm reservations inside the app.
+The reservation overview links to a detail page for each request. The detail page shows contact
+data, the stored availability snapshot, outgoing mail history and the response workflow.
+
+Admins and employees can send an acceptance, decline or question from the detail page. Acceptance
+and decline change the status only after the guest e-mail was sent successfully. Questions keep the
+request pending.
+
+The detail page also provides internal `.ics` downloads:
+
+- Anfrage-ICS: available for every request.
+- Bestätigungs-ICS: available after the request was accepted.
+
+These files contain guest contact data and are intended for internal use only.
 
 ## Blocked Days
 

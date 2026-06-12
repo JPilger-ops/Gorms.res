@@ -10,6 +10,7 @@ import {
   createAcceptedReservationInternalIcs,
   createReservationRequestIcs,
 } from "@/src/server/calendar";
+import { buildAdminReservationUrl } from "@/src/server/reservation-ics";
 import { getEmailTemplateSettings, getSmtpSettings } from "@/src/server/settings";
 
 export class EmailConfigurationError extends Error {
@@ -245,7 +246,10 @@ export async function sendInternalReservationEmail(input: ReservationEmailData) 
   const { fromAddress, fromName, mailer } = await getSmtpTransporter();
   const templates = await getEmailTemplateSettings();
   const validation = validateEmailSubjectTemplate(templates.internalEmailSubjectTemplate);
-  const calendar = createReservationRequestIcs(input);
+  const calendar = createReservationRequestIcs({
+    ...input,
+    adminUrl: buildAdminReservationUrl(input.id),
+  });
 
   if (!validation.valid) {
     throw new EmailTemplateError();

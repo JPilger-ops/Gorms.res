@@ -11,6 +11,7 @@ import {
   sendInternalReservationAcceptedEmail,
 } from "@/src/server/email";
 import type { AuthenticatedSession } from "@/src/server/guards";
+import { buildAdminReservationUrl } from "@/src/server/reservation-ics";
 import { recordReservationOutgoingEmail } from "@/src/server/reservation-outgoing-emails";
 import type { ReservationStatus } from "@/src/server/reservations";
 import { getEmailTemplateSettings } from "@/src/server/settings";
@@ -81,6 +82,7 @@ function toInternalReservationEmailData(
 ) {
   return {
     acceptedByName: session.name,
+    adminUrl: buildAdminReservationUrl(reservation.id),
     date: reservation.requestedDate,
     email: reservation.guestEmail,
     guestCount: reservation.guestCount,

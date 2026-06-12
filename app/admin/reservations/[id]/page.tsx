@@ -114,6 +114,38 @@ function ListBlock({ items, title }: { items: string[]; title: string }) {
   );
 }
 
+function IcsDownloadTile({
+  description,
+  disabledReason,
+  href,
+  title,
+}: {
+  description: string;
+  disabledReason?: string;
+  href?: string;
+  title: string;
+}) {
+  return (
+    <article className="rounded-2xl border border-border bg-surface/65 p-4">
+      <div>
+        <p className="text-sm font-bold">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
+      </div>
+      <div className="mt-4">
+        {href ? (
+          <a className="secondary-action inline-flex w-full justify-center" href={href}>
+            ICS herunterladen
+          </a>
+        ) : (
+          <span aria-disabled="true" className="secondary-action inline-flex w-full justify-center">
+            {disabledReason ?? "Nicht verfügbar"}
+          </span>
+        )}
+      </div>
+    </article>
+  );
+}
+
 export default async function ReservationDetailPage({
   params,
 }: {
@@ -284,6 +316,30 @@ export default async function ReservationDetailPage({
               Anfragen vor Version 1.1.
             </p>
           )}
+        </DetailCard>
+
+        <DetailCard eyebrow="Kalender" title="Interne ICS-Dateien">
+          <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
+            Diese Kalenderdateien sind für die interne Bearbeitung gedacht und enthalten
+            Kontaktdaten des Gasts. Nicht öffentlich teilen.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <IcsDownloadTile
+              description="Enthält die ursprüngliche Anfrage mit Status offen und Admin-Link."
+              href={`/admin/reservations/${reservation.id}/ics/request`}
+              title="Anfrage-ICS"
+            />
+            <IcsDownloadTile
+              description="Enthält die angenommene Reservierung mit bestätigtem Kalenderstatus."
+              disabledReason="Erst nach Zusage verfügbar"
+              href={
+                reservation.status === "accepted"
+                  ? `/admin/reservations/${reservation.id}/ics/accepted`
+                  : undefined
+              }
+              title="Bestätigungs-ICS"
+            />
+          </div>
         </DetailCard>
 
         <DetailCard eyebrow="Antwort" title="Entscheidung senden">

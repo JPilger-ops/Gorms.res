@@ -1,6 +1,7 @@
 import { createEvent } from "ics";
 
 export type CalendarReservationData = {
+  adminUrl?: string;
   email: string;
   guestCount: number;
   guestName: string;
@@ -33,7 +34,10 @@ function formatRequestCalendarDescription(input: CalendarReservationData) {
     "",
     "Status: Anfrage / nicht bestätigt",
     `Anfrage-ID: ${input.id}`,
-  ].join("\n");
+    input.adminUrl ? `Admin-Link: ${input.adminUrl}` : undefined,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function formatAcceptedCalendarDescription(input: AcceptedCalendarReservationData) {
@@ -49,6 +53,7 @@ function formatAcceptedCalendarDescription(input: AcceptedCalendarReservationDat
     "",
     "Status: bestätigt",
     `Anfrage-ID: ${input.id}`,
+    input.adminUrl ? `Admin-Link: ${input.adminUrl}` : undefined,
   ]
     .filter(Boolean)
     .join("\n");
