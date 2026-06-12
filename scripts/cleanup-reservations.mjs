@@ -16,6 +16,9 @@ function cutoffDate(retentionDays, now = new Date()) {
   return new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
 }
 
+const anonymizedEmail = "anonymisiert@invalid.local";
+const anonymizedText = "[anonymisiert]";
+
 const pool = new Pool({
   connectionString: databaseUrl,
   max: 1,
@@ -44,9 +47,39 @@ try {
     await client.query("begin");
 
     const reservations = await client.query(
-      "delete from reservation_requests where created_at < $1 returning id",
-      [reservationCutoff],
+      `
+        update reservation_requests
+        set guest_name = 'Anonymisiert',
+            guest_email = $2,
+            guest_phone = $3,
+            message = null,
+            updated_at = now()
+        where created_at < $1
+          and guest_email <> $2
+        returning id
+      `,
+      [reservationCutoff, anonymizedEmail, anonymizedText],
     );
+    let outgoingEmailsAnonymized = 0;
+
+    if (reservations.rows.length > 0) {
+      const reservationIds = reservations.rows.map((row) => row.id);
+      const outgoingEmails = await client.query(
+        `
+          update reservation_outgoing_emails
+          set recipient = $2,
+              subject = $3,
+              body = $3,
+              smtp_error = null
+          where reservation_request_id = any($1::uuid[])
+          returning id
+        `,
+        [reservationIds, anonymizedEmail, anonymizedText],
+      );
+
+      outgoingEmailsAnonymized = outgoingEmails.rowCount;
+    }
+
     const auditLogs = await client.query(
       "delete from audit_log where created_at < $1 returning id",
       [auditLogCutoff],
@@ -61,8 +94,9 @@ try {
         JSON.stringify({
           auditLogRetentionDays,
           auditLogsDeleted: auditLogs.rowCount,
+          outgoingEmailsAnonymized,
           reservationRetentionDays,
-          reservationsDeleted: reservations.rowCount,
+          reservationsAnonymized: reservations.rowCount,
         }),
       ],
     );
@@ -72,7 +106,8 @@ try {
     console.log(
       [
         "Retention cleanup completed.",
-        `Reservations deleted: ${reservations.rowCount}`,
+        `Reservations anonymized: ${reservations.rowCount}`,
+        `Outgoing emails anonymized: ${outgoingEmailsAnonymized}`,
         `Audit logs deleted: ${auditLogs.rowCount}`,
         `Reservation cutoff: ${reservationCutoff.toISOString()}`,
         `Audit log cutoff: ${auditLogCutoff.toISOString()}`,

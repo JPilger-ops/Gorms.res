@@ -37,6 +37,10 @@ Stores only data required to process the request:
 - privacy acknowledgement timestamp
 - created/updated timestamps
 
+Retention cleanup anonymizes old rows instead of deleting the operational shell. Date, time, guest
+count and status remain for operational reporting; guest name, e-mail, phone and message are
+removed or replaced with neutral placeholders.
+
 ### `reservation_availability_checks`
 
 Stores the rule result captured when a reservation request is created:
@@ -58,8 +62,8 @@ Stores reservation-related outgoing e-mails for the admin detail workflow:
 - SMTP status and optional sanitized error
 - send timestamp and optional sending user
 
-Rows cascade with the reservation request so retention cleanup removes related mail history with the
-personal reservation data.
+Retention cleanup anonymizes recipient, subject and body when the related reservation request is
+anonymized.
 
 ### `reservation_events`
 

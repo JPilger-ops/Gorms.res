@@ -8,7 +8,8 @@ async function main() {
   console.log(
     [
       "Retention cleanup completed.",
-      `Reservations deleted: ${result.reservationsDeleted}`,
+      `Reservations anonymized: ${result.reservationsAnonymized}`,
+      `Outgoing emails anonymized: ${result.outgoingEmailsAnonymized}`,
       `Audit logs deleted: ${result.auditLogsDeleted}`,
       `Reservation cutoff: ${result.reservationCutoff.toISOString()}`,
       `Audit log cutoff: ${result.auditLogCutoff.toISOString()}`,

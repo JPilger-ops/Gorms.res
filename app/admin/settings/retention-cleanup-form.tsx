@@ -18,15 +18,17 @@ export function RetentionCleanupForm() {
         <p className="eyebrow">Aufbewahrung</p>
         <h3 className="mt-2 text-2xl font-semibold">Alte Daten bereinigen</h3>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-          Löscht Reservierungsanfragen und Audit-Logs, die älter als die konfigurierten
-          Aufbewahrungsfristen sind. Es werden keine personenbezogenen Details protokolliert.
+          Anonymisiert personenbezogene Reservierungs- und Maildaten und löscht Audit-Logs, die
+          älter als die konfigurierten Aufbewahrungsfristen sind. Es werden keine personenbezogenen
+          Details protokolliert.
         </p>
       </div>
 
       <FormFeedback state={state} />
       {state.success ? (
         <p className="rounded-2xl border border-border bg-surface/65 px-4 py-3 text-sm font-semibold text-muted">
-          Reservierungsanfragen gelöscht: {state.reservationsDeleted ?? 0}. Audit-Logs gelöscht:{" "}
+          Reservierungsanfragen anonymisiert: {state.reservationsAnonymized ?? 0}. Mailverläufe
+          anonymisiert: {state.outgoingEmailsAnonymized ?? 0}. Audit-Logs gelöscht:{" "}
           {state.auditLogsDeleted ?? 0}.
         </p>
       ) : null}

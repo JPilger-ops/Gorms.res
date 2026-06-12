@@ -31,7 +31,7 @@ BACKUP_RETENTION_DAYS=30
 
 Admins can update reservation and audit retention values in the admin panel.
 
-## Cleanup
+## Cleanup And Anonymization
 
 Manual cleanup:
 
@@ -39,8 +39,17 @@ Manual cleanup:
 docker compose exec app node scripts/cleanup-reservations.mjs
 ```
 
-The cleanup deletes old reservation requests and old audit-log entries according to configured
-retention values.
+The cleanup anonymizes old reservation requests according to the configured reservation retention
+value. It keeps requested date, time, guest count, status and operational timestamps, but removes
+personal fields:
+
+- guest name is replaced with `Anonymisiert`
+- e-mail and phone are replaced with neutral placeholders
+- optional message is deleted
+- related outgoing e-mail recipient, subject and body are anonymized
+- related SMTP error text is removed
+
+Audit-log entries older than the configured audit retention value are deleted.
 
 ## Audit Logs
 

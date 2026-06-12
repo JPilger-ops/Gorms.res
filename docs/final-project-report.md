@@ -24,7 +24,7 @@ by staff.
 - Setup wizard protected by `SETUP_TOKEN`, admin host checks and one-time completion state.
 - Encrypted SMTP password storage using an app encryption key outside the database.
 - Local logo/favicon upload handling through the upload volume.
-- Retention cleanup for reservation requests and audit logs.
+- Retention cleanup anonymizes reservation requests/mail history and deletes old audit logs.
 - NFS backup and restore scripts for PostgreSQL and uploads.
 - GitHub Actions CI for install, lint, typecheck, format check and build.
 - Documentation for product, architecture, security, deployment, reverse proxy, backup, privacy,
