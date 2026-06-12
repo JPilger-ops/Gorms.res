@@ -170,6 +170,15 @@ export default async function ReservationsPage({
                   </div>
                 ) : null}
 
+                <div className="mt-5">
+                  <Link
+                    className="secondary-action inline-flex"
+                    href={`/admin/reservations/${reservation.id}`}
+                  >
+                    Details öffnen
+                  </Link>
+                </div>
+
                 {canManageStatus ? (
                   <ReservationStatusForm id={reservation.id} status={reservation.status} />
                 ) : null}
