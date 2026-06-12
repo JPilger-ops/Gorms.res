@@ -6,6 +6,10 @@ import {
   renderReservationSubjectTemplate,
   validateEmailSubjectTemplate,
 } from "@/src/server/email-templates";
+import type {
+  AvailabilityCheckResult,
+  AvailabilityStatus,
+} from "@/src/server/reservation-availability";
 import {
   createAcceptedReservationInternalIcs,
   createReservationRequestIcs,
@@ -27,6 +31,11 @@ export class EmailTemplateError extends Error {
 
 export type ReservationEmailData = ReservationRequestInput & {
   id: string;
+};
+
+export type InternalReservationEmailData = ReservationEmailData & {
+  adminUrl: string;
+  availability: AvailabilityCheckResult;
 };
 
 export type ReservationDecisionEmailData = {
@@ -76,7 +85,24 @@ async function getSmtpTransporter() {
   return { fromAddress: settings.fromAddress, fromName: settings.fromName, mailer };
 }
 
-function formatReservationText(input: ReservationEmailData) {
+const availabilityStatusLabels: Record<AvailabilityStatus, string> = {
+  blocked: "Blockiert",
+  bookable: "Buchbar",
+  capacity_warning: "Kapazitätswarnung",
+  manual_review: "Manuelle Prüfung",
+};
+
+function formatTextList(title: string, items: string[]) {
+  if (!items.length) {
+    return [`${title}: -`];
+  }
+
+  return [`${title}:`, ...items.map((item) => `- ${item}`)];
+}
+
+function formatReservationText(input: InternalReservationEmailData) {
+  const availability = input.availability;
+
   return [
     "Neue Reservierungsanfrage",
     "",
@@ -90,11 +116,36 @@ function formatReservationText(input: ReservationEmailData) {
     `Telefon: ${input.phone}`,
     input.message ? `Nachricht: ${input.message}` : "Nachricht: -",
     "",
+    "Gorms.res Prüfung",
+    `Status: ${availabilityStatusLabels[availability.status]}`,
+    `Saison: ${availability.season === "summer" ? "Sommer" : "Winter"}`,
+    `Zeitfenster: ${availability.windowStart} - ${availability.windowEnd}`,
+    `Späteste Reservierungszeit: ${availability.latestReservationTime}`,
+    `Kapazität: ${availability.requestedGuestCount} angefragt / ${availability.capacity} Plätze`,
+    `Bestätigte Gäste im Fenster: ${availability.acceptedGuestsInWindow}`,
+    `Offene Gäste im Fenster: ${availability.pendingGuestsInWindow}`,
+    ...formatTextList("Warnungen", availability.warnings),
+    ...formatTextList("Manuelle Prüfgründe", availability.manualReviewReasons),
+    "",
+    `Admin-Link: ${input.adminUrl}`,
     `Anfrage-ID: ${input.id}`,
   ].join("\n");
 }
 
-function formatReservationHtml(input: ReservationEmailData) {
+function formatHtmlList(items: string[]) {
+  if (!items.length) {
+    return "<span>-</span>";
+  }
+
+  return `
+    <ul style="margin: 0; padding-left: 18px;">
+      ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function formatReservationHtml(input: InternalReservationEmailData) {
+  const availability = input.availability;
   const rows = [
     ["Datum", input.date],
     ["Uhrzeit", input.time],
@@ -104,6 +155,18 @@ function formatReservationHtml(input: ReservationEmailData) {
     ["Telefon", input.phone],
     ["Nachricht", input.message || "-"],
     ["Anfrage-ID", input.id],
+  ];
+  const availabilityRows = [
+    ["Prüfstatus", availabilityStatusLabels[availability.status]],
+    ["Saison", availability.season === "summer" ? "Sommer" : "Winter"],
+    ["Zeitfenster", `${availability.windowStart} - ${availability.windowEnd}`],
+    ["Späteste Reservierungszeit", availability.latestReservationTime],
+    [
+      "Kapazität",
+      `${availability.requestedGuestCount} angefragt / ${availability.capacity} Plätze`,
+    ],
+    ["Bestätigte Gäste im Fenster", String(availability.acceptedGuestsInWindow)],
+    ["Offene Gäste im Fenster", String(availability.pendingGuestsInWindow)],
   ];
 
   return `
@@ -115,13 +178,35 @@ function formatReservationHtml(input: ReservationEmailData) {
           .map(
             ([label, value]) => `
               <tr>
-                <th align="left" style="border-bottom: 1px solid #ddd;">${label}</th>
-                <td style="border-bottom: 1px solid #ddd;">${value}</td>
+                <th align="left" style="border-bottom: 1px solid #ddd;">${escapeHtml(label)}</th>
+                <td style="border-bottom: 1px solid #ddd;">${escapeHtml(value)}</td>
               </tr>
             `,
           )
           .join("")}
       </table>
+      <h2 style="font-size: 17px; margin-top: 24px;">Gorms.res Prüfung</h2>
+      <table cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+        ${availabilityRows
+          .map(
+            ([label, value]) => `
+              <tr>
+                <th align="left" style="border-bottom: 1px solid #ddd;">${escapeHtml(label)}</th>
+                <td style="border-bottom: 1px solid #ddd;">${escapeHtml(value)}</td>
+              </tr>
+            `,
+          )
+          .join("")}
+        <tr>
+          <th align="left" style="border-bottom: 1px solid #ddd;">Warnungen</th>
+          <td style="border-bottom: 1px solid #ddd;">${formatHtmlList(availability.warnings)}</td>
+        </tr>
+        <tr>
+          <th align="left" style="border-bottom: 1px solid #ddd;">Manuelle Prüfgründe</th>
+          <td style="border-bottom: 1px solid #ddd;">${formatHtmlList(availability.manualReviewReasons)}</td>
+        </tr>
+      </table>
+      <p style="margin-top: 18px;"><a href="${escapeHtml(input.adminUrl)}">Anfrage im Adminbereich öffnen</a></p>
     </div>
   `;
 }
@@ -242,13 +327,20 @@ export function buildInternalReservationAcceptedEmailContent(
   };
 }
 
-export async function sendInternalReservationEmail(input: ReservationEmailData) {
+export async function sendInternalReservationEmail(
+  input: ReservationEmailData,
+  availability: AvailabilityCheckResult,
+) {
   const { fromAddress, fromName, mailer } = await getSmtpTransporter();
   const templates = await getEmailTemplateSettings();
   const validation = validateEmailSubjectTemplate(templates.internalEmailSubjectTemplate);
-  const calendar = createReservationRequestIcs({
+  const internalInput: InternalReservationEmailData = {
     ...input,
     adminUrl: buildAdminReservationUrl(input.id),
+    availability,
+  };
+  const calendar = createReservationRequestIcs({
+    ...internalInput,
   });
 
   if (!validation.valid) {
@@ -265,8 +357,8 @@ export async function sendInternalReservationEmail(input: ReservationEmailData) 
     to: templates.reservationNotificationEmail,
     replyTo: input.email,
     subject: renderReservationSubjectTemplate(templates.internalEmailSubjectTemplate, input),
-    text: formatReservationText(input),
-    html: formatReservationHtml(input),
+    text: formatReservationText(internalInput),
+    html: formatReservationHtml(internalInput),
     attachments: [
       {
         content: calendar,

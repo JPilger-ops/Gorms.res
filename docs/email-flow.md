@@ -17,6 +17,11 @@ The internal e-mail includes:
 - e-mail
 - phone
 - optional message
+- stored Gorms.res availability status
+- accepted and pending guest counts in the overlapping time window
+- capacity, time window, season and latest reservation time
+- warnings and manual review reasons
+- direct admin detail link
 - clear note that this is only a request
 - `.ics` calendar attachment
 

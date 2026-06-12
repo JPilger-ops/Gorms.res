@@ -66,7 +66,7 @@ export async function createReservationRequestAction(
   }
 
   try {
-    await sendInternalReservationEmail(result.emailData);
+    await sendInternalReservationEmail(result.emailData, result.availability);
   } catch (error) {
     if (!(error instanceof EmailConfigurationError)) {
       console.error("Internal reservation email failed.");

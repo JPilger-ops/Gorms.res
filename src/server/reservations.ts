@@ -4,7 +4,10 @@ import type { ReservationRequestInput } from "@/src/lib/reservation-validation";
 import type { UpdateReservationStatusInput } from "@/src/lib/reservation-status-validation";
 import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
-import { checkReservationAvailability } from "@/src/server/reservation-availability";
+import {
+  checkReservationAvailability,
+  type AvailabilityCheckResult,
+} from "@/src/server/reservation-availability";
 
 export const reservationStatuses = ["pending", "accepted", "declined", "cancelled"] as const;
 
@@ -14,6 +17,7 @@ export type ReservationStatusFilter = ReservationStatus | "all";
 
 export type CreateReservationResult =
   | {
+      availability: AvailabilityCheckResult;
       ok: true;
       id: string;
       emailData: ReservationRequestInput & { id: string };
@@ -137,6 +141,7 @@ export async function createReservationRequest(
   });
 
   return {
+    availability,
     ok: true,
     id: reservation.id,
     emailData: {
