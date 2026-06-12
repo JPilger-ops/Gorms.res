@@ -52,6 +52,16 @@ export type AvailabilityCheckSnapshotInput = AvailabilityCheckResult & {
   reservationRequestId: string;
 };
 
+export type ReservationSlot = {
+  hardBlocked: boolean;
+  label: string;
+  manualReviewReasons: string[];
+  reasons: string[];
+  status: AvailabilityStatus;
+  time: string;
+  warnings: string[];
+};
+
 function isTimeInInclusiveRange(value: string, earliest: string, latest: string) {
   const requested = timeToMinutes(value);
   const earliestMinutes = timeToMinutes(earliest);
@@ -299,6 +309,63 @@ export async function checkReservationAvailability(
     warnings,
     windowEnd: window.windowEnd,
     windowStart: window.windowStart,
+  };
+}
+
+export async function getReservationSlotsForDate({
+  date,
+  guestCount,
+}: {
+  date: string;
+  guestCount: number;
+}) {
+  const settings = await getBusinessSettings();
+  const season = isIsoDate(date) ? getSeasonForDate(date, settings) : "summer";
+  const latestReservationTime = isIsoDate(date)
+    ? getLatestReservationTimeForDate(date, settings)
+    : getLatestReservationTimeForSeason(settings, season);
+  const earliestMinutes = timeToMinutes(settings.earliestReservationTime);
+  const latestMinutes = timeToMinutes(latestReservationTime);
+
+  if (earliestMinutes === null || latestMinutes === null || earliestMinutes > latestMinutes) {
+    return {
+      date,
+      latestReservationTime,
+      season,
+      slots: [] satisfies ReservationSlot[],
+    };
+  }
+
+  const slots: ReservationSlot[] = [];
+
+  for (
+    let slotMinutes = earliestMinutes;
+    slotMinutes <= latestMinutes;
+    slotMinutes += settings.reservationSlotMinutes
+  ) {
+    const time = minutesToTime(slotMinutes);
+    const availability = await checkReservationAvailability({
+      date,
+      guestCount,
+      time,
+    });
+
+    slots.push({
+      hardBlocked: availability.hardBlocked,
+      label: time,
+      manualReviewReasons: availability.manualReviewReasons,
+      reasons: availability.reasons,
+      status: availability.status,
+      time,
+      warnings: availability.warnings,
+    });
+  }
+
+  return {
+    date,
+    latestReservationTime,
+    season,
+    slots,
   };
 }
 

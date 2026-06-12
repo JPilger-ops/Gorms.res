@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   createReservationRequestAction,
   type ReservationFormState,
@@ -8,6 +8,39 @@ import {
 import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 
 const initialState: ReservationFormState = {};
+
+type Slot = {
+  hardBlocked: boolean;
+  label: string;
+  manualReviewReasons: string[];
+  reasons: string[];
+  status: "bookable" | "manual_review" | "capacity_warning" | "blocked";
+  time: string;
+  warnings: string[];
+};
+
+type SlotResponse = {
+  date: string;
+  latestReservationTime: string;
+  season: "summer" | "winter";
+  slots: Slot[];
+};
+
+function slotHint(slot: Slot) {
+  if (slot.hardBlocked) {
+    return slot.reasons[0] ?? "Nicht verfügbar";
+  }
+
+  if (slot.status === "manual_review") {
+    return "Manuelle Prüfung";
+  }
+
+  if (slot.status === "capacity_warning") {
+    return "Prüfung erforderlich";
+  }
+
+  return "Verfügbar";
+}
 
 export function ReservationForm({
   earliestReservationTime,
@@ -25,6 +58,69 @@ export function ReservationForm({
   privacyPolicyUrl?: string;
 }) {
   const [state, formAction, pending] = useActionState(createReservationRequestAction, initialState);
+  const [date, setDate] = useState("");
+  const [guestCount, setGuestCount] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [slotError, setSlotError] = useState("");
+  const [slotLoading, setSlotLoading] = useState(false);
+
+  const selectedSlot = useMemo(
+    () => slots.find((slot) => slot.time === selectedTime),
+    [selectedTime, slots],
+  );
+
+  useEffect(() => {
+    if (!date) {
+      return;
+    }
+
+    const abortController = new AbortController();
+    const safeGuestCount = Math.max(1, Number.parseInt(guestCount, 10) || 1);
+    const query = new URLSearchParams({
+      date,
+      guestCount: String(safeGuestCount),
+    });
+
+    fetch(`/api/reservation-slots?${query.toString()}`, {
+      signal: abortController.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Slots unavailable");
+        }
+
+        return (await response.json()) as SlotResponse;
+      })
+      .then((data) => {
+        setSlots(data.slots);
+        setSelectedTime((currentTime) =>
+          data.slots.some((slot) => slot.time === currentTime && !slot.hardBlocked)
+            ? currentTime
+            : "",
+        );
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        setSlots([]);
+        setSelectedTime("");
+        setSlotError("Zeiten konnten nicht geladen werden. Bitte versuchen Sie es erneut.");
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setSlotLoading(false);
+        }
+      });
+
+    return () => {
+      abortController.abort();
+    };
+  }, [date, guestCount]);
+
+  const selectableSlots = slots.filter((slot) => !slot.hardBlocked);
 
   return (
     <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-7">
@@ -55,6 +151,15 @@ export function ReservationForm({
           <input
             className="glass-control min-h-12 w-full px-4 outline-none"
             name="date"
+            onChange={(event) => {
+              const nextDate = event.target.value;
+
+              setDate(nextDate);
+              setSelectedTime("");
+              setSlots([]);
+              setSlotError("");
+              setSlotLoading(Boolean(nextDate));
+            }}
             type="date"
             required
           />
@@ -63,16 +168,56 @@ export function ReservationForm({
 
         <label className="block space-y-2">
           <span className="text-sm font-semibold">Uhrzeit</span>
-          <input
+          <select
             className="glass-control min-h-12 w-full px-4 outline-none"
             name="time"
-            type="time"
-            min={earliestReservationTime}
-            max={latestReservationTime}
-            step="900"
+            value={selectedTime}
+            onChange={(event) => setSelectedTime(event.target.value)}
+            disabled={!date || slotLoading || Boolean(slotError) || selectableSlots.length === 0}
             required
-          />
+          >
+            <option value="">
+              {!date
+                ? "Erst Datum wählen"
+                : slotLoading
+                  ? "Zeiten werden geladen..."
+                  : selectableSlots.length === 0
+                    ? "Keine Zeiten verfügbar"
+                    : "Uhrzeit wählen"}
+            </option>
+            {selectableSlots.map((slot) => (
+              <option key={slot.time} value={slot.time}>
+                {slot.label} · {slotHint(slot)}
+              </option>
+            ))}
+          </select>
+          <noscript>
+            <input
+              className="glass-control mt-3 min-h-12 w-full px-4 outline-none"
+              name="time"
+              type="time"
+              min={earliestReservationTime}
+              max={latestReservationTime}
+              step="900"
+              required
+            />
+          </noscript>
           <FieldError messages={state.fieldErrors?.time} />
+          {slotError ? <p className="text-sm leading-6 text-danger">{slotError}</p> : null}
+          {!slotError &&
+          date &&
+          !slotLoading &&
+          slots.length > 0 &&
+          selectableSlots.length === 0 ? (
+            <p className="text-sm leading-6 text-danger">
+              Für dieses Datum sind keine Reservierungsanfragen möglich.
+            </p>
+          ) : null}
+          {selectedSlot && selectedSlot.status !== "bookable" ? (
+            <p className="text-sm leading-6 text-muted">
+              Diese Zeit wird angenommen, aber intern besonders geprüft.
+            </p>
+          ) : null}
         </label>
 
         <label className="block space-y-2">
@@ -84,6 +229,14 @@ export function ReservationForm({
             min="1"
             max={maxGuestsPerRequest}
             inputMode="numeric"
+            onChange={(event) => {
+              setGuestCount(event.target.value);
+              setSlotError("");
+
+              if (date) {
+                setSlotLoading(true);
+              }
+            }}
             required
           />
           <FieldError messages={state.fieldErrors?.guestCount} />

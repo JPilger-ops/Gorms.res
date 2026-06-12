@@ -4,7 +4,7 @@ import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
-  "Sonntage, Feiertage und gesperrte Tage werden automatisch blockiert.",
+  "Montage, Dienstage, Sonntage, Feiertage und gesperrte Tage werden automatisch blockiert.",
   "Die Reservierung gilt erst nach persönlicher Bestätigung.",
   "Ihre Daten werden nur zur Bearbeitung der Anfrage verwendet.",
 ];
