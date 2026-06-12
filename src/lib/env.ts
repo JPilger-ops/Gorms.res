@@ -17,6 +17,18 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((value) => value === "true"),
+  BLOCK_MONDAYS: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
+  BLOCK_PUBLIC_HOLIDAYS: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
+  BLOCK_TUESDAYS: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
   DATABASE_URL: z.string().optional(),
   EARLIEST_RESERVATION_TIME: z.string().default("11:30"),
   GUEST_EMAIL_SUBJECT_TEMPLATE: z
@@ -29,8 +41,11 @@ const envSchema = z.object({
     .default(
       "Neue Reservierungsanfrage: {{date}} um {{time}} - {{guestName}} - {{guestCount}} Personen",
     ),
-  LATEST_RESERVATION_TIME: z.string().default("19:00"),
-  MAX_GUESTS_PER_REQUEST: z.coerce.number().int().positive().default(30),
+  INDOOR_CAPACITY: z.coerce.number().int().positive().default(70),
+  LATEST_RESERVATION_BUFFER_MINUTES: z.coerce.number().int().min(0).default(60),
+  LATEST_RESERVATION_TIME: z.string().default("18:00"),
+  MANUAL_REVIEW_GUEST_THRESHOLD: z.coerce.number().int().positive().default(30),
+  MAX_GUESTS_PER_REQUEST: z.coerce.number().int().positive().default(70),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("https://heidekönig.gorms.de"),
   PUBLIC_ALLOWED_HOSTS: z.string().default("heidekönig.gorms.de,xn--heideknig-57a.gorms.de"),
   PUBLIC_HOST: z.string().default("heidekönig.gorms.de"),
@@ -43,6 +58,7 @@ const envSchema = z.object({
     ),
   PRIVACY_POLICY_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
   RESERVATION_NOTIFICATION_EMAIL: z.string().email().default("Welcome@der-heidekoenig.de"),
+  RESERVATION_SLOT_MINUTES: z.coerce.number().int().positive().default(30),
   RESERVATION_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
   RUN_MIGRATIONS_ON_START: z
     .enum(["true", "false"])
@@ -57,6 +73,11 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_PROVIDER: z.string().default("ionos"),
   SMTP_USER: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  STANDARD_OCCUPANCY_MINUTES: z.coerce.number().int().positive().default(120),
+  SUMMER_KITCHEN_ACCEPTANCE_UNTIL: z.string().default("19:00"),
+  SUMMER_SEASON_END: z.string().default("10-31"),
+  SUMMER_SEASON_START: z.string().default("04-01"),
+  WINTER_KITCHEN_ACCEPTANCE_UNTIL: z.string().default("18:00"),
   UPLOAD_DIR: z.string().default("/app/uploads"),
 });
 

@@ -84,6 +84,99 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             <FieldError messages={state.fieldErrors?.maxGuestsPerRequest} />
           </label>
 
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Manuelle Prüfung ab Personen</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.manualReviewGuestThreshold}
+              min={1}
+              name="manualReviewGuestThreshold"
+              required
+              type="number"
+            />
+            <FieldError messages={state.fieldErrors?.manualReviewGuestThreshold} />
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Innenkapazität Sitzplätze</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.indoorCapacity}
+              min={1}
+              name="indoorCapacity"
+              required
+              type="number"
+            />
+            <FieldError messages={state.fieldErrors?.indoorCapacity} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Aufenthaltsdauer Minuten</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.standardOccupancyMinutes}
+              min={15}
+              name="standardOccupancyMinutes"
+              required
+              type="number"
+            />
+            <FieldError messages={state.fieldErrors?.standardOccupancyMinutes} />
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Slotgröße Minuten</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.reservationSlotMinutes}
+              min={5}
+              name="reservationSlotMinutes"
+              required
+              type="number"
+            />
+            <FieldError messages={state.fieldErrors?.reservationSlotMinutes} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Puffer vor Küchenannahme Minuten</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.latestReservationBufferMinutes}
+              min={0}
+              name="latestReservationBufferMinutes"
+              required
+              type="number"
+            />
+            <FieldError messages={state.fieldErrors?.latestReservationBufferMinutes} />
+          </label>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-border bg-surface/55 px-4">
+            <input
+              className="h-4 w-4"
+              defaultChecked={settings.blockMondays}
+              name="blockMondays"
+              type="checkbox"
+              value="true"
+            />
+            <span className="text-sm font-semibold">Montage blockieren</span>
+          </label>
+
+          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-border bg-surface/55 px-4">
+            <input
+              className="h-4 w-4"
+              defaultChecked={settings.blockTuesdays}
+              name="blockTuesdays"
+              type="checkbox"
+              value="true"
+            />
+            <span className="text-sm font-semibold">Dienstage blockieren</span>
+          </label>
+
           <label className="flex min-h-12 items-center gap-3 self-end rounded-2xl border border-border bg-surface/55 px-4">
             <input
               className="h-4 w-4"
@@ -93,6 +186,17 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
               value="true"
             />
             <span className="text-sm font-semibold">Sonntage blockieren</span>
+          </label>
+
+          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-border bg-surface/55 px-4">
+            <input
+              className="h-4 w-4"
+              defaultChecked={settings.blockPublicHolidays}
+              name="blockPublicHolidays"
+              type="checkbox"
+              value="true"
+            />
+            <span className="text-sm font-semibold">NRW-Feiertage blockieren</span>
           </label>
         </div>
 
@@ -111,7 +215,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-semibold">Späteste Reservierungsuhrzeit</span>
+            <span className="text-sm font-semibold">Absolute späteste Reservierungsuhrzeit</span>
             <input
               className="glass-control min-h-12 w-full px-4 outline-none"
               defaultValue={settings.latestReservationTime}
@@ -121,6 +225,65 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
               type="time"
             />
             <FieldError messages={state.fieldErrors?.latestReservationTime} />
+            <p className="text-xs leading-5 text-muted">
+              Saisonale Küchenannahme minus Puffer kann diese Zeit weiter einschränken.
+            </p>
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Sommer Saisonstart</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.summerSeasonStart}
+              name="summerSeasonStart"
+              placeholder="04-01"
+              required
+              type="text"
+            />
+            <FieldError messages={state.fieldErrors?.summerSeasonStart} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Sommer Saisonende</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.summerSeasonEnd}
+              name="summerSeasonEnd"
+              placeholder="10-31"
+              required
+              type="text"
+            />
+            <FieldError messages={state.fieldErrors?.summerSeasonEnd} />
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Küchenannahme Sommer bis</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.summerKitchenAcceptanceUntil}
+              name="summerKitchenAcceptanceUntil"
+              required
+              step="300"
+              type="time"
+            />
+            <FieldError messages={state.fieldErrors?.summerKitchenAcceptanceUntil} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Küchenannahme Winter bis</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={settings.winterKitchenAcceptanceUntil}
+              name="winterKitchenAcceptanceUntil"
+              required
+              step="300"
+              type="time"
+            />
+            <FieldError messages={state.fieldErrors?.winterKitchenAcceptanceUntil} />
           </label>
         </div>
 

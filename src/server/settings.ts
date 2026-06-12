@@ -9,12 +9,24 @@ import { decryptSecret, encryptSecret } from "@/src/server/encryption";
 import type { AuthenticatedSession } from "@/src/server/guards";
 
 export type BusinessSettings = {
+  blockMondays: boolean;
+  blockPublicHolidays: boolean;
   blockSundays: boolean;
+  blockTuesdays: boolean;
   earliestReservationTime: string;
   holidayCountry: string;
   holidayState: string;
+  indoorCapacity: number;
+  latestReservationBufferMinutes: number;
   latestReservationTime: string;
+  manualReviewGuestThreshold: number;
   maxGuestsPerRequest: number;
+  reservationSlotMinutes: number;
+  standardOccupancyMinutes: number;
+  summerKitchenAcceptanceUntil: string;
+  summerSeasonEnd: string;
+  summerSeasonStart: string;
+  winterKitchenAcceptanceUntil: string;
 };
 
 export type EmailTemplateSettings = {
@@ -49,12 +61,24 @@ export type SmtpSettings = {
 export type SmtpSettingsForUi = Omit<SmtpSettings, "password">;
 
 const settingKeys = [
+  "block_mondays",
+  "block_public_holidays",
   "block_sundays",
+  "block_tuesdays",
   "earliest_reservation_time",
   "holiday_country",
   "holiday_state",
+  "indoor_capacity",
+  "latest_reservation_buffer_minutes",
   "latest_reservation_time",
+  "manual_review_guest_threshold",
   "max_guests_per_request",
+  "reservation_slot_minutes",
+  "standard_occupancy_minutes",
+  "summer_kitchen_acceptance_until",
+  "summer_season_end",
+  "summer_season_start",
+  "winter_kitchen_acceptance_until",
 ] as const;
 
 const emailTemplateSettingKeys = [
@@ -119,6 +143,59 @@ export function normalizeHolidayState(country: string, state: string) {
   return state.toUpperCase();
 }
 
+export type ReservationSeason = "summer" | "winter";
+
+export function timeToMinutesStrict(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+export function minutesToTime(minutes: number) {
+  const clamped = Math.max(0, Math.min(23 * 60 + 59, minutes));
+  const hours = Math.floor(clamped / 60);
+  const remainder = clamped % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+export function getSeasonForDate(date: string, settings: BusinessSettings): ReservationSeason {
+  const monthDay = date.slice(5, 10);
+  const start = settings.summerSeasonStart;
+  const end = settings.summerSeasonEnd;
+
+  if (start <= end) {
+    return monthDay >= start && monthDay <= end ? "summer" : "winter";
+  }
+
+  return monthDay >= start || monthDay <= end ? "summer" : "winter";
+}
+
+export function getLatestReservationTimeForSeason(
+  settings: BusinessSettings,
+  season: ReservationSeason,
+) {
+  const kitchenAcceptanceUntil =
+    season === "summer"
+      ? settings.summerKitchenAcceptanceUntil
+      : settings.winterKitchenAcceptanceUntil;
+
+  return minutesToTime(
+    timeToMinutesStrict(kitchenAcceptanceUntil) - settings.latestReservationBufferMinutes,
+  );
+}
+
+export function getLatestReservationTimeForDate(date: string, settings: BusinessSettings) {
+  const seasonalLatest = getLatestReservationTimeForSeason(
+    settings,
+    getSeasonForDate(date, settings),
+  );
+  const configuredLatest = settings.latestReservationTime;
+
+  return timeToMinutesStrict(configuredLatest) < timeToMinutesStrict(seasonalLatest)
+    ? configuredLatest
+    : seasonalLatest;
+}
+
 export async function getBusinessSettings(): Promise<BusinessSettings> {
   const rows = await db
     .select({ key: appSettings.key, value: appSettings.value })
@@ -127,9 +204,21 @@ export async function getBusinessSettings(): Promise<BusinessSettings> {
 
   const settings = new Map(rows.map((row) => [row.key, row.value]));
   const holidayCountry = settings.get("holiday_country") ?? env.HOLIDAY_COUNTRY;
+  const latestReservationBufferMinutes = normalizePositiveInteger(
+    settings.get("latest_reservation_buffer_minutes"),
+    env.LATEST_RESERVATION_BUFFER_MINUTES,
+  );
+  const summerKitchenAcceptanceUntil =
+    settings.get("summer_kitchen_acceptance_until") ?? env.SUMMER_KITCHEN_ACCEPTANCE_UNTIL;
 
   return {
+    blockMondays: normalizeBoolean(settings.get("block_mondays"), env.BLOCK_MONDAYS),
+    blockPublicHolidays: normalizeBoolean(
+      settings.get("block_public_holidays"),
+      env.BLOCK_PUBLIC_HOLIDAYS,
+    ),
     blockSundays: normalizeBoolean(settings.get("block_sundays"), env.BLOCK_SUNDAYS),
+    blockTuesdays: normalizeBoolean(settings.get("block_tuesdays"), env.BLOCK_TUESDAYS),
     earliestReservationTime:
       settings.get("earliest_reservation_time") ?? env.EARLIEST_RESERVATION_TIME,
     holidayCountry,
@@ -137,11 +226,34 @@ export async function getBusinessSettings(): Promise<BusinessSettings> {
       holidayCountry,
       settings.get("holiday_state") ?? env.HOLIDAY_STATE,
     ),
-    latestReservationTime: settings.get("latest_reservation_time") ?? env.LATEST_RESERVATION_TIME,
+    indoorCapacity: normalizePositiveInteger(settings.get("indoor_capacity"), env.INDOOR_CAPACITY),
+    latestReservationBufferMinutes,
+    latestReservationTime:
+      settings.get("latest_reservation_time") ??
+      minutesToTime(
+        timeToMinutesStrict(summerKitchenAcceptanceUntil) - latestReservationBufferMinutes,
+      ),
+    manualReviewGuestThreshold: normalizePositiveInteger(
+      settings.get("manual_review_guest_threshold"),
+      env.MANUAL_REVIEW_GUEST_THRESHOLD,
+    ),
     maxGuestsPerRequest: normalizePositiveInteger(
       settings.get("max_guests_per_request"),
       env.MAX_GUESTS_PER_REQUEST,
     ),
+    reservationSlotMinutes: normalizePositiveInteger(
+      settings.get("reservation_slot_minutes"),
+      env.RESERVATION_SLOT_MINUTES,
+    ),
+    standardOccupancyMinutes: normalizePositiveInteger(
+      settings.get("standard_occupancy_minutes"),
+      env.STANDARD_OCCUPANCY_MINUTES,
+    ),
+    summerKitchenAcceptanceUntil,
+    summerSeasonEnd: settings.get("summer_season_end") ?? env.SUMMER_SEASON_END,
+    summerSeasonStart: settings.get("summer_season_start") ?? env.SUMMER_SEASON_START,
+    winterKitchenAcceptanceUntil:
+      settings.get("winter_kitchen_acceptance_until") ?? env.WINTER_KITCHEN_ACCEPTANCE_UNTIL,
   };
 }
 
@@ -297,21 +409,33 @@ export async function updateAdminSettings(
   const rows = [
     ["app_name", input.appName],
     ["audit_log_retention_days", String(input.auditLogRetentionDays)],
+    ["block_mondays", String(input.blockMondays)],
+    ["block_public_holidays", String(input.blockPublicHolidays)],
     ["block_sundays", String(input.blockSundays)],
+    ["block_tuesdays", String(input.blockTuesdays)],
     ["earliest_reservation_time", input.earliestReservationTime],
     ["guest_email_subject_template", input.guestEmailSubjectTemplate],
     ["holiday_country", input.holidayCountry],
     ["holiday_state", normalizeHolidayState(input.holidayCountry, input.holidayState)],
+    ["indoor_capacity", String(input.indoorCapacity)],
     ["imprint_url", input.imprintUrl ?? ""],
     ["internal_email_subject_template", input.internalEmailSubjectTemplate],
+    ["latest_reservation_buffer_minutes", String(input.latestReservationBufferMinutes)],
     ["latest_reservation_time", input.latestReservationTime],
+    ["manual_review_guest_threshold", String(input.manualReviewGuestThreshold)],
     ["max_guests_per_request", String(input.maxGuestsPerRequest)],
     ["privacy_contact_email", input.privacyContactEmail ?? ""],
     ["privacy_notice_text", input.privacyNoticeText],
     ["privacy_policy_url", input.privacyPolicyUrl ?? ""],
     ["public_site_url", input.publicSiteUrl],
     ["reservation_notification_email", input.reservationNotificationEmail],
+    ["reservation_slot_minutes", String(input.reservationSlotMinutes)],
     ["reservation_retention_days", String(input.reservationRetentionDays)],
+    ["standard_occupancy_minutes", String(input.standardOccupancyMinutes)],
+    ["summer_kitchen_acceptance_until", input.summerKitchenAcceptanceUntil],
+    ["summer_season_end", input.summerSeasonEnd],
+    ["summer_season_start", input.summerSeasonStart],
+    ["winter_kitchen_acceptance_until", input.winterKitchenAcceptanceUntil],
   ] as const;
 
   await db.transaction(async (tx) => {
