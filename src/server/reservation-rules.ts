@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { blockedDays } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { blockedDays, reservationEvents } from "@/db/schema";
 import {
   isIsoDate,
   isPastDate,
@@ -110,6 +110,24 @@ export async function validateReservationRules(
         blockedDay.reason
           ? `Dieser Tag ist gesperrt: ${blockedDay.reason}`
           : "Dieser Tag ist gesperrt.",
+      );
+    }
+
+    const blockingEvent = await db.query.reservationEvents.findFirst({
+      where: and(
+        eq(reservationEvents.date, input.date),
+        eq(reservationEvents.reservationsAllowed, false),
+      ),
+      columns: {
+        publicNote: true,
+        title: true,
+      },
+    });
+
+    if (blockingEvent) {
+      reasons.push(
+        blockingEvent.publicNote ||
+          `${blockingEvent.title} - an diesem Tag sind keine Reservierungsanfragen möglich.`,
       );
     }
   }

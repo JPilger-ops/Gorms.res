@@ -15,6 +15,13 @@
       "when": 1779638506631,
       "tag": "0001_core_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781277839094,
+      "tag": "0002_wild_rhino",
+      "breakpoints": true
     }
   ]
 }

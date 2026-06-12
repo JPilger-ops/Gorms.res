@@ -24,6 +24,26 @@ export const reservationStatusEnum = pgEnum("reservation_status", [
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "mitarbeiter"]);
 
+export const availabilityStatusEnum = pgEnum("availability_status", [
+  "bookable",
+  "manual_review",
+  "capacity_warning",
+  "blocked",
+]);
+
+export const reservationSeasonEnum = pgEnum("reservation_season", ["summer", "winter"]);
+
+export const outgoingEmailTypeEnum = pgEnum("outgoing_email_type", [
+  "guest_receipt",
+  "staff_notification",
+  "guest_acceptance",
+  "guest_decline",
+  "guest_question",
+  "staff_acceptance_notification",
+]);
+
+export const outgoingEmailSmtpStatusEnum = pgEnum("outgoing_email_smtp_status", ["sent", "failed"]);
+
 export const users = pgTable(
   "users",
   {
@@ -81,6 +101,88 @@ export const reservationRequests = pgTable(
     index("reservation_requests_requested_date_idx").on(table.requestedDate),
     index("reservation_requests_status_idx").on(table.status),
     index("reservation_requests_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const reservationAvailabilityChecks = pgTable(
+  "reservation_availability_checks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    reservationRequestId: uuid("reservation_request_id")
+      .notNull()
+      .references(() => reservationRequests.id, { onDelete: "cascade" }),
+    status: availabilityStatusEnum("status").notNull(),
+    hardBlocked: boolean("hard_blocked").notNull().default(false),
+    reasons: jsonb("reasons")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    warnings: jsonb("warnings")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    manualReviewReasons: jsonb("manual_review_reasons")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    acceptedGuestsInWindow: integer("accepted_guests_in_window").notNull().default(0),
+    pendingGuestsInWindow: integer("pending_guests_in_window").notNull().default(0),
+    requestedGuestCount: integer("requested_guest_count").notNull(),
+    capacity: integer("capacity").notNull(),
+    windowStart: time("window_start", { withTimezone: false }).notNull(),
+    windowEnd: time("window_end", { withTimezone: false }).notNull(),
+    latestReservationTime: time("latest_reservation_time", { withTimezone: false }).notNull(),
+    season: reservationSeasonEnum("season").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("reservation_availability_checks_request_unique").on(table.reservationRequestId),
+    index("reservation_availability_checks_status_idx").on(table.status),
+    index("reservation_availability_checks_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const reservationOutgoingEmails = pgTable(
+  "reservation_outgoing_emails",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    reservationRequestId: uuid("reservation_request_id")
+      .notNull()
+      .references(() => reservationRequests.id, { onDelete: "cascade" }),
+    type: outgoingEmailTypeEnum("type").notNull(),
+    recipient: varchar("recipient", { length: 320 }).notNull(),
+    subject: varchar("subject", { length: 240 }).notNull(),
+    body: text("body").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    sentByUserId: uuid("sent_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    smtpStatus: outgoingEmailSmtpStatusEnum("smtp_status").notNull(),
+    smtpError: varchar("smtp_error", { length: 240 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("reservation_outgoing_emails_request_idx").on(table.reservationRequestId),
+    index("reservation_outgoing_emails_type_idx").on(table.type),
+    index("reservation_outgoing_emails_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const reservationEvents = pgTable(
+  "reservation_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    date: date("date").notNull(),
+    title: varchar("title", { length: 160 }).notNull(),
+    publicNote: varchar("public_note", { length: 240 }),
+    reservationsAllowed: boolean("reservations_allowed").notNull().default(false),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("reservation_events_date_idx").on(table.date),
+    index("reservation_events_reservations_allowed_idx").on(table.reservationsAllowed),
   ],
 );
 

@@ -37,6 +37,35 @@ Stores only data required to process the request:
 - privacy acknowledgement timestamp
 - created/updated timestamps
 
+### `reservation_availability_checks`
+
+Stores the rule result captured when a reservation request is created:
+
+- availability status: `bookable`, `manual_review`, `capacity_warning`, `blocked`
+- hard-block flag
+- blocking reasons, warnings, manual review reasons
+- accepted/pending guests in the checked occupancy window
+- requested guest count and configured capacity
+- window start/end, latest reservation time and season
+
+This table is a snapshot. It keeps staff decisions understandable even if settings change later.
+
+### `reservation_outgoing_emails`
+
+Stores reservation-related outgoing e-mails for the admin detail workflow:
+
+- mail type, recipient, subject and body
+- SMTP status and optional sanitized error
+- send timestamp and optional sending user
+
+Rows cascade with the reservation request so retention cleanup removes related mail history with the
+personal reservation data.
+
+### `reservation_events`
+
+Stores operational events such as music evenings. Events with `reservations_allowed=false` block
+public reservation requests for the event date and can expose a public note.
+
 ### `blocked_days`
 
 Stores manually blocked calendar dates and an optional reason.
