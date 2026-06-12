@@ -25,6 +25,14 @@ export type ReservationEmailData = ReservationRequestInput & {
   id: string;
 };
 
+export type ReservationDecisionEmailData = {
+  body: string;
+  guestEmail: string;
+  guestName: string;
+  replyTo?: string;
+  subject: string;
+};
+
 async function getSmtpTransporter() {
   const settings = await getSmtpSettings();
 
@@ -140,6 +148,19 @@ function formatGuestConfirmationHtml(input: ReservationEmailData) {
   `;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function textToHtml(value: string) {
+  return escapeHtml(value).replaceAll("\n", "<br>");
+}
+
 export async function sendInternalReservationEmail(input: ReservationEmailData) {
   const { fromAddress, fromName, mailer } = await getSmtpTransporter();
   const templates = await getEmailTemplateSettings();
@@ -192,6 +213,27 @@ export async function sendGuestReservationReceiptEmail(input: ReservationEmailDa
     subject: renderReservationSubjectTemplate(templates.guestEmailSubjectTemplate, input),
     text: formatGuestConfirmationText(input),
     html: formatGuestConfirmationHtml(input),
+  });
+}
+
+export async function sendGuestReservationDecisionEmail(input: ReservationDecisionEmailData) {
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+
+  await mailer.sendMail({
+    from: {
+      name: fromName,
+      address: fromAddress,
+    },
+    to: input.guestEmail,
+    replyTo: input.replyTo,
+    subject: input.subject,
+    text: input.body,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #171712;">
+        <p>Guten Tag ${escapeHtml(input.guestName)},</p>
+        <div>${textToHtml(input.body)}</div>
+      </div>
+    `,
   });
 }
 

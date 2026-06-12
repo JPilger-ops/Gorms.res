@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ReservationDecisionForm,
+  type ReservationDecisionDraft,
+} from "@/app/admin/reservations/[id]/decision-form";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { hasPermission } from "@/src/lib/permissions";
 import { requirePermission } from "@/src/server/guards";
+import { buildReservationDecisionDraft } from "@/src/server/reservation-decisions";
 import { getAdminReservationDetail } from "@/src/server/reservation-detail";
 import type { AvailabilityStatus } from "@/src/server/reservation-availability";
 import type { ReservationStatus } from "@/src/server/reservations";
@@ -122,6 +128,21 @@ export default async function ReservationDetailPage({
   }
 
   const { availabilityCheck, outgoingEmails, reservation } = detail;
+  const canRespond = hasPermission(session.role, "reservations:respond");
+  const decisionDrafts: ReservationDecisionDraft[] = [
+    {
+      decision: "accept",
+      ...buildReservationDecisionDraft("accept", reservation),
+    },
+    {
+      decision: "decline",
+      ...buildReservationDecisionDraft("decline", reservation),
+    },
+    {
+      decision: "question",
+      ...buildReservationDecisionDraft("question", reservation),
+    },
+  ];
 
   return (
     <AdminShell session={session}>
@@ -261,6 +282,33 @@ export default async function ReservationDetailPage({
             <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm text-muted">
               Für diese Anfrage liegt noch kein Availability-Snapshot vor. Das betrifft ältere
               Anfragen vor Version 1.1.
+            </p>
+          )}
+        </DetailCard>
+
+        <DetailCard eyebrow="Antwort" title="Entscheidung senden">
+          {canRespond && reservation.status === "pending" ? (
+            <>
+              <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
+                Zusage und Absage ändern den Status erst nach erfolgreichem SMTP-Versand. Rückfragen
+                werden protokolliert, der Status bleibt offen.
+              </p>
+              <div className="grid gap-4 xl:grid-cols-3">
+                {decisionDrafts.map((draft) => (
+                  <ReservationDecisionForm
+                    draft={draft}
+                    expectedStatus={reservation.status}
+                    key={draft.decision}
+                    reservationId={reservation.id}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
+              Für diese Anfrage ist der normale Antwortworkflow aktuell nicht verfügbar. Bereits
+              entschiedene Anfragen können später über einen kontrollierten Sonderfallprozess
+              angepasst werden.
             </p>
           )}
         </DetailCard>
