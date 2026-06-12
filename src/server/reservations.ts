@@ -1,10 +1,10 @@
 import { and, count, desc, eq, type SQL } from "drizzle-orm";
-import { auditLog, reservationRequests } from "@/db/schema";
+import { auditLog, reservationAvailabilityChecks, reservationRequests } from "@/db/schema";
 import type { ReservationRequestInput } from "@/src/lib/reservation-validation";
 import type { UpdateReservationStatusInput } from "@/src/lib/reservation-status-validation";
 import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
-import { validateReservationRules } from "@/src/server/reservation-rules";
+import { checkReservationAvailability } from "@/src/server/reservation-availability";
 
 export const reservationStatuses = ["pending", "accepted", "declined", "cancelled"] as const;
 
@@ -87,33 +87,54 @@ export async function getAdminReservationRequests({ status }: { status: Reservat
 export async function createReservationRequest(
   input: ReservationRequestInput,
 ): Promise<CreateReservationResult> {
-  const ruleResult = await validateReservationRules({
+  const availability = await checkReservationAvailability({
     date: input.date,
     guestCount: input.guestCount,
     time: input.time,
   });
 
-  if (!ruleResult.allowed) {
+  if (availability.hardBlocked) {
     return {
       ok: false,
-      reasons: ruleResult.reasons,
+      reasons: availability.reasons,
     };
   }
 
-  const [reservation] = await db
-    .insert(reservationRequests)
-    .values({
-      requestedDate: input.date,
-      requestedTime: input.time,
-      guestName: input.guestName,
-      guestEmail: input.email,
-      guestPhone: input.phone,
-      guestCount: input.guestCount,
-      message: input.message,
-      status: "pending",
-      privacyAcknowledgedAt: new Date(),
-    })
-    .returning({ id: reservationRequests.id });
+  const reservation = await db.transaction(async (tx) => {
+    const [createdReservation] = await tx
+      .insert(reservationRequests)
+      .values({
+        requestedDate: input.date,
+        requestedTime: input.time,
+        guestName: input.guestName,
+        guestEmail: input.email,
+        guestPhone: input.phone,
+        guestCount: input.guestCount,
+        message: input.message,
+        status: "pending",
+        privacyAcknowledgedAt: new Date(),
+      })
+      .returning({ id: reservationRequests.id });
+
+    await tx.insert(reservationAvailabilityChecks).values({
+      acceptedGuestsInWindow: availability.acceptedGuestsInWindow,
+      capacity: availability.capacity,
+      hardBlocked: availability.hardBlocked,
+      latestReservationTime: availability.latestReservationTime,
+      manualReviewReasons: availability.manualReviewReasons,
+      pendingGuestsInWindow: availability.pendingGuestsInWindow,
+      reasons: availability.reasons,
+      requestedGuestCount: availability.requestedGuestCount,
+      reservationRequestId: createdReservation.id,
+      season: availability.season,
+      status: availability.status,
+      warnings: availability.warnings,
+      windowEnd: availability.windowEnd,
+      windowStart: availability.windowStart,
+    });
+
+    return createdReservation;
+  });
 
   return {
     ok: true,
