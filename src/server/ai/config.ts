@@ -1,6 +1,7 @@
 import { env } from "@/src/lib/env";
 
 export type AiAssistantStatus = {
+  baseUrl: string;
   enabled: boolean;
   model: string;
   statusLabel: string;
@@ -11,6 +12,7 @@ export type AiAssistantStatus = {
 export function getAiAssistantStatus(): AiAssistantStatus {
   if (!env.AI_ENABLED) {
     return {
+      baseUrl: env.OLLAMA_BASE_URL,
       enabled: false,
       model: env.OLLAMA_MODEL,
       statusLabel: "Deaktiviert",
@@ -20,6 +22,7 @@ export function getAiAssistantStatus(): AiAssistantStatus {
   }
 
   return {
+    baseUrl: env.OLLAMA_BASE_URL,
     enabled: true,
     model: env.OLLAMA_MODEL,
     statusLabel: "Vorbereitet, noch nicht aktiv",

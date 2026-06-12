@@ -10,6 +10,7 @@ assistant is intended for internal drafting support only and is not active in th
 - No response drafts are generated.
 - No status changes, e-mails or calendar files can be triggered by AI.
 - The admin reservation detail page shows only a disabled placeholder.
+- A guarded server-side Ollama client exists for future use, but no route or server action calls it.
 
 Manual handling through the existing acceptance, decline and question workflow remains the only
 operational path.
@@ -25,6 +26,20 @@ AI_TIMEOUT_MS=30000
 
 `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are operational settings, not secrets. They are still kept
 server-side and are not exposed through public routes.
+
+## Technical Guardrails
+
+The prepared server modules are deliberately narrow:
+
+- `src/server/ai/schemas.ts` defines allowed tasks, minimized reservation prompt input and strict
+  AI response shape.
+- `src/server/ai/prompts.ts` builds a German internal prompt and instructs the model to return JSON
+  only.
+- `src/server/ai/ollama-client.ts` refuses to run when `AI_ENABLED=false`, uses a request timeout
+  and validates both request and response.
+
+The prompt input schema intentionally omits e-mail address, phone number, session data, SMTP
+settings and audit internals.
 
 ## Privacy Rules For Future Implementation
 
