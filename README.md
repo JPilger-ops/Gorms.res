@@ -53,6 +53,7 @@ Core documents:
 - [Backup and restore](docs/backup-and-restore.md)
 - [NFS backup](docs/nfs-backup.md)
 - [Operations runbook](docs/operations-runbook.md)
+- [Current live status](docs/current-live-status.md)
 - [Production cutover checklist](docs/production-cutover.md)
 - [AI assistant preparation](docs/ai-assistant.md)
 - [Final project report](docs/final-project-report.md)
