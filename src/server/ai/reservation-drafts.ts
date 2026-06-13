@@ -1,5 +1,6 @@
 import { auditLog } from "@/db/schema";
 import type { ReservationDecisionType } from "@/src/lib/reservation-decision-validation";
+import { validateAiDraftContent } from "@/src/server/ai/content-validation";
 import { generateAiDraft } from "@/src/server/ai/ollama-client";
 import type { AiDraftTask } from "@/src/server/ai/schemas";
 import { db } from "@/src/server/db";
@@ -97,6 +98,28 @@ export async function generateReservationDecisionAiDraft({
   if (!result.ok) {
     return {
       message: getAiFailureMessage(result.reason),
+      ok: false,
+    };
+  }
+
+  const validation = validateAiDraftContent(result.draft);
+
+  if (!validation.ok) {
+    await db.insert(auditLog).values({
+      action: "reservation.ai_draft_rejected",
+      entityId: id,
+      entityType: "reservation_request",
+      metadata: {
+        decision,
+        issueCount: validation.issues.length,
+        issues: validation.issues,
+      },
+      userId: session.userId,
+    });
+
+    return {
+      message:
+        "KI-Entwurf wurde aus Sicherheitsgründen nicht übernommen. Bitte manuell weiterarbeiten.",
       ok: false,
     };
   }

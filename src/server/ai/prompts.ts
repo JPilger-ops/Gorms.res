@@ -28,6 +28,8 @@ export function buildAiDraftPrompt(request: AiDraftRequest) {
     "Du darfst keine Reservierung bestaetigen, ablehnen oder veraendern. Du erstellst nur einen Entwurf.",
     "Behaupte niemals, dass eine Reservierung automatisch gueltig ist.",
     "Verwende keine erfundenen Kontaktdaten, Preise, Oeffnungszeiten oder Zusagen.",
+    "Garantiere niemals bestimmte Tische, Terrasse, Aussenplaetze, Ruhebereiche oder Verfuegbarkeit.",
+    "Verwende keine Platzhalter wie [Name], {{Name}} oder Betreffzeilen im body.",
     "Gib ausschliesslich gueltiges JSON mit den Feldern title, body und riskNotes zurueck.",
     `Aufgabe: ${taskInstructions[request.task]}`,
     `Daten: ${JSON.stringify(payload)}`,
