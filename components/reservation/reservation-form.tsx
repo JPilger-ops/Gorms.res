@@ -172,6 +172,18 @@ function statusPillTone(summary: ReturnType<typeof daySummary>, isSelected: bool
   return isSelected ? "bg-danger/20 text-danger" : "bg-danger/13 text-danger";
 }
 
+function slotTileTone(slot: Slot, isSelected: boolean) {
+  if (isSelected) {
+    return "border-primary/70 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary),white_84%),color-mix(in_srgb,var(--success),white_91%))] ring-2 ring-primary/25 shadow-[0_16px_34px_color-mix(in_srgb,var(--primary),transparent_82%)]";
+  }
+
+  if (slot.status === "bookable") {
+    return "border-success/15 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--success),white_93%),rgb(255_255_255_/_58%))] hover:border-success/35";
+  }
+
+  return "border-warning/20 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--warning),white_91%),rgb(255_255_255_/_54%))] hover:border-warning/40";
+}
+
 export function ReservationForm({
   earliestReservationTime,
   imprintUrl,
@@ -504,16 +516,16 @@ export function ReservationForm({
 
       <div className="space-y-2">
         <span className="text-sm font-semibold">Personen</span>
-        <div className="glass-tile flex min-h-[96px] items-center justify-between gap-4 p-3.5 sm:p-4">
+        <div className="glass-tile grid min-h-[104px] gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <div className="relative z-10 min-w-0">
             <span className="block text-xs font-bold uppercase text-muted">Anzahl Gäste</span>
             <span className="mt-1 block text-sm font-semibold text-muted">
               1 bis {maxGuestsPerRequest} Personen
             </span>
           </div>
-          <div className="relative z-10 flex shrink-0 items-center gap-2">
+          <div className="relative z-10 grid w-full grid-cols-[48px_minmax(72px,1fr)_48px] items-center gap-1 rounded-full border border-border bg-white/55 p-1.5 shadow-[inset_0_1px_0_rgb(255_255_255_/_72%)] sm:w-60">
             <button
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-white/65 text-2xl font-semibold leading-none text-foreground shadow-[0_8px_18px_rgb(42_52_38_/_8%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[color-mix(in_srgb,var(--primary),white_82%)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-transparent bg-white/60 text-2xl font-semibold leading-none text-foreground shadow-[0_6px_14px_rgb(42_52_38_/_7%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-[color-mix(in_srgb,var(--primary),white_84%)] disabled:cursor-not-allowed disabled:opacity-38 disabled:hover:translate-y-0"
               type="button"
               onClick={() => updateGuestCount(guestCountNumber - 1)}
               disabled={guestCountNumber <= 1}
@@ -522,13 +534,13 @@ export function ReservationForm({
               -
             </button>
             <output
-              className="flex min-h-14 min-w-16 items-center justify-center rounded-2xl border border-border bg-white/60 px-4 text-3xl font-semibold shadow-[inset_0_1px_0_rgb(255_255_255_/_70%)]"
+              className="flex h-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--primary),white_90%)] px-4 text-3xl font-semibold text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_70%)]"
               aria-live="polite"
             >
               {guestCountNumber}
             </output>
             <button
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-white/65 text-2xl font-semibold leading-none text-foreground shadow-[0_8px_18px_rgb(42_52_38_/_8%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[color-mix(in_srgb,var(--primary),white_82%)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-transparent bg-white/60 text-2xl font-semibold leading-none text-foreground shadow-[0_6px_14px_rgb(42_52_38_/_7%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-[color-mix(in_srgb,var(--primary),white_84%)] disabled:cursor-not-allowed disabled:opacity-38 disabled:hover:translate-y-0"
               type="button"
               onClick={() => updateGuestCount(guestCountNumber + 1)}
               disabled={guestCountNumber >= maxGuestsPerRequest}
@@ -552,7 +564,7 @@ export function ReservationForm({
           </div>
           {selectedDaySummary.isBookable ? (
             <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-bold text-success">
-              {selectedDaySummary.availableCount} frei
+              {selectedDaySummary.availableCount} verfügbar
             </span>
           ) : null}
         </div>
@@ -569,12 +581,9 @@ export function ReservationForm({
                 type="button"
                 onClick={() => setSelectedTime(slot.time)}
                 className={[
-                  "glass-tile min-h-[88px] p-4 text-left transition duration-200",
-                  "hover:-translate-y-0.5 hover:border-primary/40 disabled:cursor-wait disabled:opacity-55 disabled:hover:translate-y-0",
-                  isSelected ? "border-primary/60 ring-2 ring-primary/20" : "",
-                  slot.status === "bookable"
-                    ? "bg-[color-mix(in_srgb,var(--success),white_90%)]"
-                    : "bg-[color-mix(in_srgb,var(--warning),white_88%)]",
+                  "glass-tile min-h-[92px] p-4 text-left transition duration-200",
+                  "hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-55 disabled:hover:translate-y-0",
+                  slotTileTone(slot, isSelected),
                 ].join(" ")}
                 aria-pressed={isSelected}
                 disabled={slotLoading}
@@ -616,53 +625,56 @@ export function ReservationForm({
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <span className="text-sm font-semibold">Kontaktdaten</span>
+          <p className="text-sm leading-6 text-muted">
+            Wir verwenden diese Angaben nur zur Bearbeitung Ihrer Anfrage.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Name</span>
+            <input
+              className="field-input"
+              name="guestName"
+              type="text"
+              autoComplete="name"
+              required
+            />
+            <FieldError messages={state.fieldErrors?.guestName} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">E-Mail</span>
+            <input
+              className="field-input"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+            />
+            <FieldError messages={state.fieldErrors?.email} />
+          </label>
+        </div>
+
         <label className="block space-y-2">
-          <span className="text-sm font-semibold">Name</span>
-          <input
-            className="glass-control min-h-12 w-full px-4 outline-none"
-            name="guestName"
-            type="text"
-            autoComplete="name"
-            required
-          />
-          <FieldError messages={state.fieldErrors?.guestName} />
+          <span className="text-sm font-semibold">Telefonnummer</span>
+          <input className="field-input" name="phone" type="tel" autoComplete="tel" required />
+          <FieldError messages={state.fieldErrors?.phone} />
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-semibold">E-Mail</span>
-          <input
-            className="glass-control min-h-12 w-full px-4 outline-none"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
+          <span className="text-sm font-semibold">Nachricht optional</span>
+          <textarea
+            className="field-input min-h-32 resize-y py-3"
+            name="message"
+            maxLength={1000}
           />
-          <FieldError messages={state.fieldErrors?.email} />
+          <FieldError messages={state.fieldErrors?.message} />
         </label>
       </div>
-
-      <label className="block space-y-2">
-        <span className="text-sm font-semibold">Telefonnummer</span>
-        <input
-          className="glass-control min-h-12 w-full px-4 outline-none"
-          name="phone"
-          type="tel"
-          autoComplete="tel"
-          required
-        />
-        <FieldError messages={state.fieldErrors?.phone} />
-      </label>
-
-      <label className="block space-y-2">
-        <span className="text-sm font-semibold">Nachricht optional</span>
-        <textarea
-          className="glass-control min-h-28 w-full resize-y px-4 py-3 outline-none"
-          name="message"
-          maxLength={1000}
-        />
-        <FieldError messages={state.fieldErrors?.message} />
-      </label>
 
       <label className="glass-tile flex min-w-0 items-start gap-3 p-4">
         <input
