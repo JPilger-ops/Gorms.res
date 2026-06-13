@@ -26,7 +26,7 @@ function formatDateTime(value: Date) {
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface/65 p-4">
+    <div className="admin-stat-card p-4">
       <p className="text-xs font-bold uppercase text-muted">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
@@ -40,11 +40,11 @@ export default async function SystemPage() {
   return (
     <AdminShell session={session}>
       <div className="space-y-6">
-        <div className="glass-panel p-5 sm:p-7">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+        <div className="glass-panel admin-hero p-5 sm:p-7">
+          <div className="grid gap-4 xl:grid-cols-[minmax(240px,0.7fr)_minmax(320px,1fr)] xl:items-end">
             <div>
               <p className="eyebrow">System / Sicherheit</p>
-              <h2 className="mt-2 text-3xl font-semibold">Betriebsstatus</h2>
+              <h2 className="mt-2 text-3xl font-semibold break-normal">Betriebsstatus</h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-muted">
               Kontrollseite für Host-Routing, Secrets, Datenbank, Uploads und sicherheitsrelevante
@@ -61,30 +61,30 @@ export default async function SystemPage() {
           <StatCard label="Geheime Settings" value={overview.stats.secretSettings} />
         </section>
 
-        <section className="glass-panel p-5 sm:p-6">
+        <section className="glass-panel admin-panel p-5 sm:p-6">
           <p className="eyebrow">Sicherheitsstatus</p>
           <h3 className="mt-2 text-2xl font-semibold">Konfiguration</h3>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-surface/65 p-4">
+            <div className="admin-list-card p-4">
               <p className="text-xs font-bold uppercase text-muted">Public Hosts</p>
               <p className="mt-2 break-words text-sm leading-6">
                 {overview.hostSecurity.publicAllowedHosts.join(", ")}
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-surface/65 p-4">
+            <div className="admin-list-card p-4">
               <p className="text-xs font-bold uppercase text-muted">Admin Hosts</p>
               <p className="mt-2 break-words text-sm leading-6">
                 {overview.hostSecurity.adminAllowedHosts.join(", ")}
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-surface/65 p-4">
+            <div className="admin-list-card p-4">
               <p className="text-xs font-bold uppercase text-muted">Session-Cookie</p>
               <p className="mt-2 text-sm leading-6">{overview.hostSecurity.adminCookieName}</p>
               <p className="mt-1 text-sm leading-6 text-muted">
                 Admin-Cookies bleiben host-only auf dem Admin-Host.
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-surface/65 p-4">
+            <div className="admin-list-card p-4">
               <p className="text-xs font-bold uppercase text-muted">Secrets</p>
               <p className="mt-2 text-sm leading-6">
                 Encryption-Key: {overview.secrets.appEncryptionKeySource}
@@ -97,12 +97,12 @@ export default async function SystemPage() {
           </div>
         </section>
 
-        <section className="glass-panel p-5 sm:p-6">
+        <section className="glass-panel admin-panel p-5 sm:p-6">
           <p className="eyebrow">Systemprüfung</p>
           <h3 className="mt-2 text-2xl font-semibold">Checks</h3>
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             {overview.systemChecks.map((group) => (
-              <div className="rounded-2xl border border-border bg-surface/65 p-4" key={group.title}>
+              <div className="admin-list-card p-4" key={group.title}>
                 <h4 className="font-semibold">{group.title}</h4>
                 <div className="mt-4 space-y-3">
                   {group.items.map((item) => (
@@ -128,7 +128,7 @@ export default async function SystemPage() {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-          <div className="glass-panel p-5 sm:p-6">
+          <div className="glass-panel admin-panel p-5 sm:p-6">
             <p className="eyebrow">Betrieb</p>
             <h3 className="mt-2 text-2xl font-semibold">Kennzahlen</h3>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -144,7 +144,7 @@ export default async function SystemPage() {
             </div>
           </div>
 
-          <div className="glass-panel p-5 sm:p-6">
+          <div className="glass-panel admin-panel p-5 sm:p-6">
             <p className="eyebrow">Audit Log</p>
             <h3 className="mt-2 text-2xl font-semibold">Letzte Ereignisse</h3>
             <div className="event-list mt-5 space-y-3">

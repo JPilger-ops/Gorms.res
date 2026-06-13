@@ -13,7 +13,7 @@ const statusLabels = {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="glass-panel p-5">
+    <div className="admin-stat-card">
       <p className="text-sm font-semibold text-muted">{label}</p>
       <p className="mt-3 text-4xl font-semibold">{value}</p>
     </div>
@@ -27,7 +27,7 @@ export default async function AdminPage() {
   return (
     <AdminShell session={session}>
       <div className="space-y-6">
-        <div className="glass-panel p-5 sm:p-7">
+        <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="eyebrow">Dashboard</p>
@@ -47,7 +47,7 @@ export default async function AdminPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <section className="glass-panel p-5 sm:p-6">
+          <section className="glass-panel admin-panel p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <p className="eyebrow">Reservierungen</p>
@@ -58,10 +58,7 @@ export default async function AdminPage() {
             {dashboard.recentReservations.length ? (
               <div className="space-y-3">
                 {dashboard.recentReservations.map((reservation) => (
-                  <div
-                    className="rounded-2xl border border-border bg-surface/65 p-4"
-                    key={reservation.id}
-                  >
+                  <div className="admin-list-card p-4" key={reservation.id}>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-semibold">{reservation.guestName}</p>
@@ -85,14 +82,14 @@ export default async function AdminPage() {
           </section>
 
           <section className="space-y-6">
-            <div className="glass-panel p-5 sm:p-6">
+            <div className="glass-panel admin-panel p-5 sm:p-6">
               <p className="eyebrow">Auslastung</p>
               <h3 className="mt-2 text-2xl font-semibold">Nächste Tage</h3>
               <div className="mt-5 space-y-3">
                 {dashboard.reservationsByDate.length ? (
                   dashboard.reservationsByDate.map((item) => (
                     <div
-                      className="flex items-center justify-between rounded-2xl border border-border bg-surface/65 px-4 py-3"
+                      className="admin-list-card flex items-center justify-between px-4 py-3"
                       key={item.requestedDate}
                     >
                       <span className="text-sm font-semibold">{item.requestedDate}</span>
@@ -105,16 +102,13 @@ export default async function AdminPage() {
               </div>
             </div>
 
-            <div className="glass-panel p-5 sm:p-6">
+            <div className="glass-panel admin-panel p-5 sm:p-6">
               <p className="eyebrow">Sperrtage</p>
               <h3 className="mt-2 text-2xl font-semibold">Nächste Sperren</h3>
               <div className="mt-5 space-y-3">
                 {dashboard.nextBlockedDays.length ? (
                   dashboard.nextBlockedDays.map((day) => (
-                    <div
-                      className="rounded-2xl border border-border bg-surface/65 px-4 py-3"
-                      key={day.date}
-                    >
+                    <div className="admin-list-card px-4 py-3" key={day.date}>
                       <p className="text-sm font-semibold">{day.date}</p>
                       <p className="mt-1 text-sm text-muted">{day.reason || "Ohne Begründung"}</p>
                     </div>

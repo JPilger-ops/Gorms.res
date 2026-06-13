@@ -1,10 +1,10 @@
-import Link from "next/link";
 import type { CSSProperties } from "react";
 import { logoutAction } from "@/app/admin/actions";
+import { AdminNav, type AdminNavItem } from "@/components/admin/admin-nav";
 import { getBrandingSettings } from "@/src/server/branding";
 import type { AuthenticatedSession } from "@/src/server/guards";
 
-const adminNav = [
+const adminNav: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/reservations", label: "Reservierungsanfragen" },
   { href: "/admin/blocked-days", label: "Blockierte Tage" },
@@ -14,7 +14,7 @@ const adminNav = [
   { href: "/admin/system", label: "System / Sicherheit" },
 ];
 
-const employeeNav = [
+const employeeNav: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/reservations", label: "Reservierungsanfragen" },
   { href: "/admin/blocked-days", label: "Blockierte Tage" },
@@ -37,8 +37,8 @@ export async function AdminShell({
       id="main-content"
       style={{ "--primary": branding.accentColor } as CSSProperties}
     >
-      <div className="page-frame grid min-w-0 gap-4 py-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 lg:py-10">
-        <aside className="glass-panel p-4 lg:sticky lg:top-6 lg:self-start">
+      <div className="page-frame admin-frame grid min-w-0 gap-4 py-4 lg:grid-cols-[284px_minmax(0,1fr)] lg:gap-7 lg:py-10">
+        <aside className="glass-panel admin-sidebar p-4 lg:sticky lg:top-6 lg:self-start">
           <div className="space-y-1 px-2 py-2">
             {branding.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -53,20 +53,7 @@ export async function AdminShell({
             <p className="text-sm text-muted">{session.name}</p>
           </div>
 
-          <nav
-            className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0"
-            aria-label="Admin-Navigation"
-          >
-            {navItems.map((item) => (
-              <Link
-                className="glass-nav-link text-sm font-semibold lg:whitespace-normal"
-                href={item.href}
-                key={item.href}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <AdminNav items={navItems} />
 
           <form action={logoutAction} className="mt-5">
             <button className="secondary-action w-full" type="submit">
