@@ -24,6 +24,7 @@ export type SettingsActionState = {
 
 export type RetentionCleanupActionState = SettingsActionState & {
   auditLogsDeleted?: number;
+  auditLogsScrubbed?: number;
   outgoingEmailsAnonymized?: number;
   reservationsAnonymized?: number;
 };
@@ -248,6 +249,7 @@ export async function runRetentionCleanupAction(): Promise<RetentionCleanupActio
 
   return {
     auditLogsDeleted: result.auditLogsDeleted,
+    auditLogsScrubbed: result.auditLogsScrubbed,
     message: "Bereinigung wurde abgeschlossen.",
     outgoingEmailsAnonymized: result.outgoingEmailsAnonymized,
     reservationsAnonymized: result.reservationsAnonymized,

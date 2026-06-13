@@ -28,8 +28,8 @@ export function RetentionCleanupForm() {
       {state.success ? (
         <p className="admin-message-preview text-sm font-semibold text-muted">
           Reservierungsanfragen anonymisiert: {state.reservationsAnonymized ?? 0}. Mailverläufe
-          anonymisiert: {state.outgoingEmailsAnonymized ?? 0}. Audit-Logs gelöscht:{" "}
-          {state.auditLogsDeleted ?? 0}.
+          anonymisiert: {state.outgoingEmailsAnonymized ?? 0}. Audit-Metadaten bereinigt:{" "}
+          {state.auditLogsScrubbed ?? 0}. Audit-Logs gelöscht: {state.auditLogsDeleted ?? 0}.
         </p>
       ) : null}
 
