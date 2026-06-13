@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ReservationDecisionForm,
-  type ReservationDecisionDraft,
-} from "@/app/admin/reservations/[id]/decision-form";
+import { type ReservationDecisionDraft } from "@/app/admin/reservations/[id]/decision-form";
+import { ReservationDecisionWorkspace } from "@/app/admin/reservations/[id]/decision-workspace";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { hasPermission } from "@/src/lib/permissions";
 import { getAiAssistantStatus } from "@/src/server/ai/config";
@@ -313,17 +311,12 @@ export default async function ReservationDetailPage({
                 werden protokolliert, der Status bleibt offen. KI-Vorlagen sind nur editierbare
                 Textvorschläge und versenden nie automatisch.
               </div>
-              <div className="grid gap-4 2xl:grid-cols-3">
-                {decisionDrafts.map((draft) => (
-                  <ReservationDecisionForm
-                    aiEnabled={aiStatus.enabled}
-                    draft={draft}
-                    expectedStatus={reservation.status}
-                    key={draft.decision}
-                    reservationId={reservation.id}
-                  />
-                ))}
-              </div>
+              <ReservationDecisionWorkspace
+                aiEnabled={aiStatus.enabled}
+                drafts={decisionDrafts}
+                expectedStatus={reservation.status}
+                reservationId={reservation.id}
+              />
             </>
           ) : (
             <p className="admin-message-preview text-sm leading-6 text-muted">

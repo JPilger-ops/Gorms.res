@@ -681,6 +681,85 @@ html {
     padding: 18px;
   }
 
+  .admin-decision-workspace {
+    display: grid;
+    gap: 16px;
+  }
+
+  .admin-decision-switch {
+    display: grid;
+    gap: 8px;
+    border: 1px solid color-mix(in srgb, var(--border), white 24%);
+    border-radius: 24px;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 58%), rgb(255 255 255 / 30%)),
+      color-mix(in srgb, var(--surface-strong), transparent 36%);
+    box-shadow:
+      0 12px 28px rgb(42 52 38 / 7%),
+      inset 0 1px 0 rgb(255 255 255 / 66%);
+    padding: 8px;
+  }
+
+  .admin-decision-switch-item {
+    position: relative;
+    min-height: 76px;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 12px 14px;
+    text-align: left;
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease,
+      box-shadow 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .admin-decision-switch-item span,
+  .admin-decision-switch-item small {
+    display: block;
+  }
+
+  .admin-decision-switch-item span {
+    color: inherit;
+    font-size: 0.98rem;
+    font-weight: 850;
+  }
+
+  .admin-decision-switch-item small {
+    margin-top: 5px;
+    color: color-mix(in srgb, currentColor, transparent 18%);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .admin-decision-switch-item:hover {
+    border-color: color-mix(in srgb, var(--primary), transparent 66%);
+    color: var(--foreground);
+    transform: translateY(-1px);
+  }
+
+  .admin-decision-switch-item[data-active="true"] {
+    border-color: color-mix(in srgb, var(--primary), transparent 50%);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 54%), rgb(255 255 255 / 24%)),
+      color-mix(in srgb, var(--primary), white 82%);
+    box-shadow:
+      0 12px 28px color-mix(in srgb, var(--primary), transparent 84%),
+      inset 0 1px 0 rgb(255 255 255 / 64%);
+    color: var(--foreground);
+  }
+
+  @media (min-width: 900px) {
+    .admin-decision-switch {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
   .admin-decision-card::before {
     position: absolute;
     inset: 1px;
@@ -1228,6 +1307,8 @@ html {
   .admin-date-badge,
   .admin-message-preview,
   .admin-disclosure,
+  .admin-decision-switch,
+  .admin-decision-switch-item,
   .admin-decision-card,
   .admin-decision-note,
   .privacy-banner-content,
@@ -1271,6 +1352,8 @@ html {
   .admin-date-badge,
   .admin-message-preview,
   .admin-disclosure,
+  .admin-decision-switch,
+  .admin-decision-switch-item,
   .admin-decision-card,
   .admin-decision-note,
   .primary-action,
