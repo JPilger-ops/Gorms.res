@@ -153,6 +153,8 @@ export function ReservationForm({
     [selectedTime, slots],
   );
   const selectedDaySummary = daySummary(selectedDay);
+  const canSubmitReservation =
+    Boolean(selectedTime) && selectedDaySummary.isBookable && !slotLoading && !slotError;
   const nearestPreviousDate = useMemo(
     () =>
       [...slotDays]
@@ -576,11 +578,15 @@ export function ReservationForm({
 
       <button
         className="primary-action w-full"
-        disabled={pending}
+        disabled={pending || !canSubmitReservation}
         aria-busy={pending}
         type="submit"
       >
-        {pending ? "Anfrage wird geprüft..." : "Anfrage senden"}
+        {pending
+          ? "Anfrage wird geprüft..."
+          : canSubmitReservation
+            ? "Anfrage senden"
+            : "Tag und Uhrzeit wählen"}
       </button>
     </form>
   );
