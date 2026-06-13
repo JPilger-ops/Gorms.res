@@ -385,7 +385,7 @@ export function ReservationForm({
           <div className="space-y-1">
             <span className="text-sm font-semibold">Datum wählen</span>
             <p className="text-sm leading-6 text-muted">
-              Freie Tage sind grün markiert. Gesperrte Tage zeigen direkt den Grund.
+              Wählen Sie einen grün markierten Tag. Gesperrte Tage können nicht angefragt werden.
             </p>
           </div>
           <div className="min-w-0">

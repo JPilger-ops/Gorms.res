@@ -4,9 +4,10 @@ import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
-  "Montag, Dienstag, Sonntag, Feiertage und gesperrte Tage sind nicht auswählbar.",
-  "Ihre Anfrage wird persönlich geprüft.",
-  "Ihre Daten nutzen wir nur zur Bearbeitung Ihrer Anfrage.",
+  "Montags, Dienstags, Sonntags und an Feiertagen sind Reservierungen NICHT möglich.",
+  "Reservierungen sind nur in unserem Innenbereich möglich.",
+  "Für Gruppen ab 30 Personen ist eine Anzahlung von 100 € notwendig.",
+  "Nach dem Absenden erhalten Sie eine Eingangsbestätigung; verbindlich wird die Reservierung erst durch unsere persönliche Zusage.",
 ];
 
 export async function PublicReservationPage() {
@@ -31,7 +32,7 @@ export async function PublicReservationPage() {
             ) : null}
             <p className="eyebrow">{settings.appName}</p>
             <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-balance sm:text-5xl xl:text-6xl">
-              Platz im Grünen anfragen.
+              Jetzt einen Platz im Grünen anfragen.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted sm:text-xl">
               Wählen Sie einfach Datum, Uhrzeit und Personenzahl. Wir prüfen Ihre Anfrage persönlich
@@ -49,11 +50,6 @@ export async function PublicReservationPage() {
                 <p className="text-sm leading-6 text-muted">{fact}</p>
               </div>
             ))}
-          </div>
-
-          <div className="soft-card p-5 text-sm font-semibold leading-6 text-muted">
-            Nach dem Absenden erhalten Sie eine Eingangsbestätigung. Verbindlich wird die
-            Reservierung erst durch unsere persönliche Zusage.
           </div>
         </div>
 
