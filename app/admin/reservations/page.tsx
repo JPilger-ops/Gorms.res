@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ReservationStatusForm } from "@/app/admin/reservations/reservation-status-form";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { hasPermission } from "@/src/lib/permissions";
 import { requirePermission } from "@/src/server/guards";
 import {
   getAdminReservationRequests,
@@ -66,7 +67,7 @@ export default async function ReservationsPage({
   searchParams: Promise<{ status?: string | string[] }>;
 }) {
   const session = await requirePermission("reservations:read");
-  const canManageStatus = session.role === "admin";
+  const canOverrideStatus = hasPermission(session.role, "reservations:status_override");
   const status = normalizeReservationStatusFilter((await searchParams).status);
   const { countsByStatus, reservations, total } = await getAdminReservationRequests({ status });
 
@@ -191,7 +192,7 @@ export default async function ReservationsPage({
                   </p>
                 </div>
 
-                {canManageStatus ? (
+                {canOverrideStatus ? (
                   <ReservationStatusForm id={reservation.id} status={reservation.status} />
                 ) : null}
               </article>

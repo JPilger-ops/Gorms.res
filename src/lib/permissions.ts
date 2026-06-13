@@ -6,6 +6,7 @@ export const allPermissions = [
   "reservations:read",
   "reservations:manage",
   "reservations:respond",
+  "reservations:status_override",
   "blocked-days:manage",
   "opening-hours:manage",
   "settings:manage",
@@ -22,6 +23,7 @@ const permissions: Record<UserRole, readonly Permission[]> = {
     "reservations:read",
     "reservations:manage",
     "reservations:respond",
+    "reservations:status_override",
     "blocked-days:manage",
     "opening-hours:manage",
     "settings:manage",
@@ -33,6 +35,7 @@ const permissions: Record<UserRole, readonly Permission[]> = {
   mitarbeiter: [
     "reservations:read",
     "reservations:respond",
+    "reservations:status_override",
     "blocked-days:manage",
     "opening-hours:manage",
   ],

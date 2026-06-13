@@ -191,6 +191,7 @@ export async function updateReservationStatus(
       entityId: input.id,
       metadata: {
         from: currentReservation.status,
+        reason: input.reason,
         to: input.status,
       },
     });
