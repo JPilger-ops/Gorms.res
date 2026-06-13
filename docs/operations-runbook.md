@@ -13,6 +13,9 @@ Current debug deployment path:
 The later production server may use a different path. Replace the path in commands when deploying
 to another host.
 
+For the full migration from the current debug host to the later production server, use the
+[Production Cutover Checklist](production-cutover.md).
+
 ## Deployment Update
 
 Run on the app host:
