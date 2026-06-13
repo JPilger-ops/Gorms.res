@@ -1,16 +1,16 @@
-# AI Assistant Preparation
+# AI Assistant
 
-The reservation app contains a disabled preparation layer for a future local AI assistant. The
-assistant is intended for internal drafting support only and is not active in this version.
+The reservation app supports a local Ollama-based assistant for internal drafting support. It is
+disabled by default and must be explicitly enabled by the operator.
 
 ## Current Status
 
 - `AI_ENABLED=false` by default.
-- No reservation data is sent to Ollama.
-- No response drafts are generated unless the operator explicitly sets `AI_ENABLED=true`.
+- No reservation data is sent to Ollama unless the operator explicitly sets `AI_ENABLED=true`.
+- Response drafts are generated only after a staff member clicks the KI draft button.
 - No status changes, e-mails or calendar files can be triggered by AI.
 - The admin reservation detail page can request editable templates only when `AI_ENABLED=true`.
-- A guarded server-side Ollama client exists, but it is only connected to template generation.
+- The guarded server-side Ollama client is connected only to template generation.
 
 Manual handling through the existing acceptance, decline and question workflow remains the only
 operational path.
@@ -19,7 +19,7 @@ operational path.
 
 ```env
 AI_ENABLED=false
-OLLAMA_BASE_URL=http://vault.local:11434
+OLLAMA_BASE_URL=http://192.100.100.152:11434
 OLLAMA_MODEL=qwen3:8b
 AI_TIMEOUT_MS=120000
 ```
@@ -56,7 +56,7 @@ AI action cannot call that send path.
 
 ## Privacy Rules For Future Implementation
 
-Future AI support must follow these rules:
+AI support must continue to follow these rules:
 
 - Use a local Ollama endpoint only.
 - Keep AI disabled unless the operator explicitly enables it.
@@ -69,9 +69,9 @@ Future AI support must follow these rules:
 - Require a staff member to review and submit every generated text.
 - Log only the human action, not full generated or submitted guest content.
 
-## Planned Assistant Tasks
+## Supported Assistant Tasks
 
-The future assistant may support:
+The assistant may support:
 
 - summarizing the request for internal staff,
 - drafting an acceptance,

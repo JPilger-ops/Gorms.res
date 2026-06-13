@@ -9,6 +9,17 @@ only on an internal Docker network.
 The app accepts reservation requests only. A reservation is valid only after personal confirmation
 by staff.
 
+Current verified debug deployment:
+
+```text
+Date:        2026-06-13
+Commit:      ac90f9e
+App port:    6043
+Next.js:     16.2.9
+React:       19.2.7
+Audit:       0 vulnerabilities
+```
+
 ## Delivered Capabilities
 
 - Public reservation request flow for date, time, guest count, contact data, optional message and
@@ -21,6 +32,10 @@ by staff.
 - Roles: `admin` and `mitarbeiter`.
 - Admin screens for dashboard, reservation requests, blocked days, opening hours, settings, SMTP,
   branding and user management.
+- Reservation detail workflow for personal acceptance, decline and follow-up questions.
+- Acceptance and decline update status only after successful guest e-mail delivery.
+- Internal confirmation `.ics` for accepted reservations.
+- Optional local Ollama draft generation for editable staff response templates.
 - Setup wizard protected by `SETUP_TOKEN`, admin host checks and one-time completion state.
 - Encrypted SMTP password storage using an app encryption key outside the database.
 - Local logo/favicon upload handling through the upload volume.
@@ -29,6 +44,7 @@ by staff.
 - GitHub Actions CI for install, lint, typecheck, format check and build.
 - Documentation for product, architecture, security, deployment, reverse proxy, backup, privacy,
   accessibility and operations.
+- Production cutover checklist for the later move from debug host to production host.
 
 ## Security Baseline
 
@@ -42,6 +58,7 @@ by staff.
 - Session tokens are stored hashed in the database.
 - Rate-limit identifiers are hashed before in-memory storage.
 - Public reservation form includes a honeypot.
+- AI draft actions cannot send e-mails, create calendar files or change reservation status.
 - Security headers are configured in Next.js.
 - `.env` is ignored by Git.
 - Runtime upload, backup and secret directories are ignored by Git.
@@ -83,13 +100,16 @@ Container path: /backups
 
 Backups contain personal reservation data and must be access-restricted.
 
-Verified on 2026-06-12:
+Verified on 2026-06-12 and 2026-06-13:
 
 - NFS mount active at `/mnt/heidekoenig-backups`.
 - Manual backup succeeded at `/backups/20260612T112745Z`.
 - Backup files `postgres.dump`, `uploads.tar.gz` and `manifest.txt` were present.
 - Non-production restore test succeeded against a temporary PostgreSQL container.
 - Upload archive extraction succeeded with two branding files.
+- Live public request, guest receipt, internal notification and manual decline mailflow succeeded.
+- Live admin workflow feedback after manual decline succeeded.
+- Dependency deployment with Next.js `16.2.9` and clean `npm audit` succeeded.
 
 ## Verification Performed
 
@@ -111,6 +131,8 @@ scripts/restore-postgres.sh
 - Docker Compose rendered successfully with dummy secrets.
 - `npm run check` passed.
 - Docker app image build passed with Node 22.
+- `npm audit` passed with zero vulnerabilities after audited dependency overrides.
+- Live routing smoke tests passed through Cloudflare/NPM.
 
 ## Remaining Production Tasks
 
@@ -120,12 +142,14 @@ scripts/restore-postgres.sh
 - Complete setup wizard on `https://login.gorms.de/setup`.
 - Configure SMTP credentials and send a test mail.
 - Submit a test reservation request through the public host.
+- Run the documented live workflow smoke test when real test e-mails are acceptable.
+- Run a production backup and restore test on a non-production target.
 - Perform browser smoke tests on iOS Safari, Android Chrome, desktop Chrome, Firefox, Edge and
   Safari.
 
 ## Known Limits
 
-- Version 1 does not provide in-app reservation acceptance or decline workflows.
 - Automated browser accessibility tests are not installed yet.
 - Production reverse-proxy and firewall behavior can only be verified after deployment on the final
   server.
+- The local AI assistant is draft-only. It must never send messages or make decisions.

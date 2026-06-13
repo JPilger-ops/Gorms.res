@@ -45,9 +45,10 @@ The detail page also provides internal `.ics` downloads:
 
 These files contain guest contact data and are intended for internal use only.
 
-The KI-Assistenz area is a disabled placeholder for a future local Ollama assistant. It currently
-does not generate text, does not call an AI service and cannot trigger e-mails, calendar files or
-status changes.
+The KI-Assistenz area can create editable text drafts when `AI_ENABLED=true` is configured on the
+server. Generated text is inserted into the visible subject and e-mail body fields only. It cannot
+send e-mails, create calendar files or change status values. Staff must review and submit every
+message manually.
 
 ## Blocked Days
 

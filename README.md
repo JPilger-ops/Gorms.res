@@ -207,9 +207,10 @@ Common operational values:
 key in the `heidekoenig_secrets` Docker volume. See
 [settings and secrets](docs/settings-and-secrets.md).
 
-The local AI assistant preparation is disabled by default with `AI_ENABLED=false`. It is only a
-documented placeholder in the admin reservation detail page and does not send guest data to Ollama
-or generate response text in this version. See [AI assistant preparation](docs/ai-assistant.md).
+The local AI assistant is disabled by default with `AI_ENABLED=false`. When explicitly enabled, it
+can create editable German text drafts for acceptance, decline and follow-up questions in the admin
+reservation detail page. It cannot send e-mails, change status values or create calendar files. See
+[AI assistant preparation](docs/ai-assistant.md).
 
 ## Admin Setup And Roles
 

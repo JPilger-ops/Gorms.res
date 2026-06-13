@@ -51,8 +51,9 @@ HOLIDAY_STATE=NW
 Staff receive an internal e-mail with request details and an `.ics` attachment. Guests receive an
 automatic receipt e-mail that confirms only that the request was received.
 
-Version 1 prepares status values but does not require staff to accept or decline reservations in the
-app.
+Admins and employees can answer from the admin detail page with a personal acceptance, decline or
+follow-up question. Acceptance and decline update the status only after the guest e-mail has been
+sent successfully. Follow-up questions keep the request open.
 
 ## Admin Workflow
 
