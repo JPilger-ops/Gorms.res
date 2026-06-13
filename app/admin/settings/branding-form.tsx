@@ -32,7 +32,7 @@ function UploadForm({
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <div className="min-w-0 space-y-4 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5">
+    <div className="admin-list-card min-w-0 space-y-4 p-4 sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h4 className="text-lg font-semibold">{label}</h4>
@@ -91,8 +91,8 @@ export function BrandingForm({ branding }: { branding: BrandingSettings }) {
   const [accentColor, setAccentColor] = useState(branding.accentColor);
 
   return (
-    <section className="glass-panel space-y-5 p-4 sm:p-6">
-      <div>
+    <section className="glass-panel admin-panel space-y-5 p-4 sm:p-6">
+      <div className="admin-settings-intro">
         <p className="eyebrow">Branding</p>
         <h3 className="mt-2 text-2xl font-semibold">Logo, Favicon und Akzentfarbe</h3>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -101,42 +101,48 @@ export function BrandingForm({ branding }: { branding: BrandingSettings }) {
         </p>
       </div>
 
-      <form
-        action={formAction}
-        className="min-w-0 space-y-4 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5"
-      >
-        <FormFeedback state={state} />
+      <form action={formAction} className="admin-settings-section">
+        <div className="admin-settings-section-header">
+          <h4 className="text-lg font-semibold">Akzentfarbe</h4>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Die Farbe steuert primäre Buttons, aktive Navigation und feine Highlights.
+          </p>
+        </div>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold">Akzentfarbe</span>
-          <div className="grid min-w-0 gap-3 sm:grid-cols-[88px_minmax(0,1fr)]">
-            <input
-              className="glass-control h-12 w-full p-1 outline-none"
-              onChange={(event) => setAccentColor(event.target.value)}
-              type="color"
-              value={accentColor}
-            />
-            <input
-              className="glass-control min-h-12 w-full px-4 outline-none"
-              name="accentColor"
-              onChange={(event) => setAccentColor(event.target.value)}
-              pattern="#[0-9a-fA-F]{6}"
-              required
-              type="text"
-              value={accentColor}
-            />
-          </div>
-          <FieldError messages={state.fieldErrors?.accentColor} />
-        </label>
+        <div className="admin-settings-section-body">
+          <FormFeedback state={state} />
 
-        <button
-          className="secondary-action w-full"
-          disabled={pending}
-          aria-busy={pending}
-          type="submit"
-        >
-          {pending ? "Wird gespeichert..." : "Akzentfarbe speichern"}
-        </button>
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Akzentfarbe</span>
+            <div className="grid min-w-0 gap-3 sm:grid-cols-[88px_minmax(0,1fr)]">
+              <input
+                className="glass-control h-12 w-full p-1 outline-none"
+                onChange={(event) => setAccentColor(event.target.value)}
+                type="color"
+                value={accentColor}
+              />
+              <input
+                className="glass-control min-h-12 w-full px-4 outline-none"
+                name="accentColor"
+                onChange={(event) => setAccentColor(event.target.value)}
+                pattern="#[0-9a-fA-F]{6}"
+                required
+                type="text"
+                value={accentColor}
+              />
+            </div>
+            <FieldError messages={state.fieldErrors?.accentColor} />
+          </label>
+
+          <button
+            className="secondary-action w-full sm:ml-auto sm:block sm:w-auto"
+            disabled={pending}
+            aria-busy={pending}
+            type="submit"
+          >
+            {pending ? "Wird gespeichert..." : "Akzentfarbe speichern"}
+          </button>
+        </div>
       </form>
 
       <div className="grid gap-5 xl:grid-cols-2">

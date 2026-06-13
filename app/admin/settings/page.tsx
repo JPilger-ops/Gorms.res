@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   return (
     <AdminShell session={session}>
       <div className="space-y-6">
-        <div className="glass-panel p-5 sm:p-7">
+        <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="eyebrow">Einstellungen</p>
@@ -30,6 +30,25 @@ export default async function SettingsPage() {
               Diese Seite enthält nicht-sensitive Einstellungen. SMTP-Zugangsdaten und Branding
               werden in eigenen Schritten getrennt verwaltet.
             </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Regeln</p>
+            <p className="mt-3 text-lg font-semibold">Öffnungszeiten und Sperrlogik</p>
+          </div>
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Mail</p>
+            <p className="mt-3 text-lg font-semibold">SMTP und Betreffzeilen</p>
+          </div>
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Datenschutz</p>
+            <p className="mt-3 text-lg font-semibold">Hinweise und Aufbewahrung</p>
+          </div>
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Branding</p>
+            <p className="mt-3 text-lg font-semibold">Logo, Favicon und Farbe</p>
           </div>
         </div>
 

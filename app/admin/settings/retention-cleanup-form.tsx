@@ -13,8 +13,8 @@ export function RetentionCleanupForm() {
   const [state, formAction, pending] = useActionState(runRetentionCleanupAction, initialState);
 
   return (
-    <section className="glass-panel space-y-4 p-5 sm:p-6">
-      <div>
+    <section className="glass-panel admin-panel space-y-4 p-5 sm:p-6">
+      <div className="admin-settings-intro">
         <p className="eyebrow">Aufbewahrung</p>
         <h3 className="mt-2 text-2xl font-semibold">Alte Daten bereinigen</h3>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -26,7 +26,7 @@ export function RetentionCleanupForm() {
 
       <FormFeedback state={state} />
       {state.success ? (
-        <p className="rounded-2xl border border-border bg-surface/65 px-4 py-3 text-sm font-semibold text-muted">
+        <p className="admin-message-preview text-sm font-semibold text-muted">
           Reservierungsanfragen anonymisiert: {state.reservationsAnonymized ?? 0}. Mailverläufe
           anonymisiert: {state.outgoingEmailsAnonymized ?? 0}. Audit-Logs gelöscht:{" "}
           {state.auditLogsDeleted ?? 0}.
@@ -35,7 +35,7 @@ export function RetentionCleanupForm() {
 
       <form action={formAction}>
         <button
-          className="secondary-action w-full"
+          className="secondary-action w-full sm:w-auto"
           disabled={pending}
           aria-busy={pending}
           type="submit"

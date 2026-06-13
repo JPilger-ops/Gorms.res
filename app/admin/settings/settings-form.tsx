@@ -18,12 +18,12 @@ function Section({
   title: string;
 }) {
   return (
-    <section className="min-w-0 rounded-3xl border border-border bg-surface/55 p-4 sm:p-5">
-      <div className="mb-4">
-        <h3 className="text-xl font-semibold">{title}</h3>
+    <section className="admin-settings-section">
+      <div className="admin-settings-section-header">
+        <h3 className="text-lg font-semibold">{title}</h3>
         <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
       </div>
-      <div className="min-w-0 space-y-4">{children}</div>
+      <div className="admin-settings-section-body">{children}</div>
     </section>
   );
 }
@@ -32,7 +32,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   const [state, formAction, pending] = useActionState(updateSettingsAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-6">
+    <form action={formAction} className="glass-panel admin-panel space-y-5 p-4 sm:p-6">
       <FormFeedback state={state} />
 
       <Section
@@ -155,7 +155,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-border bg-surface/55 px-4">
+          <label className="admin-toggle-card">
             <input
               className="h-4 w-4"
               defaultChecked={settings.blockMondays}
@@ -166,7 +166,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             <span className="text-sm font-semibold">Montage blockieren</span>
           </label>
 
-          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-border bg-surface/55 px-4">
+          <label className="admin-toggle-card">
             <input
               className="h-4 w-4"
               defaultChecked={settings.blockTuesdays}
@@ -177,7 +177,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             <span className="text-sm font-semibold">Dienstage blockieren</span>
           </label>
 
-          <label className="flex min-h-12 items-center gap-3 self-end rounded-2xl border border-border bg-surface/55 px-4">
+          <label className="admin-toggle-card">
             <input
               className="h-4 w-4"
               defaultChecked={settings.blockSundays}
@@ -188,7 +188,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             <span className="text-sm font-semibold">Sonntage blockieren</span>
           </label>
 
-          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-border bg-surface/55 px-4">
+          <label className="admin-toggle-card">
             <input
               className="h-4 w-4"
               defaultChecked={settings.blockPublicHolidays}
@@ -321,7 +321,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
         description="Betreffzeilen für die interne Mitarbeiter-Mail und die automatische Eingangsbestätigung an Gäste."
         title="E-Mail-Betreff-Templates"
       >
-        <div className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
+        <div className="admin-message-preview text-sm leading-6 text-muted">
           Unterstützte Variablen:{" "}
           <span className="font-semibold text-foreground break-words">
             {supportedEmailTemplateVariables.map((variable) => `{{${variable}}}`).join(", ")}
@@ -445,7 +445,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       </Section>
 
       <button
-        className="primary-action w-full"
+        className="primary-action w-full sm:ml-auto sm:block sm:w-auto"
         disabled={pending}
         aria-busy={pending}
         type="submit"
