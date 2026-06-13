@@ -34,10 +34,13 @@ export function CreateUserForm() {
   const [state, formAction, pending] = useActionState(createUserAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-4 p-4 sm:p-6">
+    <form action={formAction} className="glass-panel admin-panel space-y-4 p-4 sm:p-6">
       <div>
         <p className="eyebrow">Neuer Benutzer</p>
         <h3 className="mt-2 text-2xl font-semibold">Zugang anlegen</h3>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Neue Konten sind sofort aktiv. Passwörter werden serverseitig gehasht gespeichert.
+        </p>
       </div>
 
       <FormFeedback state={state} />
@@ -127,10 +130,7 @@ export function UserEditForm({
   const [state, formAction, pending] = useActionState(updateUserAction, initialState);
 
   return (
-    <form
-      action={formAction}
-      className="min-w-0 space-y-4 rounded-2xl border border-border bg-surface/65 p-4"
-    >
+    <form action={formAction} className="admin-message-preview space-y-4">
       <input name="id" type="hidden" value={id} />
       {isCurrentUser ? (
         <>
@@ -139,63 +139,72 @@ export function UserEditForm({
         </>
       ) : null}
 
-      <FormFeedback state={state} />
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold">Name</span>
-          <input
-            className="glass-control min-h-12 w-full px-4 outline-none"
-            defaultValue={name}
-            name="name"
-            required
-            type="text"
-          />
-          <FieldError messages={state.fieldErrors?.name} />
-        </label>
-
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold">E-Mail</span>
-          <input
-            autoComplete="email"
-            className="glass-control min-h-12 w-full px-4 outline-none"
-            defaultValue={email}
-            name="email"
-            required
-            type="email"
-          />
-          <FieldError messages={state.fieldErrors?.email} />
-        </label>
-
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold">Rolle</span>
-          <RoleSelect defaultValue={role} disabled={isCurrentUser} />
-          <FieldError messages={state.fieldErrors?.role} />
-        </label>
-
-        <label className="flex min-h-12 items-center gap-3 self-end rounded-2xl border border-border bg-surface/55 px-4">
-          <input
-            className="h-4 w-4"
-            defaultChecked={isActive}
-            disabled={isCurrentUser}
-            name="isActive"
-            type="checkbox"
-            value="true"
-          />
-          <span className="text-sm font-semibold">
-            {isCurrentUser ? "Eigener Benutzer bleibt aktiv" : "Benutzer ist aktiv"}
-          </span>
-        </label>
+      <div>
+        <h5 className="text-lg font-semibold">Kontodaten</h5>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Rolle, Aktivstatus und Stammdaten des Benutzerkontos.
+        </p>
       </div>
 
-      <button
-        className="secondary-action w-full"
-        disabled={pending}
-        aria-busy={pending}
-        type="submit"
-      >
-        {pending ? "Wird gespeichert..." : "Benutzer speichern"}
-      </button>
+      <div className="space-y-4">
+        <FormFeedback state={state} />
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Name</span>
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={name}
+              name="name"
+              required
+              type="text"
+            />
+            <FieldError messages={state.fieldErrors?.name} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">E-Mail</span>
+            <input
+              autoComplete="email"
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              defaultValue={email}
+              name="email"
+              required
+              type="email"
+            />
+            <FieldError messages={state.fieldErrors?.email} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold">Rolle</span>
+            <RoleSelect defaultValue={role} disabled={isCurrentUser} />
+            <FieldError messages={state.fieldErrors?.role} />
+          </label>
+
+          <label className="admin-toggle-card xl:col-span-2">
+            <input
+              className="h-4 w-4"
+              defaultChecked={isActive}
+              disabled={isCurrentUser}
+              name="isActive"
+              type="checkbox"
+              value="true"
+            />
+            <span className="text-sm font-semibold">
+              {isCurrentUser ? "Eigener Benutzer bleibt aktiv" : "Benutzer ist aktiv"}
+            </span>
+          </label>
+        </div>
+
+        <button
+          className="secondary-action w-full sm:ml-auto sm:block sm:w-auto"
+          disabled={pending}
+          aria-busy={pending}
+          type="submit"
+        >
+          {pending ? "Wird gespeichert..." : "Benutzer speichern"}
+        </button>
+      </div>
     </form>
   );
 }
@@ -204,10 +213,7 @@ export function ResetUserPasswordForm({ id }: { id: string }) {
   const [state, formAction, pending] = useActionState(resetUserPasswordAction, initialState);
 
   return (
-    <form
-      action={formAction}
-      className="min-w-0 space-y-4 rounded-2xl border border-border bg-surface/65 p-4"
-    >
+    <form action={formAction} className="admin-message-preview space-y-4">
       <input name="id" type="hidden" value={id} />
 
       <FormFeedback state={state} />
@@ -239,7 +245,7 @@ export function ResetUserPasswordForm({ id }: { id: string }) {
       </div>
 
       <button
-        className="secondary-action w-full"
+        className="secondary-action w-full sm:ml-auto sm:block sm:w-auto"
         disabled={pending}
         aria-busy={pending}
         type="submit"

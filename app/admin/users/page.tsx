@@ -23,11 +23,14 @@ function roleLabel(role: string) {
 export default async function UsersPage() {
   const session = await requirePermission("users:manage");
   const users = await getAdminUsers();
+  const activeUsers = users.filter((user) => user.isActive).length;
+  const adminUsers = users.filter((user) => user.role === "admin").length;
+  const employeeUsers = users.filter((user) => user.role === "mitarbeiter").length;
 
   return (
     <AdminShell session={session}>
       <div className="space-y-6">
-        <div className="glass-panel p-5 sm:p-7">
+        <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="eyebrow">Benutzerverwaltung</p>
@@ -40,31 +43,55 @@ export default async function UsersPage() {
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[0.85fr_minmax(0,1.15fr)]">
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Konten</p>
+            <p className="mt-3 text-3xl font-semibold">{users.length}</p>
+            <p className="mt-2 text-sm text-muted">insgesamt angelegt</p>
+          </div>
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Aktiv</p>
+            <p className="mt-3 text-3xl font-semibold">{activeUsers}</p>
+            <p className="mt-2 text-sm text-muted">können sich anmelden</p>
+          </div>
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Admins</p>
+            <p className="mt-3 text-3xl font-semibold">{adminUsers}</p>
+            <p className="mt-2 text-sm text-muted">volle Verwaltung</p>
+          </div>
+          <div className="admin-stat-card">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Mitarbeiter</p>
+            <p className="mt-3 text-3xl font-semibold">{employeeUsers}</p>
+            <p className="mt-2 text-sm text-muted">operativer Zugriff</p>
+          </div>
+        </div>
+
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
           <CreateUserForm />
 
-          <section className="glass-panel p-4 sm:p-6">
+          <section className="glass-panel admin-panel p-4 sm:p-6">
             <div className="mb-5">
               <p className="eyebrow">Bestehende Benutzer</p>
               <h3 className="mt-2 text-2xl font-semibold">Konten</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Änderungen werden auditierbar gespeichert. Eigene Rolle und Aktivierung sind gegen
+                versehentliche Selbstsperre geschützt.
+              </p>
             </div>
 
             {users.length ? (
               <div className="space-y-4">
                 {users.map((user) => (
-                  <article
-                    className="min-w-0 rounded-3xl border border-border bg-surface/50 p-4"
-                    key={user.id}
-                  >
+                  <article className="admin-list-card min-w-0 p-4" key={user.id}>
                     <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
                           <h4 className="text-xl font-semibold">{user.name}</h4>
-                          <span className="rounded-full border border-border bg-surface/70 px-3 py-1 text-xs font-bold text-muted">
+                          <span className="admin-filter-chip pointer-events-none px-3 py-1 text-xs">
                             {roleLabel(user.role)}
                           </span>
                           <span
-                            className={`rounded-full border border-border bg-surface/70 px-3 py-1 text-xs font-bold ${
+                            className={`admin-filter-chip pointer-events-none px-3 py-1 text-xs ${
                               user.isActive ? "text-success" : "text-danger"
                             }`}
                           >
@@ -74,7 +101,7 @@ export default async function UsersPage() {
                         <p className="mt-2 break-words text-sm text-muted">{user.email}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-border bg-surface/65 px-4 py-3 text-sm">
+                      <div className="admin-message-preview text-sm">
                         <p className="font-semibold">Letzter Login</p>
                         <p className="mt-1 text-muted">{formatDateTime(user.lastLoginAt)}</p>
                       </div>
@@ -90,10 +117,12 @@ export default async function UsersPage() {
                         role={user.role}
                       />
 
-                      <details className="rounded-2xl border border-border bg-surface/45 p-4">
-                        <summary className="cursor-pointer text-sm font-semibold">
-                          Passwort neu setzen
-                        </summary>
+                      <details className="admin-disclosure">
+                        <summary>Passwort neu setzen</summary>
+                        <p className="mt-3 text-sm leading-6 text-muted">
+                          Setzt ein neues Passwort und beendet bestehende Sitzungen dieses
+                          Benutzers.
+                        </p>
                         <div className="mt-4">
                           <ResetUserPasswordForm id={user.id} />
                         </div>
@@ -103,7 +132,7 @@ export default async function UsersPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-surface/65 p-5 text-sm leading-6 text-muted">
+              <div className="admin-message-preview text-sm leading-6 text-muted">
                 Keine Benutzer vorhanden.
               </div>
             )}
