@@ -101,6 +101,68 @@ Public /admin:     404
 Admin /reservieren: 404
 ```
 
+## Live Reservation Workflow Smoke Test
+
+This test creates a real public reservation request, sends the normal staff and guest receipt
+emails, logs into the admin app and sends a manual decline email. Use it only after SMTP has been
+configured intentionally.
+
+Required environment variables:
+
+```bash
+export SMOKE_CONFIRM_SEND_EMAILS=I_UNDERSTAND
+export SMOKE_ADMIN_EMAIL='admin@example.test'
+export SMOKE_ADMIN_PASSWORD='set-this-in-your-shell-history-safe-way'
+```
+
+Optional environment variables:
+
+```bash
+export SMOKE_PUBLIC_URL='https://xn--heideknig-57a.gorms.de'
+export SMOKE_ADMIN_URL='https://login.gorms.de'
+export SMOKE_DATE='2026-06-24'
+export SMOKE_TIME='12:00'
+export SMOKE_GUEST_COUNT='2'
+export SMOKE_GUEST_EMAIL="$SMOKE_ADMIN_EMAIL"
+```
+
+Run through the Playwright container so the deployment host does not need browser packages:
+
+```bash
+cd /opt/app/Gorms.res
+docker run -i --rm --network host \
+  -v "$PWD":/work -w /work \
+  -e SMOKE_CONFIRM_SEND_EMAILS \
+  -e SMOKE_ADMIN_EMAIL \
+  -e SMOKE_ADMIN_PASSWORD \
+  -e SMOKE_PUBLIC_URL \
+  -e SMOKE_ADMIN_URL \
+  -e SMOKE_DATE \
+  -e SMOKE_TIME \
+  -e SMOKE_GUEST_COUNT \
+  -e SMOKE_GUEST_EMAIL \
+  mcr.microsoft.com/playwright:v1.56.1-noble \
+  sh -lc 'npm install --prefix /tmp/smoke playwright@1.56.1 >/tmp/smoke-npm.log && NODE_PATH=/tmp/smoke/node_modules npm run smoke:live-workflow'
+```
+
+Expected result:
+
+```json
+{ "ok": true, "reservationId": "...", "guestName": "Smoke Testgast ..." }
+```
+
+After the test, verify the created request if needed:
+
+```bash
+docker compose exec db psql -U heidekoenig_app -d heidekoenig -c "select status from reservation_requests where guest_name like 'Smoke Testgast%' order by created_at desc limit 1;"
+```
+
+Expected status:
+
+```text
+declined
+```
+
 ## Database Checks
 
 Check setup and retention settings:
