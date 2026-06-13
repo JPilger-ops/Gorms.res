@@ -7,16 +7,18 @@ server.
 ## Snapshot
 
 ```text
-Date:              2026-06-13
-Repository HEAD:   7ff73f5
-Deployment path:   /opt/app/Gorms.res
-App port:          6043
-Public host:       xn--heideknig-57a.gorms.de
-Admin host:        login.gorms.de
+Date:                         2026-06-13
+Deployment checkout HEAD:     a6e75a2
+Last rebuilt app image commit: ac90f9e
+Deployment path:              /opt/app/Gorms.res
+App port:                     6043
+Public host:                  xn--heideknig-57a.gorms.de
+Admin host:                   login.gorms.de
 ```
 
-The app container image currently running was rebuilt during the dependency hardening deploy. The
-two commits after that are documentation-only commits and do not require a container rebuild.
+The app container image currently running was rebuilt during the dependency hardening deploy at
+`ac90f9e`. The commits after that are documentation-only commits and do not require a container
+rebuild.
 
 ## Runtime Health
 
