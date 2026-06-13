@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   createReservationRequestAction,
   type ReservationFormState,
@@ -132,6 +132,7 @@ export function ReservationForm({
   privacyPolicyUrl?: string;
 }) {
   const [state, formAction, pending] = useActionState(createReservationRequestAction, initialState);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const today = useMemo(() => localIsoDate(new Date()), []);
   const [rangeStart, setRangeStart] = useState(today);
   const [date, setDate] = useState(today);
@@ -153,6 +154,7 @@ export function ReservationForm({
     [selectedTime, slots],
   );
   const selectedDaySummary = daySummary(selectedDay);
+  const selectedDateParts = useMemo(() => formatDayParts(date), [date]);
   const canSubmitReservation =
     Boolean(selectedTime) && selectedDaySummary.isBookable && !slotLoading && !slotError;
   const nearestPreviousDate = useMemo(
@@ -238,8 +240,25 @@ export function ReservationForm({
     setRangeStart(nextStart);
   }
 
+  function openDatePicker() {
+    const input = dateInputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.click();
+  }
+
   return (
-    <form action={formAction} className="glass-panel space-y-5 p-4 sm:p-7">
+    <form action={formAction} className="glass-panel space-y-6 p-4 sm:p-8 xl:p-9">
       <div className="space-y-2">
         <p className="eyebrow">Reservierungsanfrage</p>
         <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
@@ -261,7 +280,7 @@ export function ReservationForm({
         aria-hidden="true"
       />
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <span className="text-sm font-semibold">Wunschtag</span>
@@ -269,21 +288,31 @@ export function ReservationForm({
               Freie Tage sind hell markiert. Gesperrte Tage zeigen direkt den Grund.
             </p>
           </div>
-          <label className="block space-y-1 sm:w-48">
-            <span className="text-xs font-bold uppercase text-muted">Direktdatum</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-border bg-white/55 px-3 py-2 text-xs font-bold text-muted shadow-[inset_0_1px_0_rgb(255_255_255_/_68%)]">
+              {selectedDateParts.weekday}. {selectedDateParts.day}. {selectedDateParts.month}
+            </span>
+            <button
+              className="secondary-action min-h-10 px-4 text-sm"
+              type="button"
+              onClick={openDatePicker}
+            >
+              Zu Datum springen
+            </button>
             <input
-              className="glass-control min-h-11 w-full px-4 outline-none"
-              name="date"
+              ref={dateInputRef}
+              className="sr-only"
               value={date}
               onChange={(event) => selectDate(event.target.value)}
               min={today}
               type="date"
-              required
+              aria-label="Zu Datum springen"
             />
-          </label>
+            <input name="date" type="hidden" value={date} />
+          </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             className="secondary-action min-h-10 px-4 text-sm"
             disabled={rangeStart <= today}
@@ -302,7 +331,7 @@ export function ReservationForm({
         </div>
 
         <div
-          className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"
           aria-label="Tagauswahl"
         >
           {visibleDates.map((visibleDate) => {
@@ -316,7 +345,7 @@ export function ReservationForm({
                 type="button"
                 onClick={() => selectDate(visibleDate)}
                 className={[
-                  "glass-tile min-h-[132px] p-3 text-left transition duration-200",
+                  "glass-tile min-h-[154px] p-4 text-left transition duration-200",
                   "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_16px_34px_rgb(42_52_38_/_12%)]",
                   isSelected ? "border-primary/60 ring-2 ring-primary/20" : "",
                   summary.isBookable
@@ -330,7 +359,7 @@ export function ReservationForm({
                     <span className="block text-xs font-bold uppercase text-muted">
                       {parts.weekday}
                     </span>
-                    <span className="mt-1 block text-2xl font-semibold leading-none">
+                    <span className="mt-1 block text-3xl font-semibold leading-none">
                       {parts.day}
                     </span>
                     <span className="mt-1 block text-sm font-semibold text-muted">
@@ -350,7 +379,7 @@ export function ReservationForm({
                     >
                       {slotLoading && !dayMap.get(visibleDate) ? "Prüfung" : summary.statusLabel}
                     </span>
-                    <span className="mt-2 block text-xs font-semibold leading-5 text-muted">
+                    <span className="mt-3 block text-xs font-semibold leading-5 text-muted">
                       {slotLoading && !dayMap.get(visibleDate)
                         ? "Verfügbarkeit wird geladen"
                         : summary.detail}
@@ -398,103 +427,99 @@ export function ReservationForm({
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(160px,0.6fr)]">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <span className="text-sm font-semibold">Uhrzeit</span>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Wählen Sie eine verfügbare Zeit für den markierten Tag.
-              </p>
-            </div>
-            {selectedDaySummary.isBookable ? (
-              <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-bold text-success">
-                {selectedDaySummary.availableCount} frei
-              </span>
-            ) : null}
-          </div>
+      <label className="block space-y-2">
+        <span className="text-sm font-semibold">Personen</span>
+        <input
+          className="glass-control min-h-12 w-full px-4 outline-none"
+          name="guestCount"
+          type="number"
+          min="1"
+          max={maxGuestsPerRequest}
+          inputMode="numeric"
+          onChange={(event) => {
+            setGuestCount(event.target.value);
+            setSlotError("");
 
-          {selectedTime ? <input name="time" type="hidden" value={selectedTime} /> : null}
+            if (date) {
+              setSlotLoading(true);
+            }
+          }}
+          required
+        />
+        <FieldError messages={state.fieldErrors?.guestCount} />
+      </label>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {selectableSlots.map((slot) => {
-              const isSelected = selectedTime === slot.time;
-
-              return (
-                <button
-                  key={slot.time}
-                  type="button"
-                  onClick={() => setSelectedTime(slot.time)}
-                  className={[
-                    "glass-tile min-h-[78px] p-3 text-left transition duration-200",
-                    "hover:-translate-y-0.5 hover:border-primary/40",
-                    isSelected ? "border-primary/60 ring-2 ring-primary/20" : "",
-                    slot.status === "bookable"
-                      ? "bg-[color-mix(in_srgb,var(--success),white_90%)]"
-                      : "bg-[color-mix(in_srgb,var(--warning),white_88%)]",
-                  ].join(" ")}
-                  aria-pressed={isSelected}
-                >
-                  <span className="relative z-10 block">
-                    <span className="block text-xl font-semibold leading-none">{slot.label}</span>
-                    <span className="mt-2 block text-xs font-bold text-muted">
-                      {slotHint(slot)}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <noscript>
-            <div className="grid gap-3">
-              <input
-                className="glass-control min-h-12 w-full px-4 outline-none"
-                name="time"
-                type="time"
-                min={earliestReservationTime}
-                max={latestReservationTime}
-                step="900"
-                required
-              />
-            </div>
-          </noscript>
-
-          <FieldError messages={state.fieldErrors?.time} />
-          {slotError ? <p className="text-sm leading-6 text-danger">{slotError}</p> : null}
-          {!slotError && date && !slotLoading && selectedDay && selectableSlots.length === 0 ? (
-            <p className="text-sm leading-6 text-danger">
-              {blockedDateReason ?? "Für dieses Datum sind keine Reservierungsanfragen möglich."}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <span className="text-sm font-semibold">Uhrzeit</span>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              Wählen Sie eine verfügbare Zeit für den markierten Tag.
             </p>
-          ) : null}
-          {selectedSlot && selectedSlot.status !== "bookable" ? (
-            <p className="text-sm leading-6 text-muted">
-              Diese Zeit wird angenommen, aber intern besonders geprüft.
-            </p>
+          </div>
+          {selectedDaySummary.isBookable ? (
+            <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-bold text-success">
+              {selectedDaySummary.availableCount} frei
+            </span>
           ) : null}
         </div>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold">Personen</span>
-          <input
-            className="glass-control min-h-12 w-full px-4 outline-none"
-            name="guestCount"
-            type="number"
-            min="1"
-            max={maxGuestsPerRequest}
-            inputMode="numeric"
-            onChange={(event) => {
-              setGuestCount(event.target.value);
-              setSlotError("");
+        {selectedTime ? <input name="time" type="hidden" value={selectedTime} /> : null}
 
-              if (date) {
-                setSlotLoading(true);
-              }
-            }}
-            required
-          />
-          <FieldError messages={state.fieldErrors?.guestCount} />
-        </label>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          {selectableSlots.map((slot) => {
+            const isSelected = selectedTime === slot.time;
+
+            return (
+              <button
+                key={slot.time}
+                type="button"
+                onClick={() => setSelectedTime(slot.time)}
+                className={[
+                  "glass-tile min-h-[88px] p-4 text-left transition duration-200",
+                  "hover:-translate-y-0.5 hover:border-primary/40",
+                  isSelected ? "border-primary/60 ring-2 ring-primary/20" : "",
+                  slot.status === "bookable"
+                    ? "bg-[color-mix(in_srgb,var(--success),white_90%)]"
+                    : "bg-[color-mix(in_srgb,var(--warning),white_88%)]",
+                ].join(" ")}
+                aria-pressed={isSelected}
+              >
+                <span className="relative z-10 block">
+                  <span className="block text-xl font-semibold leading-none">{slot.label}</span>
+                  <span className="mt-2 block text-xs font-bold text-muted">{slotHint(slot)}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <noscript>
+          <div className="grid gap-3">
+            <input
+              className="glass-control min-h-12 w-full px-4 outline-none"
+              name="time"
+              type="time"
+              min={earliestReservationTime}
+              max={latestReservationTime}
+              step="900"
+              required
+            />
+          </div>
+        </noscript>
+
+        <FieldError messages={state.fieldErrors?.time} />
+        {slotError ? <p className="text-sm leading-6 text-danger">{slotError}</p> : null}
+        {!slotError && date && !slotLoading && selectedDay && selectableSlots.length === 0 ? (
+          <p className="text-sm leading-6 text-danger">
+            {blockedDateReason ?? "Für dieses Datum sind keine Reservierungsanfragen möglich."}
+          </p>
+        ) : null}
+        {selectedSlot && selectedSlot.status !== "bookable" ? (
+          <p className="text-sm leading-6 text-muted">
+            Diese Zeit wird angenommen, aber intern besonders geprüft.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

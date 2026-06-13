@@ -18,7 +18,7 @@ export async function PublicReservationPage() {
       id="main-content"
       style={{ "--primary": branding.accentColor } as CSSProperties}
     >
-      <section className="page-frame grid gap-6 py-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-start lg:gap-8 lg:py-14">
+      <section className="page-frame reservation-frame grid gap-6 py-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:gap-10 lg:py-14">
         <div className="space-y-6 lg:sticky lg:top-8">
           <div className="intro-panel space-y-5 p-5 sm:p-7">
             {branding.logoUrl ? (

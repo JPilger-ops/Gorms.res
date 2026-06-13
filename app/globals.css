@@ -190,6 +190,10 @@ html {
     margin-inline: auto;
   }
 
+  .reservation-frame {
+    width: min(1240px, 100%);
+  }
+
   #main-content {
     scroll-margin-top: 24px;
   }
