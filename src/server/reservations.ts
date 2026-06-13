@@ -8,6 +8,7 @@ import {
   checkReservationAvailability,
   type AvailabilityCheckResult,
 } from "@/src/server/reservation-availability";
+import { detectSpecialRequests } from "@/src/server/special-requests";
 
 export const reservationStatuses = ["pending", "accepted", "declined", "cancelled"] as const;
 
@@ -91,11 +92,23 @@ export async function getAdminReservationRequests({ status }: { status: Reservat
 export async function createReservationRequest(
   input: ReservationRequestInput,
 ): Promise<CreateReservationResult> {
-  const availability = await checkReservationAvailability({
+  const baseAvailability = await checkReservationAvailability({
     date: input.date,
     guestCount: input.guestCount,
     time: input.time,
   });
+  const specialRequests = detectSpecialRequests(input.message);
+  const availability: AvailabilityCheckResult = {
+    ...baseAvailability,
+    manualReviewReasons: [
+      ...baseAvailability.manualReviewReasons,
+      ...specialRequests.manualReviewReasons,
+    ],
+    status:
+      baseAvailability.status === "bookable" && specialRequests.hasSpecialRequest
+        ? "manual_review"
+        : baseAvailability.status,
+  };
 
   if (availability.hardBlocked) {
     return {

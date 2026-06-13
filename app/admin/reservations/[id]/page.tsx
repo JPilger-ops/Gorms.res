@@ -64,6 +64,10 @@ const decisionFeedback = {
 
 type DecisionFeedbackKey = keyof typeof decisionFeedback;
 
+function getSpecialRequestReasons(items: string[]) {
+  return items.filter((item) => item.startsWith("Sonderwunsch erkannt:"));
+}
+
 function normalizeDecisionFeedback(
   value: string | string[] | undefined,
 ): DecisionFeedbackKey | null {
@@ -197,6 +201,9 @@ export default async function ReservationDetailPage({
   const aiStatus = getAiAssistantStatus();
   const { availabilityCheck, outgoingEmails, reservation } = detail;
   const canRespond = hasPermission(session.role, "reservations:respond");
+  const specialRequestReasons = availabilityCheck
+    ? getSpecialRequestReasons(availabilityCheck.manualReviewReasons)
+    : [];
   const decisionDrafts: ReservationDecisionDraft[] = [
     {
       decision: "accept",
@@ -247,6 +254,28 @@ export default async function ReservationDetailPage({
               </span>
               <span className="block">{decisionFeedback[decisionFeedbackKey].text}</span>
             </span>
+          </section>
+        ) : null}
+
+        {specialRequestReasons.length ? (
+          <section className="glass-panel admin-panel border-warning/30 bg-warning/10 p-4 sm:p-5">
+            <p className="eyebrow">Sonderwunsch erkannt</p>
+            <h3 className="mt-1 text-xl font-semibold">Bitte vor der Antwort prüfen</h3>
+            <ul className="mt-3 space-y-2 text-sm leading-6">
+              {specialRequestReasons.map((reason) => (
+                <li className="flex gap-2" key={reason}>
+                  <span
+                    className="mt-2 size-1.5 shrink-0 rounded-full bg-warning"
+                    aria-hidden="true"
+                  />
+                  <span>{reason.replace("Sonderwunsch erkannt: ", "")}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-sm leading-6 text-muted">
+              Diese Erkennung löst keine automatische Entscheidung aus. Sie markiert nur, dass der
+              Gästetext vor Zusage, Absage oder Rückfrage bewusst gelesen werden sollte.
+            </p>
           </section>
         ) : null}
 
