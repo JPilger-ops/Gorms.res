@@ -4,9 +4,9 @@ import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
-  "Montage, Dienstage, Sonntage, Feiertage und gesperrte Tage werden automatisch blockiert.",
-  "Die Reservierung gilt erst nach persönlicher Bestätigung.",
-  "Ihre Daten werden nur zur Bearbeitung der Anfrage verwendet.",
+  "Montag, Dienstag, Sonntag, Feiertage und gesperrte Tage sind nicht auswählbar.",
+  "Ihre Anfrage wird persönlich geprüft.",
+  "Ihre Daten nutzen wir nur zur Bearbeitung Ihrer Anfrage.",
 ];
 
 export async function PublicReservationPage() {
@@ -31,11 +31,11 @@ export async function PublicReservationPage() {
             ) : null}
             <p className="eyebrow">{settings.appName}</p>
             <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-balance sm:text-5xl xl:text-6xl">
-              Anfrage für einen Platz im Grünen.
+              Platz im Grünen anfragen.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted sm:text-xl">
-              Senden Sie uns Ihre Wunschzeit für die Außengastronomie. Wir prüfen die Anfrage
-              persönlich und melden uns anschließend bei Ihnen.
+              Wählen Sie einfach Datum, Uhrzeit und Personenzahl. Wir prüfen Ihre Anfrage persönlich
+              und melden uns anschließend bei Ihnen.
             </p>
           </div>
 
@@ -52,8 +52,8 @@ export async function PublicReservationPage() {
           </div>
 
           <div className="soft-card p-5 text-sm font-semibold leading-6 text-muted">
-            Nach dem Absenden prüfen wir Ihre Wunschzeit persönlich. Erst unsere Rückmeldung macht
-            aus der Anfrage eine verbindliche Reservierung.
+            Nach dem Absenden erhalten Sie eine Eingangsbestätigung. Verbindlich wird die
+            Reservierung erst durch unsere persönliche Zusage.
           </div>
         </div>
 

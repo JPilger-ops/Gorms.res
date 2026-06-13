@@ -161,6 +161,6 @@ export async function createReservationRequestAction(
   return {
     success: true,
     message:
-      "Vielen Dank für Ihre Anfrage. Die Reservierung ist erst nach unserer persönlichen Bestätigung gültig.",
+      "Ihre Anfrage ist eingegangen. Die Reservierung ist erst nach unserer persönlichen Bestätigung gültig.",
   };
 }

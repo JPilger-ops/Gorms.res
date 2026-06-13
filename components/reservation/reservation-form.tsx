@@ -37,11 +37,11 @@ function slotHint(slot: Slot) {
   }
 
   if (slot.status === "manual_review") {
-    return "Manuelle Prüfung";
+    return "Rückfrage möglich";
   }
 
   if (slot.status === "capacity_warning") {
-    return "Prüfung erforderlich";
+    return "Rückfrage möglich";
   }
 
   return "Verfügbar";
@@ -135,7 +135,7 @@ function daySummary(day?: SlotResponse) {
 
   return {
     availableCount: selectableSlots.length,
-    detail: isLimited ? "Rückfrage möglich" : `ab ${firstAvailableTime}`,
+    detail: isLimited ? "Rückfrage" : `ab ${firstAvailableTime}`,
     firstAvailableTime,
     isBookable: true,
     isLimited,
@@ -209,6 +209,7 @@ export function ReservationForm({
   const [slotDays, setSlotDays] = useState<SlotResponse[]>([]);
   const [slotError, setSlotError] = useState("");
   const [slotLoading, setSlotLoading] = useState(true);
+  const feedbackRef = useRef<HTMLDivElement>(null);
 
   const dayMap = useMemo(() => new Map(slotDays.map((day) => [day.date, day])), [slotDays]);
   const visibleDates = useMemo(
@@ -287,6 +288,20 @@ export function ReservationForm({
     };
   }, [guestCount, rangeStart]);
 
+  useEffect(() => {
+    if (!state.message) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    feedbackRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    feedbackRef.current?.focus({ preventScroll: true });
+  }, [state.message]);
+
   const selectableSlots = slots.filter((slot) => !slot.hardBlocked);
   const blockedDateReason = slots.find((slot) => slot.hardBlocked && slot.reasons.length > 0)
     ?.reasons[0];
@@ -344,15 +359,17 @@ export function ReservationForm({
     <form action={formAction} className="glass-panel space-y-6 p-4 sm:p-8 xl:p-9">
       <div className="space-y-2">
         <p className="eyebrow">Reservierungsanfrage</p>
-        <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
-          Außengastronomie anfragen
-        </h2>
+        <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">Wunschzeit wählen</h2>
         <p className="text-sm leading-6 text-muted">
-          Bitte beachten: Dies ist noch keine Reservierungsbestätigung.
+          Wir prüfen jede Anfrage persönlich. Eine Zusage erhalten Sie separat von uns.
         </p>
       </div>
 
-      <FormFeedback state={state} />
+      {state.message ? (
+        <div ref={feedbackRef} tabIndex={-1} className="scroll-mt-6 outline-none">
+          <FormFeedback state={state} />
+        </div>
+      ) : null}
 
       <input
         className="hidden"
@@ -366,9 +383,9 @@ export function ReservationForm({
       <div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
-            <span className="text-sm font-semibold">Wunschtag</span>
+            <span className="text-sm font-semibold">Datum wählen</span>
             <p className="text-sm leading-6 text-muted">
-              Freie Tage sind hell markiert. Gesperrte Tage zeigen direkt den Grund.
+              Freie Tage sind grün markiert. Gesperrte Tage zeigen direkt den Grund.
             </p>
           </div>
           <div className="min-w-0">
@@ -376,7 +393,7 @@ export function ReservationForm({
               className="glass-tile flex min-h-16 min-w-[230px] items-center gap-3 px-3.5 py-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 sm:min-w-[260px]"
               type="button"
               onClick={openDatePicker}
-              aria-label={`Kalender öffnen. Ausgewählt ist ${selectedDateParts.weekday}. ${selectedDateParts.day}. ${selectedDateParts.month}.`}
+              aria-label={`Datum öffnen. Ausgewählt ist ${selectedDateParts.weekday}. ${selectedDateParts.day}. ${selectedDateParts.month}.`}
             >
               <span
                 className="relative z-10 flex size-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-white/65 text-center shadow-[inset_0_1px_0_rgb(255_255_255_/_72%)]"
@@ -388,7 +405,7 @@ export function ReservationForm({
                 </span>
               </span>
               <span className="relative z-10 min-w-0">
-                <span className="block text-sm font-bold text-foreground">Kalender öffnen</span>
+                <span className="block text-sm font-bold text-foreground">Datum öffnen</span>
                 <span className="mt-0.5 block text-xs font-semibold text-muted">
                   {selectedDateParts.weekday}. {selectedDateParts.day}. {selectedDateParts.month}{" "}
                   auswählen
@@ -402,7 +419,7 @@ export function ReservationForm({
               onChange={(event) => selectDate(event.target.value)}
               min={today}
               type="date"
-              aria-label="Kalender öffnen"
+              aria-label="Datum im Kalender öffnen"
             />
             <input name="date" type="hidden" value={date} />
           </div>
@@ -415,14 +432,14 @@ export function ReservationForm({
             type="button"
             onClick={() => moveRange(-7)}
           >
-            Zurück
+            Frühere Tage
           </button>
           <button
             className="secondary-action min-h-10 px-4 text-sm"
             type="button"
             onClick={() => moveRange(7)}
           >
-            Weitere Tage
+            Nächste Tage
           </button>
         </div>
 
@@ -481,10 +498,14 @@ export function ReservationForm({
 
         {!slotError && !slotLoading && selectedDay && !selectedDaySummary.isBookable ? (
           <div className="form-feedback form-feedback-error">
-            <span className="form-feedback-dot" aria-hidden="true" />
-            <div>
+            <span aria-hidden="true" className="form-feedback-icon">
+              !
+            </span>
+            <div className="form-feedback-content">
               <span className="form-feedback-label">Tag nicht verfügbar</span>
-              <p>{blockedDateReason ?? selectedDaySummary.reason}</p>
+              <span className="form-feedback-message">
+                {blockedDateReason ?? selectedDaySummary.reason}
+              </span>
               <div className="mt-3 flex flex-wrap gap-2">
                 {nearestPreviousDate ? (
                   <button
@@ -515,10 +536,10 @@ export function ReservationForm({
       </div>
 
       <div className="space-y-2">
-        <span className="text-sm font-semibold">Personen</span>
+        <span className="text-sm font-semibold">Personenzahl wählen</span>
         <div className="glass-tile grid min-h-[104px] gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <div className="relative z-10 min-w-0">
-            <span className="block text-xs font-bold uppercase text-muted">Anzahl Gäste</span>
+            <span className="block text-xs font-bold uppercase text-muted">Gäste</span>
             <span className="mt-1 block text-sm font-semibold text-muted">
               1 bis {maxGuestsPerRequest} Personen
             </span>
@@ -557,9 +578,9 @@ export function ReservationForm({
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <span className="text-sm font-semibold">Uhrzeit</span>
+            <span className="text-sm font-semibold">Uhrzeit wählen</span>
             <p className="mt-1 text-sm leading-6 text-muted">
-              Wählen Sie eine verfügbare Zeit für den markierten Tag.
+              Wählen Sie eine verfügbare Uhrzeit für den markierten Tag.
             </p>
           </div>
           {selectedDaySummary.isBookable ? (
@@ -620,7 +641,7 @@ export function ReservationForm({
         ) : null}
         {selectedSlot && selectedSlot.status !== "bookable" ? (
           <p className="text-sm leading-6 text-muted">
-            Diese Zeit wird angenommen, aber intern besonders geprüft.
+            Diese Uhrzeit nehmen wir als Anfrage an und prüfen sie intern besonders sorgfältig.
           </p>
         ) : null}
       </div>
@@ -630,11 +651,11 @@ export function ReservationForm({
           <div className="space-y-1">
             <span className="text-sm font-semibold">Kontaktdaten</span>
             <p className="text-sm leading-6 text-muted">
-              Diese Angaben nutzen wir nur, um Ihre Anfrage zu bearbeiten und Sie zu erreichen.
+              Diese Angaben brauchen wir, um Ihre Anfrage zu bearbeiten und Sie zu erreichen.
             </p>
           </div>
           <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-            Pflichtangaben
+            Erforderlich
           </span>
         </div>
 
@@ -711,7 +732,7 @@ export function ReservationForm({
           </span>
           <span className="relative z-10 min-w-0 text-sm leading-6">
             <span className="block font-bold text-foreground">
-              Ich habe den Datenschutzhinweis gelesen.
+              Ich habe den Datenschutzhinweis gelesen und nehme ihn zur Kenntnis.
             </span>
             <span className="mt-1 block text-muted">{privacyNoticeText}</span>
           </span>
@@ -739,12 +760,12 @@ export function ReservationForm({
           <div className="space-y-1">
             <span className="text-sm font-semibold">Anfrage abschicken</span>
             <p className="text-sm leading-6 text-muted">
-              Mit dem Absenden schicken Sie uns Ihre Reservierungsanfrage. Wir prüfen die
-              Verfügbarkeit persönlich und melden uns anschließend bei Ihnen.
+              Mit dem Absenden schicken Sie uns Ihre Reservierungsanfrage. Wir melden uns mit einer
+              persönlichen Rückmeldung bei Ihnen.
             </p>
           </div>
-          <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-            Noch keine Zusage
+          <span className="w-fit shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold leading-none text-primary">
+            Anfrage
           </span>
         </div>
 
@@ -762,7 +783,7 @@ export function ReservationForm({
         </button>
 
         <p className="relative z-10 text-center text-xs font-semibold leading-5 text-muted">
-          Erst unsere persönliche Bestätigung macht die Reservierung verbindlich.
+          Verbindlich wird die Reservierung erst durch unsere persönliche Zusage.
         </p>
       </div>
     </form>
