@@ -8,12 +8,13 @@ Replace every example path with the real production path.
 Last verified debug deployment:
 
 ```text
-Date:        2026-06-13
-Commit:      ac90f9e
-Debug path:  /opt/app/Gorms.res
-App port:    6043
-Public host: xn--heideknig-57a.gorms.de
-Admin host:  login.gorms.de
+Date:                         2026-06-13
+Deployment checkout commit:   ade53ce
+Last rebuilt app image commit: ac90f9e
+Debug path:                   /opt/app/Gorms.res
+App port:                     6043
+Public host:                  xn--heideknig-57a.gorms.de
+Admin host:                   login.gorms.de
 ```
 
 Verified on the debug deployment:
@@ -25,6 +26,7 @@ Verified on the debug deployment:
 - Local Ollama draft generation is enabled but cannot send emails or change status.
 - NFS backup to the NAS export works with UID/GID `3007:3009`.
 - `npm audit` is clean after dependency hardening.
+- GitHub Actions CI succeeds with install, lint, typecheck, format check and build.
 
 ## Production Inputs To Confirm
 

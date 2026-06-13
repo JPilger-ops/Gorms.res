@@ -8,7 +8,7 @@ server.
 
 ```text
 Date:                         2026-06-13
-Deployment checkout HEAD:     a6e75a2
+Deployment checkout HEAD:     ade53ce
 Last rebuilt app image commit: ac90f9e
 Deployment path:              /opt/app/Gorms.res
 App port:                     6043
@@ -17,8 +17,8 @@ Admin host:                   login.gorms.de
 ```
 
 The app container image currently running was rebuilt during the dependency hardening deploy at
-`ac90f9e`. The commits after that are documentation-only commits and do not require a container
-rebuild.
+`ac90f9e`. The commits after that are documentation and CI-only commits and do not require a
+container rebuild.
 
 ## Runtime Health
 
@@ -47,6 +47,15 @@ Startup status: setup completed, app is ready.
 0 vulnerabilities
 ```
 
+GitHub Actions CI on `main`:
+
+```text
+Run:    27464807606
+Commit: ade53ce
+Status: success
+Checks: install, lint, typecheck, format check, build
+```
+
 Host routing is still enforced by the app and reverse proxy:
 
 ```text
@@ -64,6 +73,7 @@ Counts only, without printing personal reservation details:
 ```text
 audit_log                   33
 blocked_days                 1
+reservation_events           0
 reservation_outgoing_emails  6
 reservation_requests         5
 sessions                    13

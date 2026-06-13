@@ -2,7 +2,7 @@
 
 ## Current Verified Deployment
 
-This runbook documents the verified deployment checks from 2026-06-12.
+This runbook documents the verified deployment checks from 2026-06-13.
 
 Current debug deployment path:
 
