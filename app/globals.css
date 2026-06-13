@@ -334,6 +334,57 @@ html {
       inset 0 -1px 0 rgb(255 255 255 / 28%);
   }
 
+  .indoor-callout {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 8px;
+    border: 1px solid color-mix(in srgb, var(--primary), transparent 58%);
+    border-radius: 20px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--primary), white 84%), transparent 72%),
+      linear-gradient(180deg, rgb(255 255 255 / 64%), rgb(255 255 255 / 34%)),
+      color-mix(in srgb, var(--surface-strong), transparent 34%);
+    box-shadow:
+      0 16px 36px color-mix(in srgb, var(--primary), transparent 88%),
+      inset 0 1px 0 rgb(255 255 255 / 72%);
+    padding: 15px 16px;
+  }
+
+  .indoor-callout::before {
+    position: absolute;
+    inset: 1px;
+    pointer-events: none;
+    border-radius: inherit;
+    content: "";
+    background: linear-gradient(135deg, rgb(255 255 255 / 48%), transparent 38%);
+    opacity: 0.34;
+  }
+
+  .indoor-callout span,
+  .indoor-callout p {
+    position: relative;
+    z-index: 1;
+  }
+
+  .indoor-callout span {
+    width: fit-content;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary), white 86%);
+    color: var(--primary);
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .indoor-callout p {
+    color: var(--foreground);
+    font-size: 0.98rem;
+    font-weight: 800;
+    line-height: 1.5;
+  }
+
   .soft-card::before,
   .glass-tile::before {
     position: absolute;
@@ -689,6 +740,51 @@ html {
     line-height: 1;
   }
 
+  .privacy-banner {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .privacy-banner-content {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    max-width: 880px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    border: 1px solid color-mix(in srgb, var(--border), white 24%);
+    border-radius: 24px;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 78%), rgb(255 255 255 / 46%)),
+      color-mix(in srgb, var(--surface-strong), transparent 18%);
+    box-shadow:
+      0 22px 56px rgb(31 35 29 / 18%),
+      inset 0 1px 0 rgb(255 255 255 / 76%);
+    margin-inline: auto;
+    padding: 16px;
+    pointer-events: auto;
+  }
+
+  .privacy-banner-content::before {
+    position: absolute;
+    inset: 1px;
+    pointer-events: none;
+    border-radius: inherit;
+    content: "";
+    background: linear-gradient(135deg, rgb(255 255 255 / 42%), transparent 44%);
+    opacity: 0.42;
+  }
+
+  .privacy-banner-content > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .event-list {
     position: relative;
   }
@@ -817,8 +913,10 @@ html {
 @media (forced-colors: active) {
   .glass-panel,
   .glass-control,
+  .indoor-callout,
   .glass-tile,
   .glass-nav-link,
+  .privacy-banner-content,
   .primary-action,
   .secondary-action {
     border: 1px solid CanvasText;
@@ -849,8 +947,10 @@ html {
   .glass-control,
   .field-input,
   .soft-card,
+  .indoor-callout,
   .glass-tile,
   .glass-nav-link,
+  .privacy-banner-content,
   .primary-action,
   .secondary-action {
     -webkit-backdrop-filter: blur(24px) saturate(165%);
@@ -926,5 +1026,21 @@ html {
 
   .glass-panel {
     border-radius: 22px;
+  }
+
+  .privacy-banner {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .privacy-banner-content {
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 20px;
+  }
+
+  .privacy-banner-content .primary-action {
+    width: 100%;
   }
 }

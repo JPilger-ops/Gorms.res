@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { PrivacyNoticeBanner } from "@/components/reservation/privacy-notice-banner";
 import { ReservationForm } from "@/components/reservation/reservation-form";
 import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
@@ -12,6 +13,7 @@ const facts = [
 
 export async function PublicReservationPage() {
   const [branding, settings] = await Promise.all([getBrandingSettings(), getAdminSettings()]);
+  const privacyUrl = settings.privacyPolicyUrl ?? "/datenschutz";
 
   return (
     <main
@@ -38,6 +40,10 @@ export async function PublicReservationPage() {
               Wählen Sie einfach Datum, Uhrzeit und Personenzahl. Wir prüfen Ihre Anfrage persönlich
               und melden uns anschließend bei Ihnen.
             </p>
+            <div className="indoor-callout">
+              <span aria-hidden="true">Innenbereich</span>
+              <p>Reservierungen sind ausschließlich für unseren Innenbereich möglich.</p>
+            </div>
           </div>
 
           <div className="glass-panel space-y-3 p-5 sm:p-6" aria-label="Wichtige Hinweise">
@@ -59,9 +65,10 @@ export async function PublicReservationPage() {
           earliestReservationTime={settings.earliestReservationTime}
           maxGuestsPerRequest={settings.maxGuestsPerRequest}
           privacyNoticeText={settings.privacyNoticeText}
-          privacyPolicyUrl={settings.privacyPolicyUrl}
+          privacyPolicyUrl={privacyUrl}
         />
       </section>
+      <PrivacyNoticeBanner privacyUrl={privacyUrl} />
     </main>
   );
 }

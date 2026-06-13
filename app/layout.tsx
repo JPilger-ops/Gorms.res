@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     default: "Waldwirtschaft Heidekönig",
     template: "%s | Waldwirtschaft Heidekönig",
   },
-  description: "Reservierungsanfragen für die Außengastronomie Waldwirtschaft Heidekönig.",
+  description: "Reservierungsanfragen für die Waldwirtschaft Heidekönig.",
   applicationName: "Waldwirtschaft Heidekönig Reservierungen",
   robots: {
     index: false,
