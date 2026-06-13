@@ -108,6 +108,13 @@ function serviceBlock(composeText, serviceName) {
 const envPath = process.env.PREFLIGHT_ENV_FILE ?? ".env";
 const env = parseEnv(envPath);
 const composeText = readText("docker-compose.yml");
+const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
+
+if (nodeMajor >= 22) {
+  ok("Node.js", `Node ${process.versions.node} satisfies the production toolchain.`);
+} else {
+  error("Node.js", `Node ${process.versions.node} is too old. Use Node 22 or newer.`);
+}
 
 if (existsSync(envPath)) {
   ok("Environment", `${envPath} exists.`);

@@ -49,5 +49,24 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Production preflight
+        run: |
+          cat > /tmp/heidekoenig-preflight.env <<'EOF'
+          POSTGRES_APP_PASSWORD=ci-postgres-password-not-used-in-production
+          SESSION_SECRET=ci-session-secret-that-is-not-used-in-production
+          SETUP_TOKEN=ci-setup-token-not-used-in-production
+          APP_ENCRYPTION_KEY=ci-encryption-key-not-used-in-production-32
+          PUBLIC_ALLOWED_HOSTS=heidekönig.gorms.de,xn--heideknig-57a.gorms.de
+          ADMIN_ALLOWED_HOSTS=login.gorms.de
+          NEXT_PUBLIC_SITE_URL=https://xn--heideknig-57a.gorms.de
+          ADMIN_APP_URL=https://login.gorms.de
+          ADMIN_COOKIE_DOMAIN=
+          RUN_MIGRATIONS_ON_START=false
+          PORT=6043
+          BACKUP_HOST_PATH=/mnt/heidekoenig-backups
+          BACKUP_CONTAINER_PATH=/backups
+          EOF
+          PREFLIGHT_ENV_FILE=/tmp/heidekoenig-preflight.env npm run preflight:production
+
       - name: Build
         run: npm run build

@@ -2,6 +2,17 @@
 
 ## Install
 
+Use Node 22 for local development and builds. The Docker image and GitHub Actions both use Node 22,
+and Next.js rejects older runtimes.
+
+```bash
+nvm use
+node --version
+```
+
+The repository includes `.nvmrc` and `.node-version` for version managers. If `npm run build`
+fails locally with a Node 18 error, switch to Node 22 or use the Docker build path.
+
 ```bash
 npm install
 ```
@@ -40,6 +51,7 @@ The repository CI runs on pushes to `main` and on pull requests. It uses Node 22
 - ESLint
 - TypeScript typecheck
 - Prettier format check
+- production preflight with safe dummy values
 - production build with `npm run build`
 
 CI uses dummy non-production values for required runtime secrets. Real production secrets must be
