@@ -56,6 +56,16 @@ Expected:
 - Git is installed.
 - NFS helper package is installed.
 
+After `.env` exists, run the repository preflight:
+
+```bash
+npm run preflight:production
+```
+
+This check does not print secret values. It verifies required variables, host routing values,
+host-only admin cookie settings, Docker/Compose availability, the NFS mount path and the Compose
+security assumptions.
+
 ## Repository Setup
 
 ```bash

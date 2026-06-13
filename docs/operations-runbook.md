@@ -32,6 +32,14 @@ docker compose build app
 docker compose up -d app
 ```
 
+Before a first production start or after changing `.env`, run:
+
+```bash
+npm run preflight:production
+```
+
+The preflight checks configuration and Compose safety assumptions without printing secret values.
+
 If Git reports permission errors in the deployment repository, fix repository ownership:
 
 ```bash
