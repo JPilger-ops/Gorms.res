@@ -71,6 +71,36 @@ function formatDayParts(date: string) {
   };
 }
 
+function shortUnavailableReason(reason: string) {
+  const normalized = reason.toLowerCase();
+
+  if (normalized.includes("sonntag")) {
+    return "Sonntag geschlossen";
+  }
+
+  if (normalized.includes("montag")) {
+    return "Montag geschlossen";
+  }
+
+  if (normalized.includes("dienstag")) {
+    return "Dienstag geschlossen";
+  }
+
+  if (normalized.includes("feiertag")) {
+    return "Feiertag";
+  }
+
+  if (normalized.includes("voll")) {
+    return "Heute voll";
+  }
+
+  if (normalized.includes("veranstaltung") || normalized.includes("event")) {
+    return "Eventtag";
+  }
+
+  return "Nicht verfügbar";
+}
+
 function daySummary(day?: SlotResponse) {
   if (!day) {
     return {
@@ -94,7 +124,7 @@ function daySummary(day?: SlotResponse) {
   if (selectableSlots.length === 0) {
     return {
       availableCount: 0,
-      detail: reason,
+      detail: shortUnavailableReason(reason),
       firstAvailableTime: "",
       isBookable: false,
       isLimited: false,
@@ -105,9 +135,7 @@ function daySummary(day?: SlotResponse) {
 
   return {
     availableCount: selectableSlots.length,
-    detail: isLimited
-      ? "Zeiten mit Prüfung"
-      : `${selectableSlots.length} Zeiten frei${firstAvailableTime ? `, ab ${firstAvailableTime}` : ""}`,
+    detail: isLimited ? "Rückfrage möglich" : `ab ${firstAvailableTime}`,
     firstAvailableTime,
     isBookable: true,
     isLimited,
@@ -288,16 +316,29 @@ export function ReservationForm({
               Freie Tage sind hell markiert. Gesperrte Tage zeigen direkt den Grund.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-border bg-white/55 px-3 py-2 text-xs font-bold text-muted shadow-[inset_0_1px_0_rgb(255_255_255_/_68%)]">
-              {selectedDateParts.weekday}. {selectedDateParts.day}. {selectedDateParts.month}
-            </span>
+          <div className="min-w-0">
             <button
-              className="secondary-action min-h-10 px-4 text-sm"
+              className="glass-tile flex min-h-16 min-w-[230px] items-center gap-3 px-3.5 py-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 sm:min-w-[260px]"
               type="button"
               onClick={openDatePicker}
+              aria-label={`Kalender öffnen. Ausgewählt ist ${selectedDateParts.weekday}. ${selectedDateParts.day}. ${selectedDateParts.month}.`}
             >
-              Zu Datum springen
+              <span
+                className="relative z-10 flex size-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-white/65 text-center shadow-[inset_0_1px_0_rgb(255_255_255_/_72%)]"
+                aria-hidden="true"
+              >
+                <span className="h-2.5 bg-primary/75" />
+                <span className="flex flex-1 items-center justify-center text-base font-bold leading-none">
+                  {selectedDateParts.day}
+                </span>
+              </span>
+              <span className="relative z-10 min-w-0">
+                <span className="block text-sm font-bold text-foreground">Kalender öffnen</span>
+                <span className="mt-0.5 block text-xs font-semibold text-muted">
+                  {selectedDateParts.weekday}. {selectedDateParts.day}. {selectedDateParts.month}{" "}
+                  auswählen
+                </span>
+              </span>
             </button>
             <input
               ref={dateInputRef}
@@ -306,7 +347,7 @@ export function ReservationForm({
               onChange={(event) => selectDate(event.target.value)}
               min={today}
               type="date"
-              aria-label="Zu Datum springen"
+              aria-label="Kalender öffnen"
             />
             <input name="date" type="hidden" value={date} />
           </div>
@@ -379,10 +420,8 @@ export function ReservationForm({
                     >
                       {slotLoading && !dayMap.get(visibleDate) ? "Prüfung" : summary.statusLabel}
                     </span>
-                    <span className="mt-3 block text-xs font-semibold leading-5 text-muted">
-                      {slotLoading && !dayMap.get(visibleDate)
-                        ? "Verfügbarkeit wird geladen"
-                        : summary.detail}
+                    <span className="mt-3 block text-sm font-semibold leading-5 text-muted">
+                      {slotLoading && !dayMap.get(visibleDate) ? "Wird geladen" : summary.detail}
                     </span>
                   </span>
                 </span>
