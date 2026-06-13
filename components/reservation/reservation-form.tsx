@@ -625,15 +625,20 @@ export function ReservationForm({
         ) : null}
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <span className="text-sm font-semibold">Kontaktdaten</span>
-          <p className="text-sm leading-6 text-muted">
-            Wir verwenden diese Angaben nur zur Bearbeitung Ihrer Anfrage.
-          </p>
+      <div className="glass-tile space-y-4 p-4 sm:p-5">
+        <div className="relative z-10 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <span className="text-sm font-semibold">Kontaktdaten</span>
+            <p className="text-sm leading-6 text-muted">
+              Diese Angaben nutzen wir nur, um Ihre Anfrage zu bearbeiten und Sie zu erreichen.
+            </p>
+          </div>
+          <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            Pflichtangaben
+          </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="relative z-10 grid gap-4 sm:grid-cols-2">
           <label className="block space-y-2">
             <span className="text-sm font-semibold">Name</span>
             <input
@@ -641,6 +646,7 @@ export function ReservationForm({
               name="guestName"
               type="text"
               autoComplete="name"
+              placeholder="Vor- und Nachname"
               required
             />
             <FieldError messages={state.fieldErrors?.guestName} />
@@ -653,24 +659,35 @@ export function ReservationForm({
               name="email"
               type="email"
               autoComplete="email"
+              inputMode="email"
+              placeholder="name@example.de"
               required
             />
             <FieldError messages={state.fieldErrors?.email} />
           </label>
         </div>
 
-        <label className="block space-y-2">
+        <label className="relative z-10 block space-y-2">
           <span className="text-sm font-semibold">Telefonnummer</span>
-          <input className="field-input" name="phone" type="tel" autoComplete="tel" required />
+          <input
+            className="field-input"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            placeholder="Für Rückfragen"
+            required
+          />
           <FieldError messages={state.fieldErrors?.phone} />
         </label>
 
-        <label className="block space-y-2">
+        <label className="relative z-10 block space-y-2">
           <span className="text-sm font-semibold">Nachricht optional</span>
           <textarea
             className="field-input min-h-32 resize-y py-3"
             name="message"
             maxLength={1000}
+            placeholder="Besondere Wünsche oder Hinweise"
           />
           <FieldError messages={state.fieldErrors?.message} />
         </label>
@@ -696,10 +713,7 @@ export function ReservationForm({
             <span className="block font-bold text-foreground">
               Ich habe den Datenschutzhinweis gelesen.
             </span>
-            <span className="mt-1 block text-muted">
-              Wir verwenden Ihre Angaben ausschließlich zur Bearbeitung dieser Reservierungsanfrage.{" "}
-              {privacyNoticeText}
-            </span>
+            <span className="mt-1 block text-muted">{privacyNoticeText}</span>
           </span>
         </label>
         {privacyPolicyUrl || imprintUrl ? (
@@ -725,12 +739,12 @@ export function ReservationForm({
           <div className="space-y-1">
             <span className="text-sm font-semibold">Anfrage abschicken</span>
             <p className="text-sm leading-6 text-muted">
-              Vielen Dank für Ihre Anfrage. Die Reservierung ist erst nach unserer persönlichen
-              Bestätigung gültig.
+              Mit dem Absenden schicken Sie uns Ihre Reservierungsanfrage. Wir prüfen die
+              Verfügbarkeit persönlich und melden uns anschließend bei Ihnen.
             </p>
           </div>
           <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-            Nur Anfrage
+            Noch keine Zusage
           </span>
         </div>
 
@@ -748,7 +762,7 @@ export function ReservationForm({
         </button>
 
         <p className="relative z-10 text-center text-xs font-semibold leading-5 text-muted">
-          Sie erhalten eine Eingangsbestätigung per E-Mail. Dies ist noch keine Reservierungszusage.
+          Erst unsere persönliche Bestätigung macht die Reservierung verbindlich.
         </p>
       </div>
     </form>

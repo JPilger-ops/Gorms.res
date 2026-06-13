@@ -52,8 +52,8 @@ export async function PublicReservationPage() {
           </div>
 
           <div className="soft-card p-5 text-sm font-semibold leading-6 text-muted">
-            Vielen Dank für Ihre Anfrage. Die Reservierung ist erst nach unserer persönlichen
-            Bestätigung gültig.
+            Nach dem Absenden prüfen wir Ihre Wunschzeit persönlich. Erst unsere Rückmeldung macht
+            aus der Anfrage eine verbindliche Reservierung.
           </div>
         </div>
 
