@@ -202,6 +202,7 @@ Common operational values:
 - `SMTP_PORT`
 - `BACKUP_HOST_PATH`
 - `AI_ENABLED`
+- `AI_DRAFTS_ENABLED`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 
@@ -209,10 +210,10 @@ Common operational values:
 key in the `heidekoenig_secrets` Docker volume. See
 [settings and secrets](docs/settings-and-secrets.md).
 
-The local AI assistant is disabled by default with `AI_ENABLED=false`. When explicitly enabled, it
-can create editable German text drafts for acceptance, decline and follow-up questions in the admin
-reservation detail page. It cannot send e-mails, change status values or create calendar files. See
-[AI assistant preparation](docs/ai-assistant.md).
+The local AI assistant is disabled by default with `AI_ENABLED=false` and
+`AI_DRAFTS_ENABLED=false`. Both flags must be enabled before editable German text drafts can be
+requested in the admin reservation detail page. AI can never send e-mails, change status values or
+create calendar files. See [AI assistant preparation](docs/ai-assistant.md).
 
 ## Admin Setup And Roles
 
@@ -223,7 +224,8 @@ Roles:
 
 - `admin`: full access to reservations, blocked days, opening hours, settings, SMTP, branding,
   users and system/security information
-- `mitarbeiter`: access to reservation requests, blocked days and opening hours
+- `mitarbeiter`: access to reservation requests, response workflow, controlled status override,
+  blocked days and opening hours
 
 See [authentication and roles](docs/auth-and-roles.md) and [admin guide](docs/admin-guide.md).
 
@@ -244,7 +246,8 @@ Manual cleanup:
 docker compose exec app node scripts/cleanup-reservations.mjs
 ```
 
-The cleanup deletes reservation requests and audit logs older than the configured retention values.
+The cleanup anonymizes old reservation requests, related mail history and reservation-related audit
+metadata. Audit-log rows older than the configured audit retention value are deleted.
 
 ## Privacy And Data Minimization
 

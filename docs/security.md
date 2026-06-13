@@ -53,6 +53,10 @@ Security-relevant actions are recorded without personal reservation details:
 - SMTP settings updates
 - branding changes
 - retention cleanup
+- manual reservation status overrides with required reason
+
+Reservation-related audit metadata is scrubbed by retention cleanup after the configured reservation
+retention period. Audit logs older than the configured audit retention period are deleted.
 
 ## Security Headers
 

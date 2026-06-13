@@ -48,6 +48,10 @@ If the internal confirmation e-mail fails after the guest acceptance was already
 reservation remains accepted. The failed internal message is recorded in the reservation mail
 history for follow-up.
 
+The manual status override is separate from this workflow. It can be used by admins and employees
+only as a controlled special case with a required reason. It sends no guest e-mail and creates no
+internal confirmation `.ics`; the reason is stored in the audit log.
+
 ## SMTP
 
 Defaults target IONOS:

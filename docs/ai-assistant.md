@@ -6,10 +6,13 @@ disabled by default and must be explicitly enabled by the operator.
 ## Current Status
 
 - `AI_ENABLED=false` by default.
-- No reservation data is sent to Ollama unless the operator explicitly sets `AI_ENABLED=true`.
+- `AI_DRAFTS_ENABLED=false` by default.
+- No reservation data is sent to Ollama unless the operator explicitly sets both
+  `AI_ENABLED=true` and `AI_DRAFTS_ENABLED=true`.
 - Response drafts are generated only after a staff member clicks the KI draft button.
 - No status changes, e-mails or calendar files can be triggered by AI.
-- The admin reservation detail page can request editable templates only when `AI_ENABLED=true`.
+- The admin reservation detail page can request editable templates only when both AI flags are
+  enabled.
 - The guarded server-side Ollama client is connected only to template generation.
 
 Manual handling through the existing acceptance, decline and question workflow remains the only
@@ -19,6 +22,7 @@ operational path.
 
 ```env
 AI_ENABLED=false
+AI_DRAFTS_ENABLED=false
 OLLAMA_BASE_URL=http://192.100.100.152:11434
 OLLAMA_MODEL=qwen3:8b
 AI_TIMEOUT_MS=120000
@@ -37,6 +41,11 @@ The prepared server modules are deliberately narrow:
   only.
 - `src/server/ai/ollama-client.ts` refuses to run when `AI_ENABLED=false`, uses a request timeout
   and validates both request and response.
+- `src/server/ai/reservation-drafts.ts` refuses draft generation unless both `AI_ENABLED` and
+  `AI_DRAFTS_ENABLED` are enabled.
+- `src/server/ai/content-validation.ts` blocks generated drafts that contain placeholders, subject
+  lines in the body, guarantee wording, opening-hour claims, phone numbers, e-mail addresses or
+  price statements.
 - `app/admin/reservations/[id]/actions.ts` exposes AI only as a draft action. It returns text to the
   form and does not call SMTP, status updates or calendar generation.
 
@@ -48,8 +57,9 @@ than warm follow-up requests.
 
 ## Admin Workflow
 
-When `AI_ENABLED=true`, staff can insert a generated template into the visible subject and body
-fields on the reservation detail page. The text is editable before sending.
+When both `AI_ENABLED=true` and `AI_DRAFTS_ENABLED=true`, staff can insert a generated template
+into the visible subject and body fields on the reservation detail page. The text is editable before
+sending.
 
 The send button is still the only operation that sends e-mail or changes a reservation status. The
 AI action cannot call that send path.
@@ -60,6 +70,7 @@ AI support must continue to follow these rules:
 
 - Use a local Ollama endpoint only.
 - Keep AI disabled unless the operator explicitly enables it.
+- Keep drafting disabled unless the operator explicitly enables `AI_DRAFTS_ENABLED`.
 - Do not send SMTP secrets, session tokens, audit internals or system configuration to AI.
 - Minimize guest data in prompts. Prefer date, time, guest count and message context over full
   contact details.

@@ -48,6 +48,8 @@ Stores the rule result captured when a reservation request is created:
 - availability status: `bookable`, `manual_review`, `capacity_warning`, `blocked`
 - hard-block flag
 - blocking reasons, warnings, manual review reasons
+- special-request categories are stored as manual review reasons, for example
+  `Sonderwunsch erkannt: Tisch-/Platzwunsch.`
 - accepted/pending guests in the checked occupancy window
 - requested guest count and configured capacity
 - window start/end, latest reservation time and season
@@ -62,8 +64,8 @@ Stores reservation-related outgoing e-mails for the admin detail workflow:
 - SMTP status and optional sanitized error
 - send timestamp and optional sending user
 
-Retention cleanup anonymizes recipient, subject and body when the related reservation request is
-anonymized.
+Retention cleanup anonymizes recipient, subject, body and SMTP error text when the related
+reservation request is older than the configured reservation retention value.
 
 ### `reservation_events`
 
@@ -95,7 +97,9 @@ Stores editable application settings. Secret values are encrypted before storage
 
 ### `audit_log`
 
-Stores security and administration events without reservation personal details.
+Stores security and administration events. Reservation-related audit metadata is scrubbed by
+retention cleanup when the related reservation request is older than the configured reservation
+retention value. Audit-log rows older than the configured audit retention value are deleted.
 
 ## Reservation Status Values
 
@@ -104,4 +108,5 @@ Stores security and administration events without reservation personal details.
 - `declined`
 - `cancelled`
 
-Version 1 displays the status but does not require in-app confirmation workflows.
+The normal V1.1 workflow changes status through acceptance and decline e-mails after successful SMTP
+delivery. A controlled manual override exists as a special case and requires an audit reason.

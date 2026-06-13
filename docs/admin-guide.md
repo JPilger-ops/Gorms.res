@@ -38,6 +38,15 @@ Admins and employees can send an acceptance, decline or question from the detail
 and decline change the status only after the guest e-mail was sent successfully. Questions keep the
 request pending.
 
+The reservation overview also exposes a controlled manual status override as a special case for
+admins and employees. This path requires a written reason, writes an audit-log entry and sends no
+guest e-mail. It should be used only when the normal acceptance, decline or question workflow does
+not fit an operational correction.
+
+If a guest message contains recognizable special-request wording, the detail page shows a
+"Sonderwunsch erkannt" warning. This is a staff review hint only; it does not decide, send or change
+anything automatically.
+
 The detail page also provides internal `.ics` downloads:
 
 - Anfrage-ICS: available for every request.
@@ -45,10 +54,10 @@ The detail page also provides internal `.ics` downloads:
 
 These files contain guest contact data and are intended for internal use only.
 
-The KI-Assistenz area can create editable text drafts when `AI_ENABLED=true` is configured on the
-server. Generated text is inserted into the visible subject and e-mail body fields only. It cannot
-send e-mails, create calendar files or change status values. Staff must review and submit every
-message manually.
+The KI-Assistenz area can create editable text drafts only when both `AI_ENABLED=true` and
+`AI_DRAFTS_ENABLED=true` are configured on the server. Generated text is inserted into the visible
+subject and e-mail body fields only. It cannot send e-mails, create calendar files or change status
+values. Staff must review and submit every message manually.
 
 ## Blocked Days
 

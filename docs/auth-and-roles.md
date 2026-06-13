@@ -19,6 +19,8 @@ admin host, and disables itself after setup is complete.
 Permissions:
 
 - read reservation requests
+- send acceptance, decline and question e-mails
+- use controlled manual reservation status override with a required reason
 - manage blocked days
 - manage opening hours
 - manage app settings
@@ -32,6 +34,8 @@ Permissions:
 Permissions:
 
 - read reservation requests
+- send acceptance, decline and question e-mails
+- use controlled manual reservation status override with a required reason
 - manage blocked days
 - manage opening hours
 

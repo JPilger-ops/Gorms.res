@@ -48,6 +48,8 @@ personal fields:
 - optional message is deleted
 - related outgoing e-mail recipient, subject and body are anonymized
 - related SMTP error text is removed
+- reservation-related audit metadata is scrubbed to remove operational reasons or context that may
+  contain personal details
 
 Audit-log entries older than the configured audit retention value are deleted.
 
