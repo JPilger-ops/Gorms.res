@@ -10,7 +10,11 @@ export function FieldError({ messages }: { messages?: string[] }) {
     return null;
   }
 
-  return <p className="field-error">{messages[0]}</p>;
+  return (
+    <p className="field-error">
+      <span>{messages[0]}</span>
+    </p>
+  );
 }
 
 export function FormFeedback({ state }: { state: FeedbackState }) {
@@ -18,16 +22,21 @@ export function FormFeedback({ state }: { state: FeedbackState }) {
     return null;
   }
 
+  const title = state.success ? "Anfrage eingegangen" : "Bitte prüfen";
+  const icon = state.success ? "✓" : "!";
+
   return (
     <div
       aria-live="polite"
       className={`form-feedback ${state.success ? "form-feedback-success" : "form-feedback-error"}`}
       role={state.success ? "status" : "alert"}
     >
-      <span aria-hidden="true" className="form-feedback-dot" />
-      <span className="min-w-0">
-        <span className="form-feedback-label">{state.success ? "Erfolg" : "Bitte prüfen"}</span>
-        <span className="block">{state.message}</span>
+      <span aria-hidden="true" className="form-feedback-icon">
+        {icon}
+      </span>
+      <span className="form-feedback-content">
+        <span className="form-feedback-label">{title}</span>
+        <span className="form-feedback-message">{state.message}</span>
       </span>
     </div>
   );

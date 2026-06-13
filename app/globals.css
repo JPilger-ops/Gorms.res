@@ -544,16 +544,17 @@ html {
     overflow: hidden;
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
     border: 1px solid var(--border-strong);
-    border-radius: 18px;
+    border-radius: 22px;
     background:
-      linear-gradient(180deg, rgb(255 255 255 / 66%), rgb(255 255 255 / 38%)),
+      linear-gradient(145deg, rgb(255 255 255 / 76%), rgb(255 255 255 / 42%)),
       color-mix(in srgb, var(--surface-strong), transparent 18%);
     box-shadow:
-      0 14px 30px rgb(31 35 29 / 12%),
-      inset 0 1px 0 rgb(255 255 255 / 42%);
-    padding: 15px 16px;
+      0 18px 42px rgb(31 35 29 / 13%),
+      inset 0 1px 0 rgb(255 255 255 / 74%),
+      inset 0 -1px 0 rgb(255 255 255 / 30%);
+    padding: 16px 17px;
     color: var(--foreground);
     font-size: 0.95rem;
     font-weight: 700;
@@ -561,44 +562,101 @@ html {
     animation: feedback-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
+  .form-feedback::before {
+    position: absolute;
+    inset: 1px auto 1px 1px;
+    width: 5px;
+    border-radius: 999px;
+    content: "";
+    background: currentColor;
+    opacity: 0.58;
+  }
+
+  .form-feedback::after {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(
+      105deg,
+      transparent 0 24%,
+      rgb(255 255 255 / 48%) 42%,
+      transparent 62%
+    );
+    opacity: 0;
+    transform: translateX(-70%);
+    animation: feedback-sheen 760ms ease-out 120ms 1;
+  }
+
   .form-feedback-success {
     border-color: color-mix(in srgb, var(--success), transparent 55%);
     background:
-      linear-gradient(135deg, color-mix(in srgb, var(--success), transparent 88%), transparent 58%),
-      color-mix(in srgb, var(--success), var(--surface-strong) 88%);
+      linear-gradient(135deg, color-mix(in srgb, var(--success), transparent 82%), transparent 60%),
+      linear-gradient(180deg, rgb(255 255 255 / 72%), rgb(255 255 255 / 40%)),
+      color-mix(in srgb, var(--success), var(--surface-strong) 86%);
     color: color-mix(in srgb, var(--success), black 18%);
   }
 
   .form-feedback-error {
     border-color: color-mix(in srgb, var(--danger), transparent 55%);
     background:
-      linear-gradient(135deg, color-mix(in srgb, var(--danger), transparent 90%), transparent 58%),
-      color-mix(in srgb, var(--danger), var(--surface-strong) 90%);
+      linear-gradient(135deg, color-mix(in srgb, var(--danger), transparent 86%), transparent 60%),
+      linear-gradient(180deg, rgb(255 255 255 / 72%), rgb(255 255 255 / 40%)),
+      color-mix(in srgb, var(--danger), var(--surface-strong) 88%);
     color: color-mix(in srgb, var(--danger), black 10%);
   }
 
-  .form-feedback-dot {
-    width: 10px;
-    height: 10px;
+  .form-feedback-icon {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 34px;
+    height: 34px;
     flex: 0 0 auto;
+    place-items: center;
     border-radius: 999px;
-    margin-top: 0.34em;
-    background: currentColor;
-    box-shadow: 0 0 0 6px color-mix(in srgb, currentColor, transparent 84%);
+    margin-top: 1px;
+    border: 1px solid color-mix(in srgb, currentColor, transparent 64%);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 66%), rgb(255 255 255 / 32%)),
+      color-mix(in srgb, currentColor, transparent 86%);
+    box-shadow:
+      0 0 0 7px color-mix(in srgb, currentColor, transparent 88%),
+      inset 0 1px 0 rgb(255 255 255 / 70%);
+    color: currentColor;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
     animation: feedback-pulse 1400ms ease-out 1;
+  }
+
+  .form-feedback-content {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
   }
 
   .form-feedback-label {
     display: block;
-    margin-bottom: 2px;
-    font-size: 0.72rem;
+    margin-bottom: 4px;
+    color: var(--foreground);
+    font-size: 0.86rem;
     font-weight: 850;
     letter-spacing: 0;
-    opacity: 0.78;
-    text-transform: uppercase;
+  }
+
+  .form-feedback-message {
+    display: block;
+    color: color-mix(in srgb, currentColor, var(--foreground) 18%);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.55;
   }
 
   .field-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     border: 1px solid color-mix(in srgb, var(--danger), transparent 70%);
     border-radius: 14px;
     background:
@@ -613,6 +671,22 @@ html {
     font-weight: 750;
     line-height: 1.35;
     animation: field-error-enter 180ms ease-out;
+  }
+
+  .field-error::before {
+    display: grid;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 999px;
+    margin-top: 1px;
+    background: color-mix(in srgb, var(--danger), transparent 88%);
+    color: var(--danger);
+    content: "!";
+    font-size: 0.75rem;
+    font-weight: 900;
+    line-height: 1;
   }
 
   .event-list {
@@ -699,6 +773,22 @@ html {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes feedback-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(-70%);
+  }
+
+  28% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(70%);
   }
 }
 
