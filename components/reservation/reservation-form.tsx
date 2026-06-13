@@ -144,6 +144,34 @@ function daySummary(day?: SlotResponse) {
   };
 }
 
+function dayTileTone(summary: ReturnType<typeof daySummary>, isSelected: boolean) {
+  if (isSelected) {
+    return summary.isBookable
+      ? "border-primary/70 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary),white_86%),color-mix(in_srgb,var(--success),white_90%))] ring-2 ring-primary/25 shadow-[0_18px_42px_color-mix(in_srgb,var(--primary),transparent_82%)]"
+      : "border-danger/45 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--danger),white_88%),rgb(255_255_255_/_54%))] ring-2 ring-danger/15";
+  }
+
+  if (summary.isBookable) {
+    return summary.isLimited
+      ? "border-warning/20 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--warning),white_90%),rgb(255_255_255_/_52%))] hover:border-warning/40"
+      : "border-success/15 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--success),white_91%),rgb(255_255_255_/_54%))] hover:border-success/35";
+  }
+
+  return "border-danger/10 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--danger),white_94%),rgb(255_255_255_/_58%))] opacity-90 hover:border-danger/25";
+}
+
+function statusPillTone(summary: ReturnType<typeof daySummary>, isSelected: boolean) {
+  if (summary.isBookable) {
+    if (summary.isLimited) {
+      return isSelected ? "bg-warning/20 text-warning" : "bg-warning/13 text-warning";
+    }
+
+    return isSelected ? "bg-primary/15 text-primary" : "bg-success/13 text-success";
+  }
+
+  return isSelected ? "bg-danger/20 text-danger" : "bg-danger/13 text-danger";
+}
+
 export function ReservationForm({
   earliestReservationTime,
   imprintUrl,
@@ -164,7 +192,7 @@ export function ReservationForm({
   const today = useMemo(() => localIsoDate(new Date()), []);
   const [rangeStart, setRangeStart] = useState(today);
   const [date, setDate] = useState(today);
-  const [guestCount, setGuestCount] = useState("");
+  const [guestCount, setGuestCount] = useState(() => String(Math.min(2, maxGuestsPerRequest)));
   const [selectedTime, setSelectedTime] = useState("");
   const [slotDays, setSlotDays] = useState<SlotResponse[]>([]);
   const [slotError, setSlotError] = useState("");
@@ -183,6 +211,10 @@ export function ReservationForm({
   );
   const selectedDaySummary = daySummary(selectedDay);
   const selectedDateParts = useMemo(() => formatDayParts(date), [date]);
+  const guestCountNumber = Math.min(
+    maxGuestsPerRequest,
+    Math.max(1, Number.parseInt(guestCount, 10) || 1),
+  );
   const canSubmitReservation =
     Boolean(selectedTime) && selectedDaySummary.isBookable && !slotLoading && !slotError;
   const nearestPreviousDate = useMemo(
@@ -266,6 +298,17 @@ export function ReservationForm({
     setSelectedTime("");
     setDate(nextStart);
     setRangeStart(nextStart);
+  }
+
+  function updateGuestCount(nextCount: number) {
+    const clampedCount = Math.min(maxGuestsPerRequest, Math.max(1, nextCount));
+
+    setGuestCount(String(clampedCount));
+    setSlotError("");
+
+    if (date) {
+      setSlotLoading(true);
+    }
   }
 
   function openDatePicker() {
@@ -386,12 +429,9 @@ export function ReservationForm({
                 type="button"
                 onClick={() => selectDate(visibleDate)}
                 className={[
-                  "glass-tile min-h-[154px] p-4 text-left transition duration-200",
-                  "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_16px_34px_rgb(42_52_38_/_12%)]",
-                  isSelected ? "border-primary/60 ring-2 ring-primary/20" : "",
-                  summary.isBookable
-                    ? "bg-[color-mix(in_srgb,var(--success),white_88%)]"
-                    : "bg-[color-mix(in_srgb,var(--danger),white_92%)] opacity-85",
+                  "glass-tile group min-h-[154px] p-4 text-left transition duration-200",
+                  "hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgb(42_52_38_/_12%)]",
+                  dayTileTone(summary, isSelected),
                 ].join(" ")}
                 aria-pressed={isSelected}
               >
@@ -411,11 +451,7 @@ export function ReservationForm({
                     <span
                       className={[
                         "inline-flex rounded-full px-2.5 py-1 text-xs font-bold",
-                        summary.isBookable
-                          ? summary.isLimited
-                            ? "bg-warning/15 text-warning"
-                            : "bg-success/15 text-success"
-                          : "bg-danger/15 text-danger",
+                        statusPillTone(summary, isSelected),
                       ].join(" ")}
                     >
                       {slotLoading && !dayMap.get(visibleDate) ? "Prüfung" : summary.statusLabel}
@@ -466,27 +502,45 @@ export function ReservationForm({
         ) : null}
       </div>
 
-      <label className="block space-y-2">
+      <div className="space-y-2">
         <span className="text-sm font-semibold">Personen</span>
-        <input
-          className="glass-control min-h-12 w-full px-4 outline-none"
-          name="guestCount"
-          type="number"
-          min="1"
-          max={maxGuestsPerRequest}
-          inputMode="numeric"
-          onChange={(event) => {
-            setGuestCount(event.target.value);
-            setSlotError("");
-
-            if (date) {
-              setSlotLoading(true);
-            }
-          }}
-          required
-        />
+        <div className="glass-tile flex min-h-[96px] items-center justify-between gap-4 p-3.5 sm:p-4">
+          <div className="relative z-10 min-w-0">
+            <span className="block text-xs font-bold uppercase text-muted">Anzahl Gäste</span>
+            <span className="mt-1 block text-sm font-semibold text-muted">
+              1 bis {maxGuestsPerRequest} Personen
+            </span>
+          </div>
+          <div className="relative z-10 flex shrink-0 items-center gap-2">
+            <button
+              className="secondary-action min-h-11 min-w-11 px-0 text-xl"
+              type="button"
+              onClick={() => updateGuestCount(guestCountNumber - 1)}
+              disabled={guestCountNumber <= 1}
+              aria-label="Eine Person weniger"
+            >
+              -
+            </button>
+            <output
+              className="flex min-h-14 min-w-16 items-center justify-center rounded-2xl border border-border bg-white/60 px-4 text-3xl font-semibold shadow-[inset_0_1px_0_rgb(255_255_255_/_70%)]"
+              aria-live="polite"
+            >
+              {guestCountNumber}
+            </output>
+            <button
+              className="secondary-action min-h-11 min-w-11 px-0 text-xl"
+              type="button"
+              onClick={() => updateGuestCount(guestCountNumber + 1)}
+              disabled={guestCountNumber >= maxGuestsPerRequest}
+              aria-label="Eine Person mehr"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <input name="guestCount" type="hidden" value={guestCountNumber} />
         <FieldError messages={state.fieldErrors?.guestCount} />
-      </label>
+      </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
