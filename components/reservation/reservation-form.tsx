@@ -676,49 +676,82 @@ export function ReservationForm({
         </label>
       </div>
 
-      <label className="glass-tile flex min-w-0 items-start gap-3 p-4">
-        <input
-          className="mt-1 size-4 shrink-0 accent-primary"
-          name="privacyAccepted"
-          type="checkbox"
-          value="true"
-          required
-        />
-        <span className="min-w-0 text-sm leading-6">
-          Ich habe den Datenschutzhinweis zur Verarbeitung meiner Angaben für die Bearbeitung der
-          Reservierungsanfrage zur Kenntnis genommen. {privacyNoticeText}
-          {privacyPolicyUrl ? (
-            <>
-              {" "}
-              <a className="font-semibold underline underline-offset-4" href={privacyPolicyUrl}>
-                Datenschutz
-              </a>
-            </>
-          ) : null}
-          {imprintUrl ? (
-            <>
-              {" "}
-              <a className="font-semibold underline underline-offset-4" href={imprintUrl}>
-                Impressum
-              </a>
-            </>
-          ) : null}
-        </span>
-      </label>
-      <FieldError messages={state.fieldErrors?.privacyAccepted} />
+      <div className="space-y-3">
+        <span className="text-sm font-semibold">Datenschutz</span>
+        <label className="glass-tile group grid min-w-0 cursor-pointer gap-3 p-4 transition hover:-translate-y-0.5 hover:border-primary/35 sm:grid-cols-[auto_minmax(0,1fr)]">
+          <input
+            className="peer sr-only"
+            name="privacyAccepted"
+            type="checkbox"
+            value="true"
+            required
+          />
+          <span
+            className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-white/65 text-sm font-bold text-transparent shadow-[inset_0_1px_0_rgb(255_255_255_/_72%)] transition peer-focus-visible:ring-4 peer-focus-visible:ring-focus/20 peer-checked:border-primary/40 peer-checked:bg-primary peer-checked:text-primary-foreground"
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+          <span className="relative z-10 min-w-0 text-sm leading-6">
+            <span className="block font-bold text-foreground">
+              Ich habe den Datenschutzhinweis gelesen.
+            </span>
+            <span className="mt-1 block text-muted">
+              Wir verwenden Ihre Angaben ausschließlich zur Bearbeitung dieser Reservierungsanfrage.{" "}
+              {privacyNoticeText}
+              {privacyPolicyUrl ? (
+                <>
+                  {" "}
+                  <a className="font-semibold underline underline-offset-4" href={privacyPolicyUrl}>
+                    Datenschutz
+                  </a>
+                </>
+              ) : null}
+              {imprintUrl ? (
+                <>
+                  {" "}
+                  <a className="font-semibold underline underline-offset-4" href={imprintUrl}>
+                    Impressum
+                  </a>
+                </>
+              ) : null}
+            </span>
+          </span>
+        </label>
+        <FieldError messages={state.fieldErrors?.privacyAccepted} />
+      </div>
 
-      <button
-        className="primary-action w-full"
-        disabled={pending || !canSubmitReservation}
-        aria-busy={pending}
-        type="submit"
-      >
-        {pending
-          ? "Anfrage wird geprüft..."
-          : canSubmitReservation
-            ? "Anfrage senden"
-            : "Tag und Uhrzeit wählen"}
-      </button>
+      <div className="glass-tile space-y-4 p-4 sm:p-5">
+        <div className="relative z-10 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <span className="text-sm font-semibold">Anfrage abschicken</span>
+            <p className="text-sm leading-6 text-muted">
+              Vielen Dank für Ihre Anfrage. Die Reservierung ist erst nach unserer persönlichen
+              Bestätigung gültig.
+            </p>
+          </div>
+          <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            Nur Anfrage
+          </span>
+        </div>
+
+        <button
+          className="primary-action relative z-10 w-full"
+          disabled={pending || !canSubmitReservation}
+          aria-busy={pending}
+          type="submit"
+        >
+          {pending
+            ? "Anfrage wird geprüft..."
+            : canSubmitReservation
+              ? "Anfrage senden"
+              : "Tag und Uhrzeit wählen"}
+        </button>
+
+        <p className="relative z-10 text-center text-xs font-semibold leading-5 text-muted">
+          Sie erhalten eine Eingangsbestätigung per E-Mail. Dies ist noch keine Reservierungszusage.
+        </p>
+      </div>
     </form>
   );
 }
