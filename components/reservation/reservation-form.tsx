@@ -513,7 +513,7 @@ export function ReservationForm({
           </div>
           <div className="relative z-10 flex shrink-0 items-center gap-2">
             <button
-              className="secondary-action min-h-11 min-w-11 px-0 text-xl"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-white/65 text-2xl font-semibold leading-none text-foreground shadow-[0_8px_18px_rgb(42_52_38_/_8%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[color-mix(in_srgb,var(--primary),white_82%)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
               type="button"
               onClick={() => updateGuestCount(guestCountNumber - 1)}
               disabled={guestCountNumber <= 1}
@@ -528,7 +528,7 @@ export function ReservationForm({
               {guestCountNumber}
             </output>
             <button
-              className="secondary-action min-h-11 min-w-11 px-0 text-xl"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-white/65 text-2xl font-semibold leading-none text-foreground shadow-[0_8px_18px_rgb(42_52_38_/_8%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[color-mix(in_srgb,var(--primary),white_82%)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
               type="button"
               onClick={() => updateGuestCount(guestCountNumber + 1)}
               disabled={guestCountNumber >= maxGuestsPerRequest}
