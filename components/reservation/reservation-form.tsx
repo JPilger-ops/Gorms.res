@@ -699,25 +699,24 @@ export function ReservationForm({
             <span className="mt-1 block text-muted">
               Wir verwenden Ihre Angaben ausschließlich zur Bearbeitung dieser Reservierungsanfrage.{" "}
               {privacyNoticeText}
-              {privacyPolicyUrl ? (
-                <>
-                  {" "}
-                  <a className="font-semibold underline underline-offset-4" href={privacyPolicyUrl}>
-                    Datenschutz
-                  </a>
-                </>
-              ) : null}
-              {imprintUrl ? (
-                <>
-                  {" "}
-                  <a className="font-semibold underline underline-offset-4" href={imprintUrl}>
-                    Impressum
-                  </a>
-                </>
-              ) : null}
             </span>
           </span>
         </label>
+        {privacyPolicyUrl || imprintUrl ? (
+          <p className="px-1 text-xs font-semibold leading-5 text-muted">
+            {privacyPolicyUrl ? (
+              <a className="underline underline-offset-4" href={privacyPolicyUrl}>
+                Datenschutz
+              </a>
+            ) : null}
+            {privacyPolicyUrl && imprintUrl ? <span aria-hidden="true"> · </span> : null}
+            {imprintUrl ? (
+              <a className="underline underline-offset-4" href={imprintUrl}>
+                Impressum
+              </a>
+            ) : null}
+          </p>
+        ) : null}
         <FieldError messages={state.fieldErrors?.privacyAccepted} />
       </div>
 
