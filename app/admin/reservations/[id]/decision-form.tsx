@@ -47,11 +47,13 @@ export type ReservationDecisionDraft = {
 
 export function ReservationDecisionForm({
   aiEnabled,
+  aiMessage,
   draft,
   expectedStatus,
   reservationId,
 }: {
   aiEnabled: boolean;
+  aiMessage: string;
   draft: ReservationDecisionDraft;
   expectedStatus: ReservationStatus;
   reservationId: string;
@@ -107,7 +109,8 @@ export function ReservationDecisionForm({
             <div>
               <p className="text-sm font-bold">KI-Vorlage</p>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Fügt nur Text in Betreff und E-Mail-Text ein. Danach bitte prüfen und bearbeiten.
+                {aiMessage} Fügt nur Text in Betreff und E-Mail-Text ein und versendet nie
+                automatisch.
               </p>
             </div>
             <span className="w-fit rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-bold uppercase text-warning">
@@ -125,7 +128,7 @@ export function ReservationDecisionForm({
               ? "KI-Vorlage wird erstellt..."
               : aiEnabled
                 ? "KI-Vorlage in Felder einfügen"
-                : "KI deaktiviert"}
+                : "KI-Entwürfe nicht freigegeben"}
           </button>
           <FormFeedback state={aiState} />
           {aiState.draft?.riskNotes.length ? (

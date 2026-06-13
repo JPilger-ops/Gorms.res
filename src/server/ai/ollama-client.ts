@@ -33,7 +33,7 @@ function parseDraftJson(value: string) {
 export async function generateAiDraft(request: AiDraftRequest): Promise<AiDraftResult> {
   const status = getAiAssistantStatus();
 
-  if (!status.enabled) {
+  if (!status.enabled || !status.draftsEnabled) {
     return { ok: false, reason: "disabled" };
   }
 

@@ -312,7 +312,8 @@ export default async function ReservationDetailPage({
                 Textvorschläge und versenden nie automatisch.
               </div>
               <ReservationDecisionWorkspace
-                aiEnabled={aiStatus.enabled}
+                aiEnabled={aiStatus.draftsEnabled}
+                aiMessage={aiStatus.uiMessage}
                 drafts={decisionDrafts}
                 expectedStatus={reservation.status}
                 reservationId={reservation.id}

@@ -22,11 +22,13 @@ const decisionSummaries: Record<ReservationDecisionType, string> = {
 
 export function ReservationDecisionWorkspace({
   aiEnabled,
+  aiMessage,
   drafts,
   expectedStatus,
   reservationId,
 }: {
   aiEnabled: boolean;
+  aiMessage: string;
   drafts: ReservationDecisionDraft[];
   expectedStatus: ReservationStatus;
   reservationId: string;
@@ -68,6 +70,7 @@ export function ReservationDecisionWorkspace({
 
       <ReservationDecisionForm
         aiEnabled={aiEnabled}
+        aiMessage={aiMessage}
         draft={selectedDraft}
         expectedStatus={expectedStatus}
         key={selectedDraft.decision}
