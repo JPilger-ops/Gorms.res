@@ -741,7 +741,8 @@ html {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding-bottom: 2px;
+    margin: -6px -4px -4px;
+    padding: 8px 4px 12px;
     scrollbar-width: none;
   }
 

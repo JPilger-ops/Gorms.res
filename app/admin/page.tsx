@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { requirePermission } from "@/src/server/guards";
 import { getAdminDashboardData } from "@/src/server/dashboard";
@@ -76,7 +77,12 @@ export default async function AdminPage() {
             {dashboard.recentReservations.length ? (
               <div className="space-y-3">
                 {dashboard.recentReservations.map((reservation) => (
-                  <div className="admin-list-card p-4" key={reservation.id}>
+                  <Link
+                    aria-label={`Details zu ${reservation.guestName} öffnen`}
+                    className="admin-list-card block p-4 text-foreground no-underline"
+                    href={`/admin/reservations/${reservation.id}`}
+                    key={reservation.id}
+                  >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-semibold">{reservation.guestName}</p>
@@ -94,7 +100,7 @@ export default async function AdminPage() {
                         {statusLabels[reservation.status]}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
