@@ -99,6 +99,14 @@ function windowsOverlap(
   return firstStart < secondEnd && secondStart < firstEnd;
 }
 
+function clampSlotGuestCount(value: number, maxGuestsPerRequest: number) {
+  if (!Number.isInteger(value)) {
+    return 1;
+  }
+
+  return Math.min(Math.max(value, 1), maxGuestsPerRequest);
+}
+
 async function getGuestsInWindow({
   date,
   durationMinutes,
@@ -320,6 +328,7 @@ export async function getReservationSlotsForDate({
   guestCount: number;
 }) {
   const settings = await getBusinessSettings();
+  const slotGuestCount = clampSlotGuestCount(guestCount, settings.maxGuestsPerRequest);
   const season = isIsoDate(date) ? getSeasonForDate(date, settings) : "summer";
   const latestReservationTime = isIsoDate(date)
     ? getLatestReservationTimeForDate(date, settings)
@@ -346,7 +355,7 @@ export async function getReservationSlotsForDate({
     const time = minutesToTime(slotMinutes);
     const availability = await checkReservationAvailability({
       date,
-      guestCount,
+      guestCount: slotGuestCount,
       time,
     });
 
@@ -363,6 +372,7 @@ export async function getReservationSlotsForDate({
 
   return {
     date,
+    guestCount: slotGuestCount,
     latestReservationTime,
     season,
     slots,
