@@ -19,7 +19,7 @@ export function OpeningHoursForm({
   const [state, formAction, pending] = useActionState(updateOpeningHoursAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-4 p-5 sm:p-6">
+    <form action={formAction} className="glass-panel admin-panel space-y-4 p-5 sm:p-6">
       <div>
         <p className="eyebrow">Zeitraum</p>
         <h3 className="mt-2 text-2xl font-semibold">Reservierungszeiten</h3>
@@ -59,7 +59,7 @@ export function OpeningHoursForm({
       </div>
 
       <button
-        className="primary-action w-full"
+        className="primary-action w-full sm:ml-auto sm:block sm:w-auto"
         disabled={pending}
         aria-busy={pending}
         type="submit"

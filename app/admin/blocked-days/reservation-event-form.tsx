@@ -13,7 +13,7 @@ export function ReservationEventForm() {
   const [state, formAction, pending] = useActionState(createReservationEventAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-4 p-5 sm:p-6">
+    <form action={formAction} className="glass-panel admin-panel space-y-4 p-5 sm:p-6">
       <div>
         <p className="eyebrow">Musik / Events</p>
         <h3 className="mt-2 text-2xl font-semibold">Eventtag eintragen</h3>
@@ -59,7 +59,7 @@ export function ReservationEventForm() {
         <FieldError messages={state.fieldErrors?.publicNote} />
       </label>
 
-      <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface/65 p-4">
+      <label className="admin-toggle-card items-start">
         <input className="mt-1 size-4 accent-primary" name="reservationsAllowed" type="checkbox" />
         <span>
           <span className="block text-sm font-semibold">

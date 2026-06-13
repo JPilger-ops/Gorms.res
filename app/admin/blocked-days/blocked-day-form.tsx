@@ -13,10 +13,13 @@ export function BlockedDayForm() {
   const [state, formAction, pending] = useActionState(createBlockedDayAction, initialState);
 
   return (
-    <form action={formAction} className="glass-panel space-y-4 p-5 sm:p-6">
+    <form action={formAction} className="glass-panel admin-panel space-y-4 p-5 sm:p-6">
       <div>
         <p className="eyebrow">Sperrtag</p>
         <h3 className="mt-2 text-2xl font-semibold">Tag blockieren</h3>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Für einzelne Tage, an denen keine Anfrage möglich sein soll.
+        </p>
       </div>
 
       <FormFeedback state={state} />
