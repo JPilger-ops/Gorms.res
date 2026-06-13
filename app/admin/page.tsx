@@ -11,10 +11,25 @@ const statusLabels = {
   pending: "Offen",
 };
 
+const statusClasses = {
+  accepted: "text-success",
+  cancelled: "text-muted",
+  declined: "text-danger",
+  pending: "text-warning",
+};
+
+function formatDisplayDate(date: string) {
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    weekday: "short",
+  }).format(new Date(`${date}T00:00:00`));
+}
+
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="admin-stat-card">
-      <p className="text-sm font-semibold text-muted">{label}</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{label}</p>
       <p className="mt-3 text-4xl font-semibold">{value}</p>
     </div>
   );
@@ -52,6 +67,9 @@ export default async function AdminPage() {
               <div>
                 <p className="eyebrow">Reservierungen</p>
                 <h3 className="mt-2 text-2xl font-semibold">Neue Anfragen</h3>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Die zuletzt eingegangenen Anfragen, unabhängig vom Reservierungsdatum.
+                </p>
               </div>
             </div>
 
@@ -63,11 +81,16 @@ export default async function AdminPage() {
                       <div>
                         <p className="font-semibold">{reservation.guestName}</p>
                         <p className="mt-1 text-sm text-muted">
-                          {reservation.requestedDate} um {reservation.requestedTime.slice(0, 5)} ·{" "}
-                          {reservation.guestCount} Personen
+                          {formatDisplayDate(reservation.requestedDate)} um{" "}
+                          {reservation.requestedTime.slice(0, 5)} · {reservation.guestCount}{" "}
+                          Personen
                         </p>
                       </div>
-                      <span className="w-fit rounded-full bg-surface-strong px-3 py-1 text-xs font-bold text-muted">
+                      <span
+                        className={`admin-filter-chip pointer-events-none w-fit px-3 py-1 text-xs ${
+                          statusClasses[reservation.status]
+                        }`}
+                      >
                         {statusLabels[reservation.status]}
                       </span>
                     </div>
@@ -75,7 +98,7 @@ export default async function AdminPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-surface/65 p-5 text-sm leading-6 text-muted">
+              <div className="admin-message-preview text-sm leading-6 text-muted">
                 Noch keine Reservierungsanfragen vorhanden.
               </div>
             )}
@@ -85,6 +108,9 @@ export default async function AdminPage() {
             <div className="glass-panel admin-panel p-5 sm:p-6">
               <p className="eyebrow">Auslastung</p>
               <h3 className="mt-2 text-2xl font-semibold">Nächste Tage</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Reservierungsanfragen gruppiert nach Datum.
+              </p>
               <div className="mt-5 space-y-3">
                 {dashboard.reservationsByDate.length ? (
                   dashboard.reservationsByDate.map((item) => (
@@ -92,12 +118,16 @@ export default async function AdminPage() {
                       className="admin-list-card flex items-center justify-between px-4 py-3"
                       key={item.requestedDate}
                     >
-                      <span className="text-sm font-semibold">{item.requestedDate}</span>
+                      <span className="text-sm font-semibold">
+                        {formatDisplayDate(item.requestedDate)}
+                      </span>
                       <span className="text-sm text-muted">{item.count} Anfragen</span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm leading-6 text-muted">Keine kommenden Anfragen.</p>
+                  <p className="admin-message-preview text-sm leading-6 text-muted">
+                    Keine kommenden Anfragen.
+                  </p>
                 )}
               </div>
             </div>
@@ -105,16 +135,21 @@ export default async function AdminPage() {
             <div className="glass-panel admin-panel p-5 sm:p-6">
               <p className="eyebrow">Sperrtage</p>
               <h3 className="mt-2 text-2xl font-semibold">Nächste Sperren</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Manuell gesperrte Tage, die Gäste nicht auswählen können.
+              </p>
               <div className="mt-5 space-y-3">
                 {dashboard.nextBlockedDays.length ? (
                   dashboard.nextBlockedDays.map((day) => (
                     <div className="admin-list-card px-4 py-3" key={day.date}>
-                      <p className="text-sm font-semibold">{day.date}</p>
+                      <p className="text-sm font-semibold">{formatDisplayDate(day.date)}</p>
                       <p className="mt-1 text-sm text-muted">{day.reason || "Ohne Begründung"}</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm leading-6 text-muted">Keine kommenden Sperrtage.</p>
+                  <p className="admin-message-preview text-sm leading-6 text-muted">
+                    Keine kommenden Sperrtage.
+                  </p>
                 )}
               </div>
             </div>

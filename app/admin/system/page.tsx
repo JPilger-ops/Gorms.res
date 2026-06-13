@@ -26,9 +26,9 @@ function formatDateTime(value: Date) {
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="admin-stat-card p-4">
-      <p className="text-xs font-bold uppercase text-muted">{label}</p>
-      <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <div className="admin-stat-card">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{label}</p>
+      <p className="mt-3 text-2xl font-semibold">{value}</p>
     </div>
   );
 }
@@ -64,6 +64,9 @@ export default async function SystemPage() {
         <section className="glass-panel admin-panel p-5 sm:p-6">
           <p className="eyebrow">Sicherheitsstatus</p>
           <h3 className="mt-2 text-2xl font-semibold">Konfiguration</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            Host- und Secret-Konfiguration ohne Ausgabe sensibler Werte.
+          </p>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             <div className="admin-list-card p-4">
               <p className="text-xs font-bold uppercase text-muted">Public Hosts</p>
@@ -100,20 +103,20 @@ export default async function SystemPage() {
         <section className="glass-panel admin-panel p-5 sm:p-6">
           <p className="eyebrow">Systemprüfung</p>
           <h3 className="mt-2 text-2xl font-semibold">Checks</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            Prüft Datenbank, Uploads, Backup-Pfad und notwendige Server-Secrets.
+          </p>
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             {overview.systemChecks.map((group) => (
               <div className="admin-list-card p-4" key={group.title}>
                 <h4 className="font-semibold">{group.title}</h4>
                 <div className="mt-4 space-y-3">
                   {group.items.map((item) => (
-                    <div
-                      className="rounded-xl border border-border bg-background/50 p-3"
-                      key={item.label}
-                    >
+                    <div className="admin-message-preview p-3" key={item.label}>
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold">{item.label}</p>
                         <span
-                          className={`rounded-full border px-2.5 py-1 text-xs font-bold ${checkClasses[item.status]}`}
+                          className={`admin-filter-chip pointer-events-none px-2.5 py-1 text-xs ${checkClasses[item.status]}`}
                         >
                           {checkLabels[item.status]}
                         </span>
@@ -131,6 +134,9 @@ export default async function SystemPage() {
           <div className="glass-panel admin-panel p-5 sm:p-6">
             <p className="eyebrow">Betrieb</p>
             <h3 className="mt-2 text-2xl font-semibold">Kennzahlen</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Laufende Betriebswerte und konfigurierte Aufbewahrung.
+            </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <StatCard label="Benutzer gesamt" value={overview.stats.totalUsers} />
               <StatCard label="Aktive Benutzer" value={overview.stats.activeUsers} />
@@ -147,6 +153,9 @@ export default async function SystemPage() {
           <div className="glass-panel admin-panel p-5 sm:p-6">
             <p className="eyebrow">Audit Log</p>
             <h3 className="mt-2 text-2xl font-semibold">Letzte Ereignisse</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Sicherheits- und Verwaltungsereignisse ohne Reservierungsdetails.
+            </p>
             <div className="event-list mt-5 space-y-3">
               {overview.recentAuditEvents.length ? (
                 overview.recentAuditEvents.map((event) => (
@@ -171,7 +180,7 @@ export default async function SystemPage() {
                   </div>
                 ))
               ) : (
-                <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm text-muted">
+                <p className="admin-message-preview text-sm text-muted">
                   Noch keine Audit-Ereignisse vorhanden.
                 </p>
               )}
