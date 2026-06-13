@@ -560,10 +560,46 @@ html {
       inset 0 1px 0 var(--glass-edge);
   }
 
+  .admin-user-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border), white 28%);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 56%), rgb(255 255 255 / 26%)),
+      rgb(255 255 255 / 32%);
+    box-shadow:
+      0 10px 24px rgb(42 52 38 / 7%),
+      inset 0 1px 0 rgb(255 255 255 / 64%);
+    padding: 14px;
+  }
+
+  .admin-role-badge {
+    display: inline-flex;
+    min-height: 30px;
+    flex: 0 0 auto;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--primary), transparent 68%);
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 44%), rgb(255 255 255 / 18%)),
+      color-mix(in srgb, var(--primary), white 82%);
+    color: var(--primary);
+    padding-inline: 10px;
+    font-size: 0.74rem;
+    font-weight: 850;
+    line-height: 1;
+  }
+
   .admin-hero {
     min-height: 132px;
     display: grid;
     align-items: center;
+  }
+
+  .admin-hero h2,
+  .admin-panel h3 {
+    line-height: 1.08;
   }
 
   .admin-panel {
@@ -691,12 +727,14 @@ html {
       transform 180ms ease;
   }
 
-  .admin-list-card:hover {
-    border-color: color-mix(in srgb, var(--primary), transparent 62%);
-    box-shadow:
-      0 16px 36px rgb(42 52 38 / 10%),
-      inset 0 1px 0 rgb(255 255 255 / 70%);
-    transform: translateY(-1px);
+  @media (hover: hover) and (pointer: fine) {
+    .admin-list-card:hover {
+      border-color: color-mix(in srgb, var(--primary), transparent 62%);
+      box-shadow:
+        0 16px 36px rgb(42 52 38 / 10%),
+        inset 0 1px 0 rgb(255 255 255 / 70%);
+      transform: translateY(-1px);
+    }
   }
 
   .admin-filter-bar {
@@ -704,6 +742,11 @@ html {
     gap: 8px;
     overflow-x: auto;
     padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .admin-filter-bar::-webkit-scrollbar {
+    display: none;
   }
 
   .admin-filter-chip {
@@ -785,6 +828,7 @@ html {
 
   .admin-message-preview {
     padding: 16px;
+    line-height: 1.55;
   }
 
   .admin-disclosure {
@@ -1395,6 +1439,39 @@ html {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 14px;
+  }
+
+  .admin-frame {
+    gap: 14px;
+    padding-block: 14px;
+  }
+
+  .admin-sidebar,
+  .admin-panel,
+  .admin-hero {
+    border-radius: 24px;
+  }
+
+  .admin-hero {
+    min-height: auto;
+  }
+
+  .admin-hero h2 {
+    font-size: 2rem;
+  }
+
+  .admin-stat-card {
+    padding: 18px;
+  }
+
+  .admin-filter-chip {
+    padding: 9px 12px;
   }
 }
 
