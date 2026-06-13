@@ -63,6 +63,7 @@ export async function PublicReservationPage() {
           imprintUrl={settings.imprintUrl}
           latestReservationTime={settings.latestReservationTime}
           earliestReservationTime={settings.earliestReservationTime}
+          manualReviewGuestThreshold={settings.manualReviewGuestThreshold}
           maxGuestsPerRequest={settings.maxGuestsPerRequest}
           privacyNoticeText={settings.privacyNoticeText}
           privacyPolicyUrl={privacyUrl}

@@ -188,6 +188,7 @@ export function ReservationForm({
   earliestReservationTime,
   imprintUrl,
   latestReservationTime,
+  manualReviewGuestThreshold,
   maxGuestsPerRequest,
   privacyNoticeText,
   privacyPolicyUrl,
@@ -195,6 +196,7 @@ export function ReservationForm({
   earliestReservationTime: string;
   imprintUrl?: string;
   latestReservationTime: string;
+  manualReviewGuestThreshold: number;
   maxGuestsPerRequest: number;
   privacyNoticeText: string;
   privacyPolicyUrl?: string;
@@ -228,6 +230,7 @@ export function ReservationForm({
     maxGuestsPerRequest,
     Math.max(1, Number.parseInt(guestCount, 10) || 1),
   );
+  const depositApplies = guestCountNumber >= manualReviewGuestThreshold;
   const canSubmitReservation =
     Boolean(selectedTime) && selectedDaySummary.isBookable && !slotLoading && !slotError;
   const nearestPreviousDate = useMemo(
@@ -361,7 +364,8 @@ export function ReservationForm({
         <p className="eyebrow">Reservierungsanfrage</p>
         <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">Wunschzeit wählen</h2>
         <p className="text-sm leading-6 text-muted">
-          Wir prüfen jede Anfrage persönlich. Eine Zusage erhalten Sie separat von uns.
+          Wählen Sie Datum, Uhrzeit und Personenzahl. Wir melden uns anschließend persönlich bei
+          Ihnen.
         </p>
       </div>
 
@@ -537,11 +541,21 @@ export function ReservationForm({
 
       <div className="space-y-2">
         <span className="text-sm font-semibold">Personenzahl wählen</span>
-        <div className="glass-tile grid min-h-[104px] gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="glass-tile grid min-h-[104px] gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
           <div className="relative z-10 min-w-0">
             <span className="block text-xs font-bold uppercase text-muted">Gäste</span>
             <span className="mt-1 block text-sm font-semibold text-muted">
               1 bis {maxGuestsPerRequest} Personen
+            </span>
+            <span
+              className={[
+                "mt-3 block rounded-2xl border px-3 py-2 text-sm font-bold leading-5",
+                depositApplies
+                  ? "border-warning/35 bg-warning/15 text-warning"
+                  : "border-border bg-white/42 text-muted",
+              ].join(" ")}
+            >
+              Ab {manualReviewGuestThreshold} Personen ist eine Anzahlung von 100 € notwendig.
             </span>
           </div>
           <div className="relative z-10 grid w-full grid-cols-[48px_minmax(72px,1fr)_48px] items-center gap-1 rounded-full border border-border bg-white/55 p-1.5 shadow-[inset_0_1px_0_rgb(255_255_255_/_72%)] sm:w-60">
@@ -732,7 +746,8 @@ export function ReservationForm({
           </span>
           <span className="relative z-10 min-w-0 text-sm leading-6">
             <span className="block font-bold text-foreground">
-              Ich habe den Datenschutzhinweis gelesen und nehme ihn zur Kenntnis.
+              Ich habe die Datenschutzhinweise gelesen und nehme die Verarbeitung meiner Angaben zur
+              Bearbeitung der Anfrage zur Kenntnis.
             </span>
             <span className="mt-1 block text-muted">{privacyNoticeText}</span>
           </span>
@@ -760,8 +775,8 @@ export function ReservationForm({
           <div className="space-y-1">
             <span className="text-sm font-semibold">Anfrage abschicken</span>
             <p className="text-sm leading-6 text-muted">
-              Mit dem Absenden schicken Sie uns Ihre Reservierungsanfrage. Wir melden uns mit einer
-              persönlichen Rückmeldung bei Ihnen.
+              Mit dem Absenden schicken Sie uns Ihre Anfrage. Eine Reservierung entsteht erst nach
+              unserer persönlichen Zusage.
             </p>
           </div>
           <span className="w-fit shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold leading-none text-primary">
@@ -776,10 +791,10 @@ export function ReservationForm({
           type="submit"
         >
           {pending
-            ? "Anfrage wird geprüft..."
+            ? "Anfrage wird gesendet..."
             : canSubmitReservation
-              ? "Anfrage senden"
-              : "Tag und Uhrzeit wählen"}
+              ? "Anfrage absenden"
+              : "Datum und Uhrzeit wählen"}
         </button>
 
         <p className="relative z-10 text-center text-xs font-semibold leading-5 text-muted">
