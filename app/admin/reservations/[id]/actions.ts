@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   reservationDecisionSchema,
@@ -58,6 +59,10 @@ export async function sendReservationDecisionAction(
   revalidatePath(`/admin/reservations/${parsed.data.id}`);
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
+
+  if (result.ok) {
+    redirect(`/admin/reservations/${parsed.data.id}?decision=${parsed.data.decision}`);
+  }
 
   return {
     message: result.message,

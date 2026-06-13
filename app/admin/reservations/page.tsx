@@ -118,7 +118,14 @@ export default async function ReservationsPage({
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-2xl font-semibold">{reservation.guestName}</h3>
+                      <h3 className="text-2xl font-semibold">
+                        <Link
+                          className="break-words underline-offset-4 hover:underline"
+                          href={`/admin/reservations/${reservation.id}`}
+                        >
+                          {reservation.guestName}
+                        </Link>
+                      </h3>
                       <span
                         className={`rounded-full border border-border bg-surface/70 px-3 py-1 text-xs font-bold ${statusClasses[reservation.status]}`}
                       >
@@ -173,6 +180,7 @@ export default async function ReservationsPage({
                 <div className="mt-5">
                   <Link
                     className="secondary-action inline-flex"
+                    aria-label={`Details zu ${reservation.guestName} öffnen`}
                     href={`/admin/reservations/${reservation.id}`}
                   >
                     Details öffnen

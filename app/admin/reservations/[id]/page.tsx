@@ -49,6 +49,35 @@ const emailTypeLabels: Record<string, string> = {
   staff_notification: "Interne Anfrage",
 };
 
+const decisionFeedback = {
+  accept: {
+    eyebrow: "Zusage gesendet",
+    text: "Die persönliche Zusage wurde per E-Mail versendet, intern protokolliert und der Status wurde auf angenommen gesetzt.",
+  },
+  decline: {
+    eyebrow: "Absage gesendet",
+    text: "Die persönliche Absage wurde per E-Mail versendet, intern protokolliert und der Status wurde auf abgelehnt gesetzt.",
+  },
+  question: {
+    eyebrow: "Rückfrage gesendet",
+    text: "Die Rückfrage wurde per E-Mail versendet und intern protokolliert. Der Status der Anfrage bleibt offen.",
+  },
+} as const;
+
+type DecisionFeedbackKey = keyof typeof decisionFeedback;
+
+function normalizeDecisionFeedback(
+  value: string | string[] | undefined,
+): DecisionFeedbackKey | null {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+
+  if (rawValue === "accept" || rawValue === "decline" || rawValue === "question") {
+    return rawValue;
+  }
+
+  return null;
+}
+
 function formatDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
 
@@ -160,11 +189,14 @@ function DisabledAiAction({ label }: { label: string }) {
 
 export default async function ReservationDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ decision?: string | string[] }>;
 }) {
   const session = await requirePermission("reservations:read");
   const { id } = await params;
+  const decisionFeedbackKey = normalizeDecisionFeedback((await searchParams).decision);
   const detail = await getAdminReservationDetail(id);
 
   if (!detail) {
@@ -214,6 +246,18 @@ export default async function ReservationDetailPage({
             </span>
           </div>
         </div>
+
+        {decisionFeedbackKey ? (
+          <section className="form-feedback form-feedback-success">
+            <span aria-hidden="true" className="form-feedback-dot" />
+            <span className="min-w-0">
+              <span className="form-feedback-label">
+                {decisionFeedback[decisionFeedbackKey].eyebrow}
+              </span>
+              <span className="block">{decisionFeedback[decisionFeedbackKey].text}</span>
+            </span>
+          </section>
+        ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <DetailCard eyebrow="Anfrage" title="Reservierungsdaten">
