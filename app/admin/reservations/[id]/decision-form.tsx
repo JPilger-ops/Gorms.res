@@ -65,7 +65,7 @@ export function ReservationDecisionForm({
   const currentBody = aiState.draft?.body ?? draft.body;
 
   return (
-    <form action={formAction} className="rounded-3xl border border-border bg-surface/65 p-4">
+    <form action={formAction} className="admin-decision-card" data-decision={draft.decision}>
       <input name="decision" type="hidden" value={draft.decision} />
       <input name="expectedStatus" type="hidden" value={expectedStatus} />
       <input name="id" type="hidden" value={reservationId} />
@@ -102,7 +102,7 @@ export function ReservationDecisionForm({
           <FieldError messages={state.fieldErrors?.body} />
         </label>
 
-        <div className="rounded-2xl border border-border bg-surface/65 p-3">
+        <div className="admin-decision-note">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm font-bold">KI-Vorlage</p>
@@ -143,7 +143,7 @@ export function ReservationDecisionForm({
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface/65 p-3">
+        <div className="admin-decision-note">
           <p className="text-sm font-bold">Manueller Versand</p>
           <p className="mt-1 text-sm leading-6 text-muted">
             Erst dieser Button sendet die E-Mail. Bei Zusage oder Absage wird danach der Status

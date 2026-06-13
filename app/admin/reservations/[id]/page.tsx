@@ -30,14 +30,14 @@ const availabilityStatusLabels: Record<AvailabilityStatus, string> = {
 };
 
 const statusClasses: Record<ReservationStatus | AvailabilityStatus, string> = {
-  accepted: "text-success",
-  blocked: "text-danger",
-  bookable: "text-success",
-  cancelled: "text-muted",
-  capacity_warning: "text-warning",
-  declined: "text-danger",
-  manual_review: "text-warning",
-  pending: "text-warning",
+  accepted: "border-success/35 bg-success/10 text-success",
+  blocked: "border-danger/35 bg-danger/10 text-danger",
+  bookable: "border-success/35 bg-success/10 text-success",
+  cancelled: "border-border bg-surface-strong/70 text-muted",
+  capacity_warning: "border-warning/35 bg-warning/10 text-warning",
+  declined: "border-danger/35 bg-danger/10 text-danger",
+  manual_review: "border-warning/35 bg-warning/10 text-warning",
+  pending: "border-warning/35 bg-warning/10 text-warning",
 };
 
 const emailTypeLabels: Record<string, string> = {
@@ -100,14 +100,18 @@ function formatDateTime(value: Date | null) {
 function DetailCard({
   children,
   eyebrow,
+  featured = false,
   title,
 }: {
   children: React.ReactNode;
   eyebrow?: string;
+  featured?: boolean;
   title: string;
 }) {
   return (
-    <section className="glass-panel p-4 sm:p-6">
+    <section
+      className={`glass-panel admin-panel p-4 sm:p-6 ${featured ? "admin-focus-panel" : ""}`}
+    >
       {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
       <h3 className="mt-1 text-2xl font-semibold">{title}</h3>
       <div className="mt-4 min-w-0 space-y-4">{children}</div>
@@ -117,7 +121,7 @@ function DetailCard({
 
 function DataTile({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface/65 p-4">
+    <div className="admin-list-card p-4">
       <p className="text-xs font-bold uppercase text-muted">{label}</p>
       <div className="mt-1 min-w-0 break-words font-semibold">{value}</div>
     </div>
@@ -130,7 +134,7 @@ function ListBlock({ items, title }: { items: string[]; title: string }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface/65 p-4">
+    <div className="admin-list-card p-4">
       <p className="text-xs font-bold uppercase text-muted">{title}</p>
       <ul className="mt-3 space-y-2 text-sm leading-6">
         {items.map((item) => (
@@ -156,7 +160,7 @@ function IcsDownloadTile({
   title: string;
 }) {
   return (
-    <article className="rounded-2xl border border-border bg-surface/65 p-4">
+    <article className="admin-list-card p-4">
       <div>
         <p className="text-sm font-bold">{title}</p>
         <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
@@ -173,17 +177,6 @@ function IcsDownloadTile({
         )}
       </div>
     </article>
-  );
-}
-
-function DisabledAiAction({ label }: { label: string }) {
-  return (
-    <span
-      aria-disabled="true"
-      className="secondary-action inline-flex min-h-12 w-full items-center justify-center text-center"
-    >
-      {label}
-    </span>
   );
 }
 
@@ -224,7 +217,7 @@ export default async function ReservationDetailPage({
   return (
     <AdminShell session={session}>
       <div className="space-y-6">
-        <div className="glass-panel p-5 sm:p-7">
+        <div className="glass-panel admin-hero p-5 sm:p-7">
           <Link
             className="text-sm font-semibold text-muted hover:text-foreground"
             href="/admin/reservations"
@@ -240,7 +233,7 @@ export default async function ReservationDetailPage({
               </p>
             </div>
             <span
-              className={`w-fit rounded-full border border-border bg-surface/70 px-4 py-2 text-sm font-bold ${statusClasses[reservation.status]}`}
+              className={`w-fit rounded-full border px-4 py-2 text-sm font-bold ${statusClasses[reservation.status]}`}
             >
               {reservationStatusLabels[reservation.status]}
             </span>
@@ -272,12 +265,12 @@ export default async function ReservationDetailPage({
             </div>
 
             {reservation.message ? (
-              <div className="rounded-2xl border border-border bg-surface/65 p-4">
+              <div className="admin-message-preview">
                 <p className="text-xs font-bold uppercase text-muted">Nachricht</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{reservation.message}</p>
               </div>
             ) : (
-              <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm text-muted">
+              <p className="admin-message-preview text-sm text-muted">
                 Keine optionale Nachricht angegeben.
               </p>
             )}
@@ -312,6 +305,35 @@ export default async function ReservationDetailPage({
           </DetailCard>
         </div>
 
+        <DetailCard eyebrow="Antwort" featured title="Entscheidung senden">
+          {canRespond && reservation.status === "pending" ? (
+            <>
+              <div className="admin-message-preview text-sm leading-6 text-muted">
+                Zusage und Absage ändern den Status erst nach erfolgreichem SMTP-Versand. Rückfragen
+                werden protokolliert, der Status bleibt offen. KI-Vorlagen sind nur editierbare
+                Textvorschläge und versenden nie automatisch.
+              </div>
+              <div className="grid gap-4 2xl:grid-cols-3">
+                {decisionDrafts.map((draft) => (
+                  <ReservationDecisionForm
+                    aiEnabled={aiStatus.enabled}
+                    draft={draft}
+                    expectedStatus={reservation.status}
+                    key={draft.decision}
+                    reservationId={reservation.id}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="admin-message-preview text-sm leading-6 text-muted">
+              Für diese Anfrage ist der normale Antwortworkflow aktuell nicht verfügbar. Bereits
+              entschiedene Anfragen können später über einen kontrollierten Sonderfallprozess
+              angepasst werden.
+            </p>
+          )}
+        </DetailCard>
+
         <DetailCard eyebrow="Gorms.res Prüfung" title="Availability Snapshot">
           {availabilityCheck ? (
             <>
@@ -319,7 +341,9 @@ export default async function ReservationDetailPage({
                 <DataTile
                   label="Prüfstatus"
                   value={
-                    <span className={statusClasses[availabilityCheck.status]}>
+                    <span
+                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusClasses[availabilityCheck.status]}`}
+                    >
                       {availabilityStatusLabels[availabilityCheck.status]}
                     </span>
                   }
@@ -362,13 +386,13 @@ export default async function ReservationDetailPage({
               {!availabilityCheck.reasons.length &&
               !availabilityCheck.warnings.length &&
               !availabilityCheck.manualReviewReasons.length ? (
-                <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm text-muted">
+                <p className="admin-message-preview text-sm text-muted">
                   Für diese Anfrage wurden keine Blocker, Warnungen oder Prüfgründe gespeichert.
                 </p>
               ) : null}
             </>
           ) : (
-            <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm text-muted">
+            <p className="admin-message-preview text-sm text-muted">
               Für diese Anfrage liegt noch kein Availability-Snapshot vor. Das betrifft ältere
               Anfragen vor Version 1.1.
             </p>
@@ -376,7 +400,7 @@ export default async function ReservationDetailPage({
         </DetailCard>
 
         <DetailCard eyebrow="Kalender" title="Interne ICS-Dateien">
-          <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
+          <p className="admin-message-preview text-sm leading-6 text-muted">
             Diese Kalenderdateien sind für die interne Bearbeitung gedacht und enthalten
             Kontaktdaten des Gasts. Nicht öffentlich teilen.
           </p>
@@ -399,72 +423,11 @@ export default async function ReservationDetailPage({
           </div>
         </DetailCard>
 
-        <DetailCard eyebrow="KI-Assistenz" title="Lokale Assistenz vorbereitet">
-          <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
-            {aiStatus.uiMessage} KI darf keine Zusage, Absage, Rückfrage, E-Mail, ICS-Datei oder
-            Statusänderung automatisch auslösen. Erzeugte Texte werden nur als editierbare Vorlage
-            in die Antwortfelder eingefügt.
-          </p>
-          <div className="grid gap-3 md:grid-cols-3">
-            <DataTile label="KI darf" value="Textvorlagen erstellen" />
-            <DataTile label="KI darf nicht" value="Senden oder Status ändern" />
-            <DataTile label="Pflichtschritt" value="Mensch prüft und sendet manuell" />
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <DisabledAiAction label="Anfrage zusammenfassen" />
-            <DisabledAiAction
-              label={aiStatus.enabled ? "Zusage im Antwortbereich" : "Zusage entwerfen"}
-            />
-            <DisabledAiAction
-              label={aiStatus.enabled ? "Absage im Antwortbereich" : "Absage entwerfen"}
-            />
-            <DisabledAiAction
-              label={aiStatus.enabled ? "Rückfrage im Antwortbereich" : "Rückfrage entwerfen"}
-            />
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <DataTile label="Status" value={aiStatus.statusLabel} />
-            <DataTile label="Geplantes Modell" value={aiStatus.model} />
-            <DataTile label="Timeout" value={`${aiStatus.timeoutMs} ms`} />
-          </div>
-        </DetailCard>
-
-        <DetailCard eyebrow="Antwort" title="Entscheidung senden">
-          {canRespond && reservation.status === "pending" ? (
-            <>
-              <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
-                Zusage und Absage ändern den Status erst nach erfolgreichem SMTP-Versand. Rückfragen
-                werden protokolliert, der Status bleibt offen.
-              </p>
-              <div className="grid gap-4 xl:grid-cols-3">
-                {decisionDrafts.map((draft) => (
-                  <ReservationDecisionForm
-                    aiEnabled={aiStatus.enabled}
-                    draft={draft}
-                    expectedStatus={reservation.status}
-                    key={draft.decision}
-                    reservationId={reservation.id}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm leading-6 text-muted">
-              Für diese Anfrage ist der normale Antwortworkflow aktuell nicht verfügbar. Bereits
-              entschiedene Anfragen können später über einen kontrollierten Sonderfallprozess
-              angepasst werden.
-            </p>
-          )}
-        </DetailCard>
-
         <DetailCard eyebrow="Kommunikation" title="Mailhistorie">
           {outgoingEmails.length ? (
             <div className="space-y-3">
               {outgoingEmails.map((email) => (
-                <article
-                  className="rounded-2xl border border-border bg-surface/65 p-4"
-                  key={email.id}
-                >
+                <article className="admin-list-card p-4" key={email.id}>
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                     <div>
                       <p className="text-sm font-bold">
@@ -473,8 +436,10 @@ export default async function ReservationDetailPage({
                       <p className="mt-1 text-sm text-muted">{email.subject}</p>
                     </div>
                     <span
-                      className={`w-fit rounded-full border border-border bg-surface/70 px-3 py-1 text-xs font-bold ${
-                        email.smtpStatus === "sent" ? "text-success" : "text-danger"
+                      className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${
+                        email.smtpStatus === "sent"
+                          ? "border-success/35 bg-success/10 text-success"
+                          : "border-danger/35 bg-danger/10 text-danger"
                       }`}
                     >
                       {email.smtpStatus === "sent" ? "Gesendet" : "Fehlgeschlagen"}
@@ -488,7 +453,7 @@ export default async function ReservationDetailPage({
               ))}
             </div>
           ) : (
-            <p className="rounded-2xl border border-border bg-surface/65 p-4 text-sm text-muted">
+            <p className="admin-message-preview text-sm text-muted">
               Für diese Anfrage wurde noch keine ausgehende E-Mail im neuen Workflow protokolliert.
             </p>
           )}
