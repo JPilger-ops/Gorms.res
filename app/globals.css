@@ -461,23 +461,6 @@ html {
     color: var(--foreground);
   }
 
-  .glass-nav-link[data-active="true"]::before {
-    position: absolute;
-    inset-block: 50% auto;
-    left: 10px;
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: var(--primary);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary), transparent 84%);
-    content: "";
-    transform: translateY(-50%);
-  }
-
-  .glass-nav-link[data-active="true"] {
-    padding-left: 25px;
-  }
-
   .admin-mobile-menu {
     min-width: 0;
   }
@@ -759,7 +742,7 @@ html {
       linear-gradient(180deg, rgb(255 255 255 / 58%), rgb(255 255 255 / 30%)),
       rgb(255 255 255 / 38%);
     box-shadow:
-      0 8px 18px rgb(42 52 38 / 6%),
+      0 1px 0 rgb(255 255 255 / 72%),
       inset 0 1px 0 rgb(255 255 255 / 66%);
     color: var(--muted);
     padding: 10px 14px;
@@ -786,8 +769,8 @@ html {
       linear-gradient(180deg, rgb(255 255 255 / 24%), rgb(255 255 255 / 8%)),
       color-mix(in srgb, var(--primary), white 12%);
     box-shadow:
-      0 16px 34px color-mix(in srgb, var(--primary), transparent 72%),
-      inset 0 1px 0 rgb(255 255 255 / 22%);
+      inset 0 1px 0 rgb(255 255 255 / 22%),
+      inset 0 -1px 0 color-mix(in srgb, var(--primary), black 20%);
     color: var(--primary-foreground);
   }
 
