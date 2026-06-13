@@ -16,6 +16,9 @@ to another host.
 For the full migration from the current debug host to the later production server, use the
 [Production Cutover Checklist](production-cutover.md).
 
+For the concrete fill-in sheet before the server move, use the
+[Production Server Worksheet](production-server-worksheet.md).
+
 For the current verified debug deployment snapshot, see [Current Live Status](current-live-status.md).
 
 ## Deployment Update

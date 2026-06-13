@@ -55,6 +55,7 @@ Core documents:
 - [Operations runbook](docs/operations-runbook.md)
 - [Current live status](docs/current-live-status.md)
 - [Production cutover checklist](docs/production-cutover.md)
+- [Production server worksheet](docs/production-server-worksheet.md)
 - [AI assistant preparation](docs/ai-assistant.md)
 - [Final project report](docs/final-project-report.md)
 

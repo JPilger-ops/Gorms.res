@@ -3,6 +3,9 @@
 This checklist is for moving from the current debug deployment to the later production server.
 Replace every example path with the real production path.
 
+For a fill-in operational sheet with no secrets, use
+[Production Server Worksheet](production-server-worksheet.md).
+
 ## Current Verified Baseline
 
 Last verified debug deployment:

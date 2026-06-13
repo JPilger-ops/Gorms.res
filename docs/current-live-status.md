@@ -8,7 +8,7 @@ server.
 
 ```text
 Date:                         2026-06-13
-Deployment checkout HEAD:     ade53ce
+Deployment checkout HEAD:     6dc628a
 Last rebuilt app image commit: ac90f9e
 Deployment path:              /opt/app/Gorms.res
 App port:                     6043
@@ -18,7 +18,8 @@ Admin host:                   login.gorms.de
 
 The app container image currently running was rebuilt during the dependency hardening deploy at
 `ac90f9e`. The commits after that are documentation and CI-only commits and do not require a
-container rebuild.
+container rebuild. If this file is changed by a later documentation-only commit, use the Git history
+and CI status as the source of truth for the latest documentation checkout.
 
 ## Runtime Health
 
