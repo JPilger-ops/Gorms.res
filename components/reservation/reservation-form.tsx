@@ -570,13 +570,14 @@ export function ReservationForm({
                 onClick={() => setSelectedTime(slot.time)}
                 className={[
                   "glass-tile min-h-[88px] p-4 text-left transition duration-200",
-                  "hover:-translate-y-0.5 hover:border-primary/40",
+                  "hover:-translate-y-0.5 hover:border-primary/40 disabled:cursor-wait disabled:opacity-55 disabled:hover:translate-y-0",
                   isSelected ? "border-primary/60 ring-2 ring-primary/20" : "",
                   slot.status === "bookable"
                     ? "bg-[color-mix(in_srgb,var(--success),white_90%)]"
                     : "bg-[color-mix(in_srgb,var(--warning),white_88%)]",
                 ].join(" ")}
                 aria-pressed={isSelected}
+                disabled={slotLoading}
               >
                 <span className="relative z-10 block">
                   <span className="block text-xl font-semibold leading-none">{slot.label}</span>
