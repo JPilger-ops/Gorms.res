@@ -680,7 +680,7 @@ export function ReservationForm({
         <span className="text-sm font-semibold">Datenschutz</span>
         <label className="glass-tile group grid min-w-0 cursor-pointer gap-3 p-4 transition hover:-translate-y-0.5 hover:border-primary/35 sm:grid-cols-[auto_minmax(0,1fr)]">
           <input
-            className="peer sr-only"
+            className="peer absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0"
             name="privacyAccepted"
             type="checkbox"
             value="true"
