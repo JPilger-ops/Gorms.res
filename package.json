@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "check": "npm run lint && npm run typecheck && npm run format:check",
     "preflight:production": "node scripts/production-preflight.mjs",
+    "preflight:production:auto": "scripts/run-production-preflight.sh",
     "smoke:live-workflow": "node scripts/smoke-live-workflow.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

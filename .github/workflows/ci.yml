@@ -66,7 +66,7 @@ jobs:
           BACKUP_HOST_PATH=/mnt/heidekoenig-backups
           BACKUP_CONTAINER_PATH=/backups
           EOF
-          PREFLIGHT_ENV_FILE=/tmp/heidekoenig-preflight.env npm run preflight:production
+          PREFLIGHT_ENV_FILE=/tmp/heidekoenig-preflight.env npm run preflight:production:auto
 
       - name: Build
         run: npm run build

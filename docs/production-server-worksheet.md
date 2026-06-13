@@ -59,12 +59,13 @@ Expected:
 After `.env` exists, run the repository preflight:
 
 ```bash
-npm run preflight:production
+./scripts/run-production-preflight.sh
 ```
 
 This check does not print secret values. It verifies required variables, host routing values,
 host-only admin cookie settings, Docker/Compose availability, the NFS mount path and the Compose
-security assumptions.
+security assumptions. Prefer local Node 22 for the most complete host checks; the runner can fall
+back to Docker Node 22 if local Node is missing or too old.
 
 ## Repository Setup
 

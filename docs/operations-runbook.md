@@ -35,7 +35,7 @@ docker compose up -d app
 Before a first production start or after changing `.env`, run:
 
 ```bash
-npm run preflight:production
+./scripts/run-production-preflight.sh
 ```
 
 The preflight checks configuration and Compose safety assumptions without printing secret values.
