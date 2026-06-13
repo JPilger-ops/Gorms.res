@@ -33,6 +33,12 @@ const decisionEyebrows: Record<ReservationDecisionType, string> = {
   question: "Rückfrage",
 };
 
+const manualSendLabels: Record<ReservationDecisionType, string> = {
+  accept: "Geprüfte Zusage jetzt senden",
+  decline: "Geprüfte Absage jetzt senden",
+  question: "Geprüfte Rückfrage jetzt senden",
+};
+
 export type ReservationDecisionDraft = {
   body: string;
   decision: ReservationDecisionType;
@@ -97,10 +103,17 @@ export function ReservationDecisionForm({
         </label>
 
         <div className="rounded-2xl border border-border bg-surface/65 p-3">
-          <p className="text-sm leading-6 text-muted">
-            KI-Vorlagen werden nur in diese editierbaren Felder eingefügt. Versand und Statuswechsel
-            erfolgen ausschließlich über den manuellen Senden-Button.
-          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-bold">KI-Vorlage</p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Fügt nur Text in Betreff und E-Mail-Text ein. Danach bitte prüfen und bearbeiten.
+              </p>
+            </div>
+            <span className="w-fit rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-bold uppercase text-warning">
+              Kein Versand
+            </span>
+          </div>
           <button
             aria-busy={aiPending}
             className="secondary-action mt-3 w-full"
@@ -111,7 +124,7 @@ export function ReservationDecisionForm({
             {aiPending
               ? "KI-Vorlage wird erstellt..."
               : aiEnabled
-                ? "KI-Vorlage einfügen"
+                ? "KI-Vorlage in Felder einfügen"
                 : "KI deaktiviert"}
           </button>
           <FormFeedback state={aiState} />
@@ -130,13 +143,21 @@ export function ReservationDecisionForm({
           ) : null}
         </div>
 
+        <div className="rounded-2xl border border-border bg-surface/65 p-3">
+          <p className="text-sm font-bold">Manueller Versand</p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Erst dieser Button sendet die E-Mail. Bei Zusage oder Absage wird danach der Status
+            geändert.
+          </p>
+        </div>
+
         <button
           aria-busy={pending}
           className="primary-action w-full"
           disabled={pending}
           type="submit"
         >
-          {pending ? "Wird gesendet..." : decisionLabels[draft.decision]}
+          {pending ? "Wird gesendet..." : manualSendLabels[draft.decision]}
         </button>
 
         <FormFeedback state={state} />

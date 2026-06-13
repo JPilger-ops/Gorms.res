@@ -361,6 +361,11 @@ export default async function ReservationDetailPage({
             Statusänderung automatisch auslösen. Erzeugte Texte werden nur als editierbare Vorlage
             in die Antwortfelder eingefügt.
           </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            <DataTile label="KI darf" value="Textvorlagen erstellen" />
+            <DataTile label="KI darf nicht" value="Senden oder Status ändern" />
+            <DataTile label="Pflichtschritt" value="Mensch prüft und sendet manuell" />
+          </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <DisabledAiAction label="Anfrage zusammenfassen" />
             <DisabledAiAction
