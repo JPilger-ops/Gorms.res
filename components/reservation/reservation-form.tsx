@@ -211,6 +211,10 @@ function statusPillTone(summary: ReturnType<typeof daySummary>, isSelected: bool
     return isSelected ? "bg-primary/15 text-primary" : "bg-success/13 text-success";
   }
 
+  if (summary.statusLabel === "Geöffnet") {
+    return isSelected ? "bg-success/22 text-success" : "bg-success/15 text-success";
+  }
+
   return isSelected ? "bg-danger/20 text-danger" : "bg-danger/13 text-danger";
 }
 
