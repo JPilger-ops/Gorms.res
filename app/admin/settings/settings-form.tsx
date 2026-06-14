@@ -366,7 +366,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       </Section>
 
       <Section
-        description="Datenschutztexte und automatische Aufbewahrungsfristen. Die eigentliche Löschung wird im Retention-Schritt ergänzt."
+        description="Datenschutztexte und automatische Aufbewahrungsfristen. Die Bereinigung anonymisiert personenbezogene Reservierungs- und E-Mail-Daten und löscht alte Audit-Logs."
         title="Datenschutz und Aufbewahrung"
       >
         <div className="grid gap-4 md:grid-cols-2">

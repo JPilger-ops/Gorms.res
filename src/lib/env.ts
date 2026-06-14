@@ -65,7 +65,7 @@ const envSchema = z.object({
   PRIVACY_NOTICE_TEXT: z
     .string()
     .default(
-      "Wir verwenden Ihre Angaben ausschließlich zur Bearbeitung Ihrer Reservierungsanfrage.",
+      "Wir verarbeiten Ihre Angaben ausschließlich zur Bearbeitung Ihrer Reservierungsanfrage, für Rückfragen und zur persönlichen Zu- oder Absage.",
     ),
   PRIVACY_POLICY_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
   RESERVATION_NOTIFICATION_EMAIL: z.string().email().default("Welcome@der-heidekoenig.de"),

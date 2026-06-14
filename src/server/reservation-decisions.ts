@@ -68,11 +68,7 @@ function reservationSummary(reservation: DecisionDraftReservation) {
   return `${formatDate(reservation.requestedDate)} um ${reservation.requestedTime.slice(0, 5)} Uhr für ${reservation.guestCount} Personen`;
 }
 
-function sanitizeSmtpError(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message.slice(0, 240);
-  }
-
+function sanitizeSmtpError() {
   return "SMTP-Versand fehlgeschlagen.";
 }
 
@@ -113,7 +109,7 @@ async function sendInternalAcceptanceNotification(
       recipient: internalEmail.recipient,
       reservationRequestId: reservation.id,
       sentByUserId: session.userId,
-      smtpError: sanitizeSmtpError(error),
+      smtpError: sanitizeSmtpError(),
       smtpStatus: "failed",
       subject: internalEmail.subject,
       type: "staff_acceptance_notification",
@@ -242,7 +238,7 @@ export async function sendReservationDecision(
       recipient: reservation.guestEmail,
       reservationRequestId: reservation.id,
       sentByUserId: session.userId,
-      smtpError: sanitizeSmtpError(error),
+      smtpError: sanitizeSmtpError(),
       smtpStatus: "failed",
       subject: input.subject,
       type: config.emailType,

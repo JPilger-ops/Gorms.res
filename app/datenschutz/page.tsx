@@ -38,7 +38,7 @@ export default async function PrivacyPage() {
         <div className="intro-panel space-y-5 p-5 sm:p-7">
           <p className="eyebrow">Datenschutz</p>
           <h1 className="max-w-4xl text-3xl font-semibold leading-[1.08] text-balance sm:text-5xl">
-            Ihre Daten bleiben auf unserem System.
+            Ihre Daten werden datensparsam verarbeitet.
           </h1>
           <p className="max-w-3xl text-lg leading-8 text-muted">
             Diese Seite beschreibt, welche Daten wir für Reservierungsanfragen verarbeiten. Wir
@@ -84,6 +84,15 @@ export default async function PrivacyPage() {
             </p>
           </Section>
 
+          <Section title="Rechtsgrundlage">
+            <p>
+              Die Bearbeitung Ihrer Reservierungsanfrage erfolgt zur Durchführung vorvertraglicher
+              Maßnahmen beziehungsweise zur Reservierungsabwicklung. Technische Schutzmaßnahmen wie
+              Rate Limiting, Admin-Sitzungen und Sicherheitsprotokolle erfolgen auf Grundlage
+              unseres berechtigten Interesses an einem sicheren Betrieb.
+            </p>
+          </Section>
+
           <Section title="Welche Daten werden verarbeitet?">
             <ul className="list-disc space-y-2 pl-5">
               <li>Name</li>
@@ -108,7 +117,8 @@ export default async function PrivacyPage() {
             <p>
               Die öffentliche Reservierungsseite setzt keine Tracking-Cookies. Wenn Sie den
               Datenschutz- und Cookie-Hinweis bestätigen, speichern wir diese Bestätigung lokal in
-              Ihrem Browser. Dadurch erscheint der Hinweis bei späteren Besuchen nicht erneut.
+              Ihrem Browser. Dadurch erscheint der Hinweis bei späteren Besuchen nicht erneut. Die
+              Bestätigung wird nach 180 Tagen erneut abgefragt.
             </p>
             <p>
               Admin-Sitzungscookies werden ausschließlich auf der getrennten Login-Domain verwendet
@@ -116,11 +126,28 @@ export default async function PrivacyPage() {
             </p>
           </Section>
 
+          <Section title="Technische Schutzmaßnahmen">
+            <p>
+              Zum Schutz vor Missbrauch nutzt die Anwendung kurzlebiges Rate Limiting. Dafür wird
+              aus technischen Verbindungsdaten ein gekürzter Hash gebildet und nur im
+              Arbeitsspeicher der App gehalten. Diese Daten werden nicht in der
+              Reservierungsdatenbank gespeichert.
+            </p>
+          </Section>
+
           <Section title="Speicherdauer">
             <p>
-              Reservierungsanfragen werden standardmäßig nach {settings.reservationRetentionDays}{" "}
-              Tagen gelöscht. Sicherheits- und Auditprotokolle werden standardmäßig nach{" "}
-              {settings.auditLogRetentionDays} Tagen bereinigt.
+              Personenbezogene Kontaktdaten aus Reservierungsanfragen werden standardmäßig nach{" "}
+              {settings.reservationRetentionDays} Tagen anonymisiert. Dabei werden Name, E-Mail,
+              Telefonnummer, optionale Nachricht und zugehörige E-Mail-Historie entfernt oder
+              anonymisiert. Technische Eckdaten wie Datum, Uhrzeit, Personenzahl und Status können
+              für betriebliche Auswertungen ohne direkten Personenbezug verbleiben.
+            </p>
+            <p>
+              Sicherheits- und Auditprotokolle werden standardmäßig nach{" "}
+              {settings.auditLogRetentionDays} Tagen bereinigt. Backups können Daten bis zum Ablauf
+              der jeweils konfigurierten Backup-Aufbewahrung enthalten und sind nur für berechtigte
+              Server-Administratoren zugänglich.
             </p>
           </Section>
 
@@ -130,6 +157,25 @@ export default async function PrivacyPage() {
               Mitarbeiterin und eine automatische Eingangsbestätigung an Sie. Diese
               Eingangsbestätigung ist noch keine Reservierungszusage.
             </p>
+            <p>
+              Für den Versand wird der im System konfigurierte SMTP-Anbieter verwendet. Inhalte von
+              Reservierungs- und Antwort-E-Mails werden zur Bearbeitung und Nachvollziehbarkeit im
+              System gespeichert und im Rahmen der Aufbewahrungsfrist anonymisiert.
+            </p>
+          </Section>
+
+          <Section title="Empfänger und Auftragsverarbeitung">
+            <p>
+              Zugriff auf Reservierungsdaten haben nur berechtigte Mitarbeitende im geschützten
+              Adminbereich. Technische Empfänger können der konfigurierte SMTP-Anbieter, der selbst
+              betriebene Datenbankserver, das interne Backup-Ziel und die Serverinfrastruktur sein.
+            </p>
+            <p>
+              Wenn die lokale KI-Entwurfsfunktion im Adminbereich aktiviert ist, können berechtigte
+              Mitarbeitende auf Knopfdruck einen bearbeitbaren Antwortentwurf erzeugen lassen. Dabei
+              werden nur für den Entwurf notwendige Reservierungsdaten an den lokal betriebenen
+              Ollama-Dienst übergeben. Die KI versendet keine E-Mails und trifft keine Entscheidung.
+            </p>
           </Section>
 
           <Section title="Ihre Rechte">
@@ -137,6 +183,12 @@ export default async function PrivacyPage() {
               Sie können Auskunft, Berichtigung oder Löschung Ihrer personenbezogenen Daten
               verlangen. Bitte wenden Sie sich dafür an den Datenschutz-Kontakt oder an die im
               Impressum genannte Kontaktadresse.
+            </p>
+            <p>
+              Außerdem können Sie Einschränkung der Verarbeitung, Widerspruch und
+              Datenübertragbarkeit verlangen, soweit die gesetzlichen Voraussetzungen vorliegen. Sie
+              haben zudem das Recht, sich bei einer zuständigen Datenschutzaufsichtsbehörde zu
+              beschweren.
             </p>
           </Section>
         </div>

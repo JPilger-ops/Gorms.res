@@ -23,11 +23,7 @@ export type ReservationFormState = {
   success?: boolean;
 };
 
-function sanitizeSmtpError(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message.slice(0, 240);
-  }
-
+function sanitizeSmtpError() {
   return "SMTP-Versand fehlgeschlagen.";
 }
 
@@ -48,7 +44,7 @@ async function recordInitialOutgoingEmail({
       recipient: content.recipient,
       reservationRequestId,
       sentAt: error ? undefined : new Date(),
-      smtpError: error ? sanitizeSmtpError(error) : undefined,
+      smtpError: error ? sanitizeSmtpError() : undefined,
       smtpStatus: error ? "failed" : "sent",
       subject: content.subject,
       type,

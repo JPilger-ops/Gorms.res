@@ -3,20 +3,54 @@
 import { useEffect, useState } from "react";
 
 const storageKey = "heidekoenig_privacy_notice_acknowledged";
+const acknowledgementTtlMs = 180 * 24 * 60 * 60 * 1000;
+
+function isAcknowledgementValid(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  if (value === "true") {
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ acknowledgedAt: new Date().toISOString() }),
+    );
+    return true;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as { acknowledgedAt?: string };
+    const acknowledgedAt = parsed.acknowledgedAt ? Date.parse(parsed.acknowledgedAt) : Number.NaN;
+    const isFresh =
+      Number.isFinite(acknowledgedAt) && Date.now() - acknowledgedAt < acknowledgementTtlMs;
+
+    if (!isFresh) {
+      window.localStorage.removeItem(storageKey);
+    }
+
+    return isFresh;
+  } catch {
+    window.localStorage.removeItem(storageKey);
+    return false;
+  }
+}
 
 export function PrivacyNoticeBanner({ privacyUrl = "/datenschutz" }: { privacyUrl?: string }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      setIsVisible(window.localStorage.getItem(storageKey) !== "true");
+      setIsVisible(!isAcknowledgementValid(window.localStorage.getItem(storageKey)));
     });
 
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
   function acknowledge() {
-    window.localStorage.setItem(storageKey, "true");
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ acknowledgedAt: new Date().toISOString() }),
+    );
     setIsVisible(false);
   }
 
@@ -31,7 +65,7 @@ export function PrivacyNoticeBanner({ privacyUrl = "/datenschutz" }: { privacyUr
           <p className="text-sm font-bold text-foreground">Datenschutz & Cookies</p>
           <p className="text-sm leading-6 text-muted">
             Keine Analytics, kein Tracking. Wir speichern nur diese Bestätigung lokal in Ihrem
-            Browser.
+            Browser und fragen sie nach 180 Tagen erneut ab.
           </p>
           <a
             className="text-sm font-bold text-primary underline underline-offset-4"

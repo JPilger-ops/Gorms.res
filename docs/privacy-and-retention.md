@@ -16,10 +16,16 @@ Reservation requests store only:
 The app does not persist full IP addresses, user agents, tracking IDs, location data, analytics IDs
 or marketing preferences.
 
+Public form, slot and login rate limits use short-lived in-memory keys derived from a truncated hash
+of proxy connection data. These keys are not written to the reservation database.
+
 ## Public Privacy Notice
 
 Guests must acknowledge the privacy notice before submitting a request. The notice text and optional
 privacy/imprint links are configurable by admins.
+
+The public privacy banner stores only the banner acknowledgement in the guest browser. It does not
+track the guest, expires after 180 days and is asked again after expiry.
 
 ## Retention Defaults
 
@@ -57,6 +63,15 @@ Audit-log entries older than the configured audit retention value are deleted.
 
 Audit logs should not contain personal reservation details. They track security and administration
 events such as login attempts, user changes, SMTP changes and retention cleanup.
+
+SMTP transport errors stored in the outgoing e-mail history are deliberately generic. Raw provider
+errors are not persisted because they can contain operational details or parts of a submitted message.
+
+## Local AI Drafts
+
+The optional Ollama integration is a draft assistant only. It receives the minimum reservation
+context needed to prepare an editable response draft, cannot send e-mails and cannot decide a
+reservation status automatically.
 
 ## Backups
 
