@@ -6,7 +6,6 @@ import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
   "Montags, dienstags, sonntags und an Feiertagen keine Reservierungen.",
-  "Reservierungen nur im Innenbereich.",
   "Ab 30 Personen: 100 € Anzahlung.",
   "Verbindlich erst nach persönlicher Zusage.",
 ];
