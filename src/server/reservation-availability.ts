@@ -227,7 +227,7 @@ export async function checkReservationAvailability(
 
     if (settings.blockSundays && isSunday(input.date)) {
       reasons.push(
-        "Wir sind sonntags geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.",
+        "Wir haben sonntags geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.",
       );
     }
 

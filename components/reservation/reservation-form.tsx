@@ -75,7 +75,7 @@ function shortUnavailableReason(reason: string) {
   const normalized = reason.toLowerCase();
 
   if (normalized.includes("sonntag")) {
-    return "Keine Reservierung";
+    return "Keine Reservierungen möglich";
   }
 
   if (normalized.includes("montag")) {
@@ -87,7 +87,7 @@ function shortUnavailableReason(reason: string) {
   }
 
   if (normalized.includes("feiertag")) {
-    return "Keine Reservierung";
+    return "Keine Reservierungen möglich";
   }
 
   if (normalized.includes("voll")) {
@@ -125,7 +125,7 @@ function guestUnavailableMessage(reason?: string) {
   const normalized = reason.toLowerCase();
 
   if (normalized.includes("sonntag")) {
-    return "Wir sind sonntags geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.";
+    return "Wir haben sonntags geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.";
   }
 
   if (normalized.includes("feiertag")) {
