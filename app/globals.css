@@ -1289,10 +1289,11 @@ html {
 
   .privacy-banner {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
-    left: 16px;
+    right: 18px;
+    bottom: 18px;
+    left: auto;
     z-index: 50;
+    width: min(420px, calc(100vw - 32px));
     pointer-events: none;
   }
 
@@ -1300,10 +1301,10 @@ html {
     position: relative;
     overflow: hidden;
     display: flex;
-    max-width: 880px;
+    max-width: 100%;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 18px;
+    flex-direction: column;
+    gap: 12px;
     border: 1px solid color-mix(in srgb, var(--border), white 24%);
     border-radius: 24px;
     background:
@@ -1313,8 +1314,13 @@ html {
       0 22px 56px rgb(31 35 29 / 18%),
       inset 0 1px 0 rgb(255 255 255 / 76%);
     margin-inline: auto;
-    padding: 16px;
+    padding: 14px;
     pointer-events: auto;
+  }
+
+  .privacy-banner-content .primary-action {
+    width: 100%;
+    min-height: 44px;
   }
 
   .privacy-banner-content::before {
@@ -1646,15 +1652,11 @@ html {
     right: 10px;
     bottom: 10px;
     left: 10px;
+    width: auto;
   }
 
   .privacy-banner-content {
-    flex-direction: column;
     gap: 12px;
     border-radius: 20px;
-  }
-
-  .privacy-banner-content .primary-action {
-    width: 100%;
   }
 }

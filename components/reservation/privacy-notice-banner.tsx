@@ -30,8 +30,8 @@ export function PrivacyNoticeBanner({ privacyUrl = "/datenschutz" }: { privacyUr
         <div className="min-w-0 space-y-1">
           <p className="text-sm font-bold text-foreground">Datenschutz & Cookies</p>
           <p className="text-sm leading-6 text-muted">
-            Wir verwenden keine Analytics- oder Tracking-Cookies. Auf der öffentlichen Seite
-            speichern wir nur diese Hinweis-Bestätigung lokal in Ihrem Browser.
+            Keine Analytics, kein Tracking. Wir speichern nur diese Bestätigung lokal in Ihrem
+            Browser.
           </p>
           <a
             className="text-sm font-bold text-primary underline underline-offset-4"
