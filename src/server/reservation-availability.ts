@@ -226,7 +226,9 @@ export async function checkReservationAvailability(
     }
 
     if (settings.blockSundays && isSunday(input.date)) {
-      reasons.push("Sonntags nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.");
+      reasons.push(
+        "Wir sind sonntags geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.",
+      );
     }
 
     if (settings.blockPublicHolidays) {
@@ -234,7 +236,7 @@ export async function checkReservationAvailability(
 
       if (holiday.isHoliday) {
         reasons.push(
-          `${holiday.name ?? "An Feiertagen"} nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.`,
+          `Wir sind an Feiertagen geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.`,
         );
       }
     }

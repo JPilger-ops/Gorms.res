@@ -75,7 +75,7 @@ function shortUnavailableReason(reason: string) {
   const normalized = reason.toLowerCase();
 
   if (normalized.includes("sonntag")) {
-    return "Ohne Reservierung";
+    return "Keine Reservierung";
   }
 
   if (normalized.includes("montag")) {
@@ -87,7 +87,7 @@ function shortUnavailableReason(reason: string) {
   }
 
   if (normalized.includes("feiertag")) {
-    return "Ohne Reservierung";
+    return "Keine Reservierung";
   }
 
   if (normalized.includes("voll")) {
@@ -105,6 +105,16 @@ function shortUnavailableReason(reason: string) {
   return "Nicht verfügbar";
 }
 
+function unavailableStatusLabel(reason: string) {
+  const normalized = reason.toLowerCase();
+
+  if (normalized.includes("sonntag") || normalized.includes("feiertag")) {
+    return "Geöffnet";
+  }
+
+  return "Gesperrt";
+}
+
 function guestUnavailableMessage(reason?: string) {
   const fallback = "Für dieses Datum sind keine Reservierungsanfragen möglich.";
 
@@ -115,11 +125,11 @@ function guestUnavailableMessage(reason?: string) {
   const normalized = reason.toLowerCase();
 
   if (normalized.includes("sonntag")) {
-    return "Sonntags nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.";
+    return "Wir sind sonntags geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.";
   }
 
   if (normalized.includes("feiertag")) {
-    return "An Feiertagen nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.";
+    return "Wir sind an Feiertagen geöffnet, nehmen aber keine Reservierungen an. Kommen Sie gern einfach vorbei.";
   }
 
   if (
@@ -161,7 +171,7 @@ function daySummary(day?: SlotResponse) {
       isBookable: false,
       isLimited: false,
       reason,
-      statusLabel: "Gesperrt",
+      statusLabel: unavailableStatusLabel(reason),
     };
   }
 
