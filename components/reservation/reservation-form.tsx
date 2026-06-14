@@ -433,10 +433,6 @@ export function ReservationForm({
       <div className="space-y-2">
         <p className="eyebrow">Reservierungsanfrage</p>
         <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">Wunschzeit wählen</h2>
-        <p className="text-sm leading-6 text-muted">
-          Wählen Sie Datum, Uhrzeit und Personenzahl. Wir melden uns anschließend persönlich bei
-          Ihnen.
-        </p>
       </div>
 
       {state.message ? (
@@ -458,9 +454,7 @@ export function ReservationForm({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <span className="text-sm font-semibold">Datum wählen</span>
-            <p className="text-sm leading-6 text-muted">
-              Wählen Sie einen grün markierten Tag. Gesperrte Tage können nicht angefragt werden.
-            </p>
+            <p className="text-sm leading-6 text-muted">Grüne Tage sind anfragbar.</p>
           </div>
           <div className="min-w-0">
             <button
@@ -668,9 +662,7 @@ export function ReservationForm({
         <div className="flex items-center justify-between gap-3">
           <div>
             <span className="text-sm font-semibold">Uhrzeit wählen</span>
-            <p className="mt-1 text-sm leading-6 text-muted">
-              Wählen Sie eine verfügbare Uhrzeit für den markierten Tag.
-            </p>
+            <p className="mt-1 text-sm leading-6 text-muted">Freie Uhrzeit wählen.</p>
           </div>
           {selectedDaySummary.isBookable ? (
             <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-bold text-success">
@@ -741,9 +733,6 @@ export function ReservationForm({
         <div className="relative z-10 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <span className="text-sm font-semibold">Kontaktdaten</span>
-            <p className="text-sm leading-6 text-muted">
-              Diese Angaben brauchen wir, um Ihre Anfrage zu bearbeiten und Sie zu erreichen.
-            </p>
           </div>
           <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
             Erforderlich
@@ -823,8 +812,7 @@ export function ReservationForm({
           </span>
           <span className="relative z-10 min-w-0 text-sm leading-6">
             <span className="block font-bold text-foreground">
-              Ich habe die Datenschutzhinweise gelesen und nehme die Verarbeitung meiner Angaben zur
-              Bearbeitung der Anfrage zur Kenntnis.
+              Ich akzeptiere die Datenschutzhinweise zur Bearbeitung meiner Anfrage.
             </span>
             <span className="mt-1 block text-muted">{privacyNoticeText}</span>
           </span>
@@ -851,10 +839,6 @@ export function ReservationForm({
         <div className="relative z-10 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <span className="text-sm font-semibold">Anfrage abschicken</span>
-            <p className="text-sm leading-6 text-muted">
-              Mit dem Absenden schicken Sie uns Ihre Anfrage. Eine Reservierung entsteht erst nach
-              unserer persönlichen Zusage.
-            </p>
           </div>
           <span className="w-fit shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold leading-none text-primary">
             Anfrage
@@ -875,7 +859,7 @@ export function ReservationForm({
         </button>
 
         <p className="relative z-10 text-center text-xs font-semibold leading-5 text-muted">
-          Verbindlich wird die Reservierung erst durch unsere persönliche Zusage.
+          Verbindlich erst nach persönlicher Zusage.
         </p>
       </div>
     </form>

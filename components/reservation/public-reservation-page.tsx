@@ -5,10 +5,10 @@ import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
 
 const facts = [
-  "Montags, Dienstags, Sonntags und an Feiertagen sind Reservierungen NICHT möglich.",
-  "Reservierungen sind nur in unserem Innenbereich möglich.",
-  "Für Gruppen ab 30 Personen ist eine Anzahlung von 100 € notwendig.",
-  "Nach dem Absenden erhalten Sie eine Eingangsbestätigung; verbindlich wird die Reservierung erst durch unsere persönliche Zusage.",
+  "Montags, dienstags, sonntags und an Feiertagen keine Reservierungen.",
+  "Reservierungen nur im Innenbereich.",
+  "Ab 30 Personen: 100 € Anzahlung.",
+  "Verbindlich erst nach persönlicher Zusage.",
 ];
 
 export async function PublicReservationPage() {
@@ -36,13 +36,9 @@ export async function PublicReservationPage() {
             <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-balance sm:text-5xl xl:text-6xl">
               Jetzt einen Platz im Grünen anfragen.
             </h1>
-            <p className="max-w-2xl text-lg leading-8 text-muted sm:text-xl">
-              Wählen Sie einfach Datum, Uhrzeit und Personenzahl. Wir prüfen Ihre Anfrage persönlich
-              und melden uns anschließend bei Ihnen.
-            </p>
             <div className="indoor-callout">
               <span aria-hidden="true">Innenbereich</span>
-              <p>Reservierungen sind ausschließlich für unseren Innenbereich möglich.</p>
+              <p>Reservierungen nur im Innenbereich.</p>
             </div>
           </div>
 
