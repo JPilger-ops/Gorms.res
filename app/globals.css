@@ -1288,12 +1288,7 @@ html {
   }
 
   .privacy-banner {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    left: auto;
-    z-index: 50;
-    width: min(420px, calc(100vw - 32px));
+    width: 100%;
     pointer-events: none;
   }
 
@@ -1646,13 +1641,6 @@ html {
 
   .glass-panel {
     border-radius: 22px;
-  }
-
-  .privacy-banner {
-    right: 10px;
-    bottom: 10px;
-    left: 10px;
-    width: auto;
   }
 
   .privacy-banner-content {

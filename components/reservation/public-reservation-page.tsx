@@ -57,6 +57,8 @@ export async function PublicReservationPage() {
               </div>
             ))}
           </div>
+
+          <PrivacyNoticeBanner privacyUrl={privacyUrl} />
         </div>
 
         <ReservationForm
@@ -69,7 +71,6 @@ export async function PublicReservationPage() {
           privacyPolicyUrl={privacyUrl}
         />
       </section>
-      <PrivacyNoticeBanner privacyUrl={privacyUrl} />
     </main>
   );
 }
