@@ -11,6 +11,11 @@ import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
 import { buildReservationDecisionDraft } from "@/src/server/reservation-decisions";
 import { getAdminReservationDetail } from "@/src/server/reservation-detail";
+import {
+  buildSpecialRequestContentForDecision,
+  DEPOSIT_REQUIRED_AMOUNT_EUR,
+  evaluateSpecialRequests,
+} from "@/src/server/reservation-special-requests";
 
 const decisionTaskMap: Record<ReservationDecisionType, AiDraftTask> = {
   accept: "acceptance_note",
@@ -22,6 +27,7 @@ const blockingIssueMessages: Record<AiDraftContentBlockingIssue, string> = {
   acceptance_pending_phrase: "falscher Hinweis zur Verbindlichkeit in einer Zusage erkannt",
   ascii_umlaut: "ASCII-Ersatz statt deutscher Umlaute erkannt",
   body_too_long: "Text ist zu lang",
+  deposit_policy_violation: "falsche Aussage zur Anzahlung erkannt",
   email_address: "mögliche erfundene E-Mail-Adresse erkannt",
   guarantee_phrase: "garantierte Tisch- oder Verfügbarkeitszusage erkannt",
   guest_request_copied: "Gastformulierung wurde ungeprüft kopiert",
@@ -29,6 +35,7 @@ const blockingIssueMessages: Record<AiDraftContentBlockingIssue, string> = {
   placeholder: "möglicher Platzhalter erkannt",
   price_amount: "konkreter Betrag oder Preis erkannt",
   question_wrong_flow: "fachlich falsche Rückfrageformulierung erkannt",
+  special_request_forbidden_claim: "unzulässige Aussage zu einem Sonderwunsch erkannt",
   specific_place_reserved: "bestimmter Tisch oder Platz wurde als reserviert dargestellt",
   signature_placeholder: "kaputter Template- oder Signaturhinweis erkannt",
   subject_in_body: "Betreffzeile im E-Mail-Text erkannt",
@@ -71,6 +78,10 @@ function buildAvailabilityNotes(
     ...availabilityCheck.warnings,
     ...availabilityCheck.manualReviewReasons,
   ].slice(0, 20);
+}
+
+function getAllowedPriceAmounts(guestCount: number) {
+  return guestCount >= 30 ? [DEPOSIT_REQUIRED_AMOUNT_EUR] : [];
 }
 
 function getAiFailureMessage(reason: string) {
@@ -130,6 +141,72 @@ async function buildStandardTemplateResult({
   };
 }
 
+async function buildRuleBasedTemplateResult({
+  content,
+  decision,
+  detail,
+  session,
+}: {
+  content: string;
+  decision: ReservationDecisionType;
+  detail: NonNullable<Awaited<ReturnType<typeof getAdminReservationDetail>>>;
+  session: AuthenticatedSession;
+}): Promise<ReservationAiDraftResult> {
+  const aiTask = decisionTaskMap[decision];
+  const validation = validateAiDraftContent({ content }, aiTask, {
+    allowedPriceAmounts: getAllowedPriceAmounts(detail.reservation.guestCount),
+  });
+
+  if (!validation.ok) {
+    await db.insert(auditLog).values({
+      action: "reservation.policy_draft_rejected",
+      entityId: detail.reservation.id,
+      entityType: "reservation_request",
+      metadata: {
+        decision,
+        blockingIssueCount: validation.blockingIssues.length,
+        blockingIssues: validation.blockingIssues,
+      },
+      userId: session.userId,
+    });
+
+    return {
+      message: formatBlockingIssueMessage(validation.blockingIssues),
+      ok: false,
+    };
+  }
+
+  const validationWarnings = validation.warnings.map((warning) => warningMessages[warning]);
+  const draft = buildReservationDecisionDraft(decision, detail.reservation, content);
+  const riskNotes = [
+    "Sonderwunsch-Baustein wurde aus festen Gorms.res-Regeln erstellt.",
+    ...validationWarnings,
+  ].slice(0, 10);
+
+  await db.insert(auditLog).values({
+    action: "reservation.policy_draft_generated",
+    entityId: detail.reservation.id,
+    entityType: "reservation_request",
+    metadata: {
+      decision,
+      warningCount: validation.warnings.length,
+      warnings: validation.warnings,
+    },
+    userId: session.userId,
+  });
+
+  return {
+    draft: {
+      body: draft.body,
+      riskNotes,
+      subject: draft.subject,
+    },
+    message:
+      "Gorms.res-Regelbaustein wurde in das sichere Template eingefügt. Bitte vor dem Senden prüfen.",
+    ok: true,
+  };
+}
+
 export async function generateReservationDecisionAiDraft({
   decision,
   id,
@@ -155,9 +232,30 @@ export async function generateReservationDecisionAiDraft({
     };
   }
 
+  const specialRequestEvaluation = evaluateSpecialRequests({
+    guestCount: detail.reservation.guestCount,
+    message: detail.reservation.message,
+  });
+  const ruleBasedContent = buildSpecialRequestContentForDecision(
+    decision,
+    specialRequestEvaluation,
+  );
+
+  if (ruleBasedContent) {
+    return await buildRuleBasedTemplateResult({
+      content: ruleBasedContent,
+      decision,
+      detail,
+      session,
+    });
+  }
+
   const result = await generateAiDraft({
     reservation: {
-      availabilityNotes: buildAvailabilityNotes(detail.availabilityCheck),
+      availabilityNotes: [
+        ...buildAvailabilityNotes(detail.availabilityCheck),
+        ...specialRequestEvaluation.policyNotes,
+      ].slice(0, 20),
       guestCount: detail.reservation.guestCount,
       guestMessage: detail.reservation.message ?? undefined,
       requestedDate: detail.reservation.requestedDate,
@@ -176,7 +274,9 @@ export async function generateReservationDecisionAiDraft({
   }
 
   const aiTask = decisionTaskMap[decision];
-  const validation = validateAiDraftContent(result.draft, aiTask);
+  const validation = validateAiDraftContent(result.draft, aiTask, {
+    allowedPriceAmounts: getAllowedPriceAmounts(detail.reservation.guestCount),
+  });
 
   if (!validation.ok) {
     await db.insert(auditLog).values({

@@ -44,8 +44,10 @@ guest e-mail. It should be used only when the normal acceptance, decline or ques
 not fit an operational correction.
 
 If a guest message contains recognizable special-request wording, the detail page shows a
-"Sonderwunsch erkannt" warning. This is a staff review hint only; it does not decide, send or change
-anything automatically.
+"Sonderwunsch erkannt" warning. The wording comes from the Gorms.res special-request policy engine
+and includes operational notes such as dog noted, outdoor area not reservable, A-/B-table not
+reservable, allergy to check on site, or deposit required from 30 guests. This is a staff review hint
+only; it does not decide, send or change anything automatically.
 
 The detail page also provides internal `.ics` downloads:
 

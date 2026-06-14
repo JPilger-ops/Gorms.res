@@ -7,6 +7,10 @@ Gorms.res remains the source of truth for outgoing guest e-mails. The AI does no
 acceptance, decline or question mails. It only returns a controlled content block that is inserted
 into a fixed Gorms.res template.
 
+Special requests are evaluated before AI drafting by the rule-based Gorms.res policy engine. If a
+safe operator-approved block exists, Gorms.res inserts that block directly and does not need Ollama
+for that wording.
+
 ## Current Status
 
 - `AI_ENABLED=false` by default.
@@ -47,12 +51,15 @@ The prepared server modules are deliberately narrow:
   and validates both request and response. Ollama generation is capped to a short response, runs
   with thinking disabled and keeps the model warm for follow-up requests.
 - `src/server/ai/reservation-drafts.ts` refuses draft generation unless both `AI_ENABLED` and
-  `AI_DRAFTS_ENABLED` are enabled.
+  `AI_DRAFTS_ENABLED` are enabled. It prefers deterministic Gorms.res special-request blocks before
+  calling Ollama.
 - `src/server/ai/content-validation.ts` separates blocking issues from warnings. Blocking issues
   prevent insertion into the form; warnings are shown as KI-Prüfhinweise and still require staff
   review before sending. Validation is decision-specific.
 - `src/server/reservation-decisions.ts` builds the full outgoing acceptance, decline and question
   mails from fixed Gorms.res templates.
+- `src/server/reservation-special-requests.ts` defines the Heidekönig special-request policies,
+  safe guest blocks, staff notes, forbidden claims and combination logic.
 - `app/admin/reservations/[id]/actions.ts` exposes AI only as a draft action. It returns text to the
   form and does not call SMTP, status updates or calendar generation.
 
@@ -65,8 +72,9 @@ logged without guest message content.
 
 Blocking validation covers guaranteed table, terrace, outdoor, quiet-area or availability claims,
 invented phone numbers or e-mail addresses, concrete money amounts, placeholders, subject lines in
-the content and broken template/signature hints. General notes about deposits, opening hours, special
-requests or cautious availability wording are warnings only.
+the content and broken template/signature hints. The fixed 100 Euro deposit amount is allowed only
+when the validation context explicitly allows the Gorms.res deposit policy. General notes about
+deposits, opening hours, special requests or cautious availability wording are warnings only.
 
 Decision-specific blockers:
 
@@ -131,3 +139,29 @@ The assistant may support controlled blocks for:
 
 Every generated text must be editable before sending and must pass the existing server-side mail
 workflow, permission checks and audit logging.
+
+## Special-Request Policy Engine
+
+Gorms.res evaluates guest messages and guest count with fixed Heidekönig rules:
+
+- Dogs are generally allowed and are only noted. Drafts must not say dogs are guaranteed no problem
+  or always possible.
+- High chairs are available, but not guaranteed. Baby/toddler wording can produce a follow-up
+  question asking whether a high chair is needed.
+- Outdoor area and terrace requests are not reservable. Reservations apply to the indoor area only;
+  guests may use free outdoor tables on site in good weather.
+- Reservable table wishes are `R*` and `C1` to `C9`; they are noted but never guaranteed.
+- `A*` and `B*` table requests are not reservable.
+- General table, quiet-place, window or favorite-seat requests are noted but never guaranteed.
+- Allergies and intolerances are noted and must also be raised with staff on site. No medical safety
+  promise is allowed.
+- Birthdays, weddings, funerals, anniversaries or other occasions are noted only. Decoration,
+  surprises or special services are not promised.
+- From 30 guests, the fixed policy block states that a 100 Euro deposit is required.
+
+When multiple wishes are detected, the engine combines them by priority and keeps mandatory allergy
+and deposit blocks. For three or more wishes, it uses a compact general note plus mandatory blocks
+instead of stacking every possible sentence.
+
+The admin detail page shows the stored manual review reasons from this policy engine. These notes
+are staff guidance only; they do not decide, send or change status automatically.

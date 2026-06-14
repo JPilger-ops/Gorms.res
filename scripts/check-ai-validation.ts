@@ -63,6 +63,39 @@ assertNoBlockingPhone("Wir bestätigen Ihre Reservierung am 14.06.2026 um 18:00 
 }
 
 {
+  const result = validateAiDraftContent(
+    {
+      content:
+        "Bitte beachten Sie, dass bei Reservierungen ab 30 Personen eine Anzahlung in Höhe von 100 € erforderlich ist.",
+    },
+    "acceptance_note",
+    { allowedPriceAmounts: [100] },
+  );
+  assert.equal(result.blockingIssues.includes("price_amount"), false);
+}
+
+for (const content of [
+  "Hund ist garantiert kein Problem.",
+  "Hochstuhl ist garantiert verfügbar.",
+  "Terrasse ist reserviert.",
+  "Außenplatz ist reserviert.",
+  "Allergie kann sicher berücksichtigt werden.",
+  "garantiert allergenfrei.",
+  "Dekoration wird vorbereitet.",
+  "Sonderleistung ist zugesagt.",
+]) {
+  const result = validate(content, "acceptance_note");
+  assert.equal(result.ok, false);
+  assert.equal(result.blockingIssues.includes("special_request_forbidden_claim"), true);
+}
+
+{
+  const result = validate("Anzahlung entfällt.", "acceptance_note");
+  assert.equal(result.ok, false);
+  assert.equal(result.blockingIssues.includes("deposit_policy_violation"), true);
+}
+
+{
   const result = validate("Guten Tag [Name], vielen Dank für Ihre Anfrage.");
   assert.equal(result.ok, false);
   assert.equal(result.blockingIssues.includes("placeholder"), true);

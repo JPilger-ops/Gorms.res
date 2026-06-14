@@ -48,8 +48,9 @@ Stores the rule result captured when a reservation request is created:
 - availability status: `bookable`, `manual_review`, `capacity_warning`, `blocked`
 - hard-block flag
 - blocking reasons, warnings, manual review reasons
-- special-request categories are stored as manual review reasons, for example
-  `Sonderwunsch erkannt: Tisch-/Platzwunsch.`
+- special-request policy notes are stored as manual review reasons, for example
+  `Sonderwunsch erkannt: Gast wünscht A-/B-Tisch A1. Diese Tische können grundsätzlich nicht reserviert werden.`
+  or `Anfrage ab 30 Personen: Anzahlung in Höhe von 100 € erforderlich.`
 - accepted/pending guests in the checked occupancy window
 - requested guest count and configured capacity
 - window start/end, latest reservation time and season

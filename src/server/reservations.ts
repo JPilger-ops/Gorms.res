@@ -97,7 +97,7 @@ export async function createReservationRequest(
     guestCount: input.guestCount,
     time: input.time,
   });
-  const specialRequests = detectSpecialRequests(input.message);
+  const specialRequests = detectSpecialRequests(input.message, input.guestCount);
   const availability: AvailabilityCheckResult = {
     ...baseAvailability,
     manualReviewReasons: [

@@ -5,6 +5,7 @@ export type AiDraftContentBlockingIssue =
   | "acceptance_pending_phrase"
   | "ascii_umlaut"
   | "body_too_long"
+  | "deposit_policy_violation"
   | "email_address"
   | "guarantee_phrase"
   | "guest_request_copied"
@@ -12,6 +13,7 @@ export type AiDraftContentBlockingIssue =
   | "placeholder"
   | "price_amount"
   | "question_wrong_flow"
+  | "special_request_forbidden_claim"
   | "specific_place_reserved"
   | "signature_placeholder"
   | "subject_in_body";
@@ -101,6 +103,27 @@ const questionWrongFlowPatterns = [
   /\breservierung\s+best[äa]tigt\b/i,
 ];
 
+const specialRequestForbiddenClaimPatterns = [
+  /\bhund\s+ist\s+(?:garantiert\s+)?(?:kein\s+problem|immer\s+m[öo]glich)\b/i,
+  /\bhochstuhl\s+ist\s+garantiert\s+verf[üu]gbar\b/i,
+  /\b(?:terrasse|au[ßs]enplatz|aussenplatz)\s+(?:ist|wurde)\s+reserviert\b/i,
+  /\b(?:terrasse|au[ßs]enbereich|aussenbereich)\s+ist\s+(?:garantiert|verf[üu]gbar)\b/i,
+  /\b[ab]\s*[-_.]?\s*\d{1,2}\s+(?:ist|wurde)\s+reserviert\b/i,
+  /\ballergie\b.{0,80}\bsicher\s+ber[üu]cksichtigt\b/i,
+  /\bgarantiert\s+allergenfrei\b/i,
+  /\bkein\s+risiko\b/i,
+  /\bdekoration\s+wird\s+vorbereitet\b/i,
+  /\bwir\s+k[üu]mmern\s+uns\s+um\s+eine\s+[üu]berraschung\b/i,
+  /\bsonderleistung\s+ist\s+zugesagt\b/i,
+];
+
+const depositPolicyViolationPatterns = [
+  /\banzahlung\s+entf[äa]llt\b/i,
+  /\bkeine\s+anzahlung\s+erforderlich\b/i,
+  /\banzahlung\s+ist\s+nicht\s+erforderlich\b/i,
+  /\b(?:eventuell|m[öo]glicherweise)\s+(?:ist\s+|f[äa]llt\s+)?eine\s+anzahlung\b/i,
+];
+
 function addIssue(
   issues: Set<AiDraftContentBlockingIssue>,
   issue: AiDraftContentBlockingIssue,
@@ -151,9 +174,24 @@ function hasPhoneNumber(value: string) {
   );
 }
 
+function hasBlockedPriceAmount(value: string, allowedPriceAmounts: number[]) {
+  const matches = value.matchAll(new RegExp(priceAmountPattern.source, "giu"));
+
+  for (const match of matches) {
+    const numericValue = Number(match[0].replace(/[^\d,.]/g, "").replace(",", "."));
+
+    if (!allowedPriceAmounts.includes(numericValue)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function validateAiDraftContent(
   draft: Pick<AiDraftResponse, "content">,
   task?: AiDraftTask,
+  options: { allowedPriceAmounts?: number[] } = {},
 ): AiDraftContentValidationResult {
   const blockingIssues = new Set<AiDraftContentBlockingIssue>();
   const warnings = new Set<AiDraftContentWarning>();
@@ -172,7 +210,21 @@ export function validateAiDraftContent(
   addIssue(blockingIssues, "subject_in_body", subjectInBodyPattern.test(draft.content));
   addIssue(blockingIssues, "email_address", emailPattern.test(combined));
   addIssue(blockingIssues, "phone_number", hasPhoneNumber(combined));
-  addIssue(blockingIssues, "price_amount", priceAmountPattern.test(combined));
+  addIssue(
+    blockingIssues,
+    "price_amount",
+    hasBlockedPriceAmount(combined, options.allowedPriceAmounts ?? []),
+  );
+  addIssue(
+    blockingIssues,
+    "deposit_policy_violation",
+    matchesAny(combined, depositPolicyViolationPatterns),
+  );
+  addIssue(
+    blockingIssues,
+    "special_request_forbidden_claim",
+    matchesAny(combined, specialRequestForbiddenClaimPatterns),
+  );
 
   if (task === "acceptance_note") {
     addIssue(

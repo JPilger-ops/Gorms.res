@@ -18,6 +18,7 @@
     "preflight:production": "node scripts/production-preflight.mjs",
     "preflight:production:auto": "scripts/run-production-preflight.sh",
     "test:ai-validation": "tsx scripts/check-ai-validation.ts",
+    "test:special-requests": "tsx scripts/check-special-requests.ts",
     "smoke:live-workflow": "node scripts/smoke-live-workflow.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
