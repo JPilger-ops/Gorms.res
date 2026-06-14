@@ -396,6 +396,21 @@ export function ReservationForm({
     }
   }
 
+  function handleGuestCountInput(nextValue: string) {
+    if (nextValue === "") {
+      setGuestCount("");
+      setSlotError("");
+      setSlotLoading(true);
+      return;
+    }
+
+    updateGuestCount(Number.parseInt(nextValue, 10) || 1);
+  }
+
+  function normalizeGuestCountInput() {
+    updateGuestCount(guestCountNumber);
+  }
+
   function openDatePicker() {
     const input = dateInputRef.current;
 
@@ -623,12 +638,17 @@ export function ReservationForm({
             >
               -
             </button>
-            <output
-              className="flex h-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--primary),white_90%)] px-4 text-3xl font-semibold text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_70%)]"
-              aria-live="polite"
-            >
-              {guestCountNumber}
-            </output>
+            <input
+              className="h-12 min-w-0 rounded-full border border-transparent bg-[color-mix(in_srgb,var(--primary),white_90%)] px-2 text-center text-3xl font-semibold text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_70%)] outline-none transition [appearance:textfield] focus:border-primary/35 focus:ring-2 focus:ring-primary/20 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              value={guestCount}
+              type="number"
+              min={1}
+              max={maxGuestsPerRequest}
+              inputMode="numeric"
+              aria-label="Personenzahl eingeben"
+              onBlur={normalizeGuestCountInput}
+              onChange={(event) => handleGuestCountInput(event.target.value)}
+            />
             <button
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-transparent bg-white/60 text-2xl font-semibold leading-none text-foreground shadow-[0_6px_14px_rgb(42_52_38_/_7%),inset_0_1px_0_rgb(255_255_255_/_72%)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-[color-mix(in_srgb,var(--primary),white_84%)] disabled:cursor-not-allowed disabled:opacity-38 disabled:hover:translate-y-0"
               type="button"
