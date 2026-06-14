@@ -70,6 +70,12 @@ If Ollama times out, returns invalid JSON or cannot be reached, the admin workfl
 safe Gorms.res standard template instead of leaving the page in a broken state. The fallback is
 logged without guest message content.
 
+For question drafts, recognized special requests are handled conservatively: Gorms.res inserts a
+rule-based question only when a real clarification is useful, such as outdoor seating, non-reservable
+tables, table wishes or baby/high-chair ambiguity. Notes such as dog, allergy or occasion do not
+trigger free AI wording for questions; the workflow falls back to the neutral editable question
+template.
+
 Blocking validation covers guaranteed table, terrace, outdoor, quiet-area or availability claims,
 invented phone numbers or e-mail addresses, concrete money amounts, placeholders, subject lines in
 the content and broken template/signature hints. The fixed 100 Euro deposit amount is allowed only

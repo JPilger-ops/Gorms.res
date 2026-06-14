@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { validateAiDraftContent } from "@/src/server/ai/content-validation";
 import {
+  buildSpecialRequestContentForDecision,
   DEPOSIT_REQUIRED_AMOUNT_EUR,
   evaluateSpecialRequests,
 } from "@/src/server/reservation-special-requests";
@@ -25,6 +26,7 @@ function assertCategory(message: string, category: string, guestCount = 8) {
   const result = assertCategory("Wir kommen mit Hund.", "dog");
   assert.match(result.acceptanceNotes.join(" "), /Hund kommen, haben wir notiert/);
   assert.match(result.manualReviewReasons.join(" "), /Gast kommt mit Hund/);
+  assert.equal(buildSpecialRequestContentForDecision("question", result), "");
 }
 
 {
@@ -36,11 +38,19 @@ function assertCategory(message: string, category: string, guestCount = 8) {
 {
   const result = assertCategory("Wir kommen mit Baby.", "high_chair");
   assert.match(result.questionTexts.join(" "), /Benötigen Sie.*Hochstuhl/);
+  assert.match(
+    buildSpecialRequestContentForDecision("question", result),
+    /Benötigen Sie.*Hochstuhl/,
+  );
 }
 
 {
   const result = assertCategory("Bitte draußen auf der Terrasse.", "terrace");
   assert.match(result.acceptanceNotes.join(" "), /nur für den Innenbereich/);
+  assert.match(
+    buildSpecialRequestContentForDecision("question", result),
+    /Sollen wir Ihre Anfrage.*Innenbereich weiterbearbeiten/,
+  );
 }
 
 for (const tableCode of ["C1", "C9", "R3"]) {
@@ -50,6 +60,10 @@ for (const tableCode of ["C1", "C9", "R3"]) {
   );
   assert.match(result.acceptanceNotes.join(" "), new RegExp(`Tisch ${tableCode}`));
   assert.match(result.acceptanceNotes.join(" "), /nicht verbindlich garantieren/);
+  assert.match(
+    buildSpecialRequestContentForDecision("question", result),
+    new RegExp(`Tisch ${tableCode}`),
+  );
 }
 
 {
@@ -76,12 +90,14 @@ for (const tableCode of ["A1", "B2"]) {
 {
   const result = assertCategory("Eine Person hat eine Nussallergie.", "allergy");
   assert.match(result.acceptanceNotes.join(" "), /vor Ort zusätzlich/);
+  assert.equal(buildSpecialRequestContentForDecision("question", result), "");
 }
 
 {
   const result = assertCategory("Wir feiern Geburtstag.", "occasion");
   assert.match(result.acceptanceNotes.join(" "), /Anlass.*notiert/);
   assert.match(result.acceptanceNotes.join(" "), /Sonderleistungen.*nicht verbindlich/);
+  assert.equal(buildSpecialRequestContentForDecision("question", result), "");
 }
 
 {

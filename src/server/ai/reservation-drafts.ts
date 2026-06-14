@@ -250,6 +250,16 @@ export async function generateReservationDecisionAiDraft({
     });
   }
 
+  if (decision === "question" && specialRequestEvaluation.hasSpecialRequest) {
+    return await buildStandardTemplateResult({
+      decision,
+      detail,
+      message:
+        "Für die erkannten Sonderwünsche ist keine automatische Rückfrage nötig. Das sichere Gorms.res-Standardtemplate wurde eingefügt.",
+      session,
+    });
+  }
+
   const result = await generateAiDraft({
     reservation: {
       availabilityNotes: [
