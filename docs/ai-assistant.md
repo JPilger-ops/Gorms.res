@@ -44,7 +44,8 @@ The prepared server modules are deliberately narrow:
 - `src/server/ai/prompts.ts` builds a German internal prompt and instructs the model to return JSON
   only.
 - `src/server/ai/ollama-client.ts` refuses to run when `AI_ENABLED=false`, uses a request timeout
-  and validates both request and response.
+  and validates both request and response. Ollama generation is capped to a short response, runs
+  with thinking disabled and keeps the model warm for follow-up requests.
 - `src/server/ai/reservation-drafts.ts` refuses draft generation unless both `AI_ENABLED` and
   `AI_DRAFTS_ENABLED` are enabled.
 - `src/server/ai/content-validation.ts` separates blocking issues from warnings. Blocking issues
@@ -57,6 +58,10 @@ The prepared server modules are deliberately narrow:
 
 The prompt input schema intentionally omits e-mail address, phone number, session data, SMTP
 settings and audit internals.
+
+If Ollama times out, returns invalid JSON or cannot be reached, the admin workflow falls back to the
+safe Gorms.res standard template instead of leaving the page in a broken state. The fallback is
+logged without guest message content.
 
 Blocking validation covers guaranteed table, terrace, outdoor, quiet-area or availability claims,
 invented phone numbers or e-mail addresses, concrete money amounts, placeholders, subject lines in
@@ -72,6 +77,8 @@ Decision-specific blockers:
   must not confirm a reservation.
 - Common ASCII replacements such as `fuer`, `bestaetigen`, `Gruessen` or `Heidekoenig` are blocked
   so outgoing drafts use natural German umlauts.
+- Copied guest wording such as `Wir würden gerne ...` is blocked because AI content must be a
+  controlled operator note, not a pasted guest request.
 
 Allowed examples:
 

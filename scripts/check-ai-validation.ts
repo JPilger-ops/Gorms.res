@@ -44,6 +44,12 @@ assertNoBlockingPhone("Wir bestätigen Ihre Reservierung am 14.06.2026 um 18:00 
 }
 
 {
+  const result = validate("Wir würden gerne am Tisch c1 sitzen.", "acceptance_note");
+  assert.equal(result.ok, false);
+  assert.equal(result.blockingIssues.includes("guest_request_copied"), true);
+}
+
+{
   const result = validate("Bei Gruppen ab 30 Personen ist eine Anzahlung erforderlich.");
   assert.equal(result.ok, true);
   assert.equal(result.warnings.includes("deposit_notice"), true);

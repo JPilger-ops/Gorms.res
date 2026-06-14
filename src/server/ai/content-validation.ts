@@ -7,6 +7,7 @@ export type AiDraftContentBlockingIssue =
   | "body_too_long"
   | "email_address"
   | "guarantee_phrase"
+  | "guest_request_copied"
   | "phone_number"
   | "placeholder"
   | "price_amount"
@@ -76,6 +77,8 @@ const priceAmountPattern = /\b\d{1,5}(?:[,.]\d{2})?\s*(?:€|eur|euro)(?=$|[^\p{
 const depositNoticePattern = /\banzahlung\b/i;
 const asciiUmlautPattern =
   /\b(?:fuer|bestaetigen|bestaetigt|zukuenftig|gruessen|heidekoenig|gewaehlt|pruefung|persoenlich|verfuegbar|rueckfrage|aussenplaetze?|aussenbereich)\b/i;
+const copiedGuestRequestPattern =
+  /\b(?:wir|ich)\s+(?:w[üu]rden|möchten|moechten|h[äa]tten|wollen)\s+gerne\b/i;
 
 const acceptancePendingPatterns = [
   /\bnoch\s+nicht\s+verbindlich\b/i,
@@ -158,6 +161,7 @@ export function validateAiDraftContent(
 
   addIssue(blockingIssues, "body_too_long", draft.content.length > 1200);
   addIssue(blockingIssues, "guarantee_phrase", matchesAnyUnsafeGuarantee(combined));
+  addIssue(blockingIssues, "guest_request_copied", copiedGuestRequestPattern.test(combined));
   addIssue(blockingIssues, "ascii_umlaut", asciiUmlautPattern.test(combined));
   addIssue(blockingIssues, "placeholder", matchesAny(combined, placeholderPatterns));
   addIssue(

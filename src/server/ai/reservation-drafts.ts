@@ -24,6 +24,7 @@ const blockingIssueMessages: Record<AiDraftContentBlockingIssue, string> = {
   body_too_long: "Text ist zu lang",
   email_address: "mögliche erfundene E-Mail-Adresse erkannt",
   guarantee_phrase: "garantierte Tisch- oder Verfügbarkeitszusage erkannt",
+  guest_request_copied: "Gastformulierung wurde ungeprüft kopiert",
   phone_number: "mögliche erfundene Telefonnummer erkannt",
   placeholder: "möglicher Platzhalter erkannt",
   price_amount: "konkreter Betrag oder Preis erkannt",
@@ -94,6 +95,41 @@ function formatBlockingIssueMessage(issues: AiDraftContentBlockingIssue[]) {
   return `KI-Entwurf wurde nicht übernommen: ${labels.join(", ")}.`;
 }
 
+async function buildStandardTemplateResult({
+  decision,
+  detail,
+  message,
+  session,
+}: {
+  decision: ReservationDecisionType;
+  detail: NonNullable<Awaited<ReturnType<typeof getAdminReservationDetail>>>;
+  message: string;
+  session: AuthenticatedSession;
+}): Promise<ReservationAiDraftResult> {
+  const draft = buildReservationDecisionDraft(decision, detail.reservation);
+
+  await db.insert(auditLog).values({
+    action: "reservation.ai_draft_fallback",
+    entityId: detail.reservation.id,
+    entityType: "reservation_request",
+    metadata: {
+      decision,
+      reason: message,
+    },
+    userId: session.userId,
+  });
+
+  return {
+    draft: {
+      body: draft.body,
+      riskNotes: [message],
+      subject: draft.subject,
+    },
+    message,
+    ok: true,
+  };
+}
+
 export async function generateReservationDecisionAiDraft({
   decision,
   id,
@@ -131,10 +167,12 @@ export async function generateReservationDecisionAiDraft({
   });
 
   if (!result.ok) {
-    return {
-      message: getAiFailureMessage(result.reason),
-      ok: false,
-    };
+    return await buildStandardTemplateResult({
+      decision,
+      detail,
+      message: `${getAiFailureMessage(result.reason)} Das sichere Gorms.res-Standardtemplate wurde eingefügt.`,
+      session,
+    });
   }
 
   const aiTask = decisionTaskMap[decision];

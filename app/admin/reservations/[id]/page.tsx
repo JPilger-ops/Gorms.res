@@ -12,6 +12,7 @@ import type { AvailabilityStatus } from "@/src/server/reservation-availability";
 import type { ReservationStatus } from "@/src/server/reservations";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const reservationStatusLabels: Record<ReservationStatus, string> = {
   accepted: "Angenommen",

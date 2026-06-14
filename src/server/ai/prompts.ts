@@ -10,6 +10,7 @@ const taskInstructions: Record<AiDraftTask, string> = {
     "Schreibe niemals, dass noch eine Prüfung durch Mitarbeitende nötig ist.",
     "Bestimmte Tische, Terrasse, Außenplätze oder ruhige Bereiche dürfen nicht bestätigt werden.",
     "Tischwünsche nur als notiert und nicht garantiert formulieren.",
+    "Bei einem Tischwunsch antworte inhaltlich wie: Ihren Wunsch nach Tisch c1 haben wir notiert. Bitte haben Sie Verständnis, dass wir bestimmte Tische je nach Auslastung nicht verbindlich garantieren können.",
   ].join(" "),
   decline_note: [
     "Du formulierst keine komplette Mail.",
@@ -26,6 +27,7 @@ const taskInstructions: Record<AiDraftTask, string> = {
     "Stelle keine Verfügbarkeit dar.",
     "Verwende nicht das Wort Anmeldung.",
     "Bestätige keine Reservierung.",
+    "Bei einem Tischwunsch antworte inhaltlich wie: Wir haben Ihren Wunsch nach Tisch c1 notiert. Bitte beachten Sie, dass wir bestimmte Tische nicht verbindlich zusagen können. Sollen wir Ihre Anfrage auch dann weiterbearbeiten, wenn Tisch c1 nicht verfügbar ist?",
   ].join(" "),
 };
 
@@ -45,6 +47,7 @@ export function buildAiDraftPrompt(request: AiDraftRequest) {
     "Arbeite auf Deutsch, ruhig, gastfreundlich und präzise. Verwende normale deutsche Umlaute.",
     "Du darfst keine Entscheidung treffen, keine E-Mail senden und keinen Status verändern.",
     "Gorms.res baut die vollständige E-Mail aus festen, sicheren Templates. Du lieferst nur den erlaubten Zusatzbaustein.",
+    "Wiederhole nicht einfach die Gastnachricht. Formuliere sie in eine sichere Betreiberformulierung um.",
     "Verwende keine erfundenen Kontaktdaten, Preise, Öffnungszeiten, Alternativtermine, Kapazitäten oder Zusagen.",
     "Erwähne eine Anzahlung nur allgemein, wenn sie fachlich nötig ist. Nenne keine konkreten Beträge, wenn sie nicht in den Daten stehen.",
     "Garantiere niemals bestimmte Tische, Terrasse, Außenplätze, Ruhebereiche oder Verfügbarkeit.",
