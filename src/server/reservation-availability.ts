@@ -226,14 +226,16 @@ export async function checkReservationAvailability(
     }
 
     if (settings.blockSundays && isSunday(input.date)) {
-      reasons.push("Sonntage sind für Reservierungsanfragen gesperrt.");
+      reasons.push("Sonntags nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.");
     }
 
     if (settings.blockPublicHolidays) {
       const holiday = isPublicHoliday(input.date, settings.holidayCountry, settings.holidayState);
 
       if (holiday.isHoliday) {
-        reasons.push(`${holiday.name ?? "Feiertage"} sind für Reservierungsanfragen gesperrt.`);
+        reasons.push(
+          `${holiday.name ?? "An Feiertagen"} nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.`,
+        );
       }
     }
 
@@ -267,7 +269,7 @@ export async function checkReservationAvailability(
     if (blockingEvent) {
       reasons.push(
         blockingEvent.publicNote ||
-          `${blockingEvent.title} - an diesem Tag sind keine Reservierungsanfragen möglich.`,
+          `${blockingEvent.title} - an diesem Tag nehmen wir keine normalen Reservierungen an. Kommen Sie gern einfach vorbei.`,
       );
     }
   }

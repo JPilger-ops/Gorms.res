@@ -5,7 +5,7 @@ import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
 
 const defaultBlockingPublicNote =
-  "An diesem Tag sind keine normalen Reservierungsanfragen möglich. Bei Interesse am Event wenden Sie sich bitte direkt an uns.";
+  "An diesem Tag nehmen wir keine normalen Reservierungen an. Kommen Sie gern einfach vorbei.";
 
 export async function listReservationEvents() {
   return db.query.reservationEvents.findMany({

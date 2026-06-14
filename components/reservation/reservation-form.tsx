@@ -75,7 +75,7 @@ function shortUnavailableReason(reason: string) {
   const normalized = reason.toLowerCase();
 
   if (normalized.includes("sonntag")) {
-    return "Sonntag geschlossen";
+    return "Ohne Reservierung";
   }
 
   if (normalized.includes("montag")) {
@@ -87,18 +87,50 @@ function shortUnavailableReason(reason: string) {
   }
 
   if (normalized.includes("feiertag")) {
-    return "Feiertag";
+    return "Ohne Reservierung";
   }
 
   if (normalized.includes("voll")) {
     return "Heute voll";
   }
 
-  if (normalized.includes("veranstaltung") || normalized.includes("event")) {
-    return "Eventtag";
+  if (
+    normalized.includes("veranstaltung") ||
+    normalized.includes("event") ||
+    normalized.includes("musik")
+  ) {
+    return "Einfach vorbeikommen";
   }
 
   return "Nicht verfügbar";
+}
+
+function guestUnavailableMessage(reason?: string) {
+  const fallback = "Für dieses Datum sind keine Reservierungsanfragen möglich.";
+
+  if (!reason) {
+    return fallback;
+  }
+
+  const normalized = reason.toLowerCase();
+
+  if (normalized.includes("sonntag")) {
+    return "Sonntags nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.";
+  }
+
+  if (normalized.includes("feiertag")) {
+    return "An Feiertagen nehmen wir keine Reservierungen an. Kommen Sie gern einfach vorbei.";
+  }
+
+  if (
+    normalized.includes("veranstaltung") ||
+    normalized.includes("event") ||
+    normalized.includes("musik")
+  ) {
+    return "An Musik- und Eventabenden nehmen wir keine normalen Reservierungen an. Kommen Sie gern einfach vorbei.";
+  }
+
+  return reason;
 }
 
 function daySummary(day?: SlotResponse) {
@@ -182,6 +214,15 @@ function slotTileTone(slot: Slot, isSelected: boolean) {
   }
 
   return "border-warning/20 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--warning),white_91%),rgb(255_255_255_/_54%))] hover:border-warning/40";
+}
+
+function SlotLoadingIndicator() {
+  return (
+    <div className="slot-loading-card" role="status" aria-live="polite">
+      <span className="slot-loading-ring" aria-hidden="true" />
+      <span>Uhrzeiten werden geprüft...</span>
+    </div>
+  );
 }
 
 export function ReservationForm({
@@ -508,7 +549,7 @@ export function ReservationForm({
             <div className="form-feedback-content">
               <span className="form-feedback-label">Tag nicht verfügbar</span>
               <span className="form-feedback-message">
-                {blockedDateReason ?? selectedDaySummary.reason}
+                {guestUnavailableMessage(blockedDateReason ?? selectedDaySummary.reason)}
               </span>
               <div className="mt-3 flex flex-wrap gap-2">
                 {nearestPreviousDate ? (
@@ -606,6 +647,8 @@ export function ReservationForm({
 
         {selectedTime ? <input name="time" type="hidden" value={selectedTime} /> : null}
 
+        {slotLoading ? <SlotLoadingIndicator /> : null}
+
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
           {selectableSlots.map((slot) => {
             const isSelected = selectedTime === slot.time;
@@ -650,7 +693,7 @@ export function ReservationForm({
         {slotError ? <p className="text-sm leading-6 text-danger">{slotError}</p> : null}
         {!slotError && date && !slotLoading && selectedDay && selectableSlots.length === 0 ? (
           <p className="text-sm leading-6 text-danger">
-            {blockedDateReason ?? "Für dieses Datum sind keine Reservierungsanfragen möglich."}
+            {guestUnavailableMessage(blockedDateReason ?? selectedDaySummary.reason)}
           </p>
         ) : null}
         {selectedSlot && selectedSlot.status !== "bookable" ? (

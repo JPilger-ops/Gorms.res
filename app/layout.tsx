@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   },
   description: "Reservierungsanfragen für die Waldwirtschaft Heidekönig.",
   applicationName: "Waldwirtschaft Heidekönig Reservierungen",
+  icons: {
+    apple: [{ url: "/branding/favicon" }],
+    icon: [{ url: "/branding/favicon" }],
+  },
   robots: {
     index: false,
     follow: false,
