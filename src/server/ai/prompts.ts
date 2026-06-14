@@ -20,6 +20,15 @@ const taskInstructions: Record<AiDraftTask, string> = {
     "Erfinde keine Alternativtermine.",
     "Erfinde keine Kapazitäten.",
   ].join(" "),
+  policy_polish: [
+    "Du bekommst einen sicheren Basistext aus Gorms.res.",
+    "Verbessere nur Lesbarkeit und Natürlichkeit.",
+    "Ändere keine Fakten.",
+    "Ergänze keine neuen Aussagen.",
+    "Entferne keine Pflichtinformationen wie 100 € Anzahlung, Innenbereich-Regel oder Allergiehinweis.",
+    "Nutze nur die übergebenen specialRequests, safeFacts und erlaubten Bausteine.",
+    "Wenn du unsicher bist, gib den Basistext unverändert als content zurück.",
+  ].join(" "),
   question_text: [
     "Du formulierst nur die konkrete Rückfrage.",
     "Keine komplette Mail.",
@@ -34,10 +43,12 @@ const taskInstructions: Record<AiDraftTask, string> = {
 export function buildAiDraftPrompt(request: AiDraftRequest) {
   const payload = {
     availabilityNotes: request.reservation.availabilityNotes,
+    baseContent: request.reservation.baseContent ?? null,
     guestCount: request.reservation.guestCount,
     guestMessage: request.reservation.guestMessage ?? null,
     requestedDate: request.reservation.requestedDate,
     requestedTime: request.reservation.requestedTime.slice(0, 5),
+    specialRequests: request.reservation.specialRequests,
     staffInstruction: request.reservation.staffInstruction ?? null,
     task: request.task,
   };
@@ -51,7 +62,12 @@ export function buildAiDraftPrompt(request: AiDraftRequest) {
     "Verwende keine erfundenen Kontaktdaten, Preise, Öffnungszeiten, Alternativtermine, Kapazitäten oder Zusagen.",
     "Erwähne eine Anzahlung nur, wenn die Daten eine feste Gorms.res-Policy dazu enthalten. Nenne dann ausschließlich den dort genannten Betrag.",
     "Garantiere niemals bestimmte Tische, Terrasse, Außenplätze, Ruhebereiche oder Verfügbarkeit.",
-    "Sonderwünsche darfst du nicht frei bewerten. Nutze nur die in den Daten enthaltenen Gorms.res-Policy-Hinweise.",
+    "Sonderwünsche und Gastfragen darfst du nur anhand der übergebenen specialRequests beantworten.",
+    "Du darfst keine Machbarkeit aus der Gastnachricht ableiten.",
+    "Wenn safeFacts und erlaubte Bausteine vorhanden sind, nutze nur diese.",
+    "neverSay darf auch sinngemäß nicht im content vorkommen.",
+    "Wenn keine passende Policy vorhanden ist, gib content als leeren String zurück.",
+    "Du darfst mehrere erlaubte Hinweise sprachlich zusammenführen, aber keine neuen Fakten ergänzen.",
     "Verwende keine Platzhalter wie [Name], {{Name}} oder Betreffzeilen im content.",
     "Gib ausschließlich gültiges JSON mit den Feldern content und riskNotes zurück.",
     `Aufgabe: ${taskInstructions[request.task]}`,

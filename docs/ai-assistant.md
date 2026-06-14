@@ -8,8 +8,8 @@ acceptance, decline or question mails. It only returns a controlled content bloc
 into a fixed Gorms.res template.
 
 Special requests are evaluated before AI drafting by the rule-based Gorms.res policy engine. If a
-safe operator-approved block exists, Gorms.res inserts that block directly and does not need Ollama
-for that wording.
+safe operator-approved block exists, Gorms.res keeps that block as the mandatory fallback and may ask
+Ollama only to polish the wording. The factual policy remains Gorms.res-owned.
 
 ## Current Status
 
@@ -44,15 +44,17 @@ server-side and are not exposed through public routes.
 The prepared server modules are deliberately narrow:
 
 - `src/server/ai/schemas.ts` defines allowed content-block tasks, minimized reservation prompt input
-  and strict AI response shape.
+  and strict AI response shape. Prompt input includes structured `specialRequests` policies with
+  `safeFacts`, `neverSay`, allowed blocks, question categories and optional `baseContent`.
 - `src/server/ai/prompts.ts` builds a German internal prompt and instructs the model to return JSON
-  only.
+  only. The `policy_polish` task tells Ollama to improve only readability and never change facts.
 - `src/server/ai/ollama-client.ts` refuses to run when `AI_ENABLED=false`, uses a request timeout
   and validates both request and response. Ollama generation is capped to a short response, runs
   with thinking disabled and keeps the model warm for follow-up requests.
 - `src/server/ai/reservation-drafts.ts` refuses draft generation unless both `AI_ENABLED` and
-  `AI_DRAFTS_ENABLED` are enabled. It prefers deterministic Gorms.res special-request blocks before
-  calling Ollama.
+  `AI_DRAFTS_ENABLED` are enabled. It builds deterministic Gorms.res special-request blocks first,
+  then optionally asks Ollama to polish those blocks. Timeout, invalid output, missing required
+  policy facts or validation failure fall back to the deterministic Gorms.res block.
 - `src/server/ai/content-validation.ts` separates blocking issues from warnings. Blocking issues
   prevent insertion into the form; warnings are shown as KI-Prüfhinweise and still require staff
   review before sending. Validation is decision-specific.
@@ -148,7 +150,23 @@ workflow, permission checks and audit logging.
 
 ## Special-Request Policy Engine
 
-Gorms.res evaluates guest messages and guest count with fixed Heidekönig rules:
+Gorms.res evaluates guest messages and guest count with fixed Heidekönig rules. Each detected policy
+can expose:
+
+- a category and certainty,
+- safe facts for Ollama,
+- `neverSay` examples,
+- allowed acceptance/question blocks,
+- optional answer text,
+- optional clarification questions,
+- detected guest question categories such as `asks_outdoor_seating`, `asks_dog_allowed`,
+  `asks_high_chair`, `asks_specific_table`, `asks_deposit`, `asks_allergy`, `asks_occasion` and
+  `asks_accessibility`.
+
+The structured context lets Ollama phrase a safe answer more naturally without deciding whether a
+wish is feasible.
+
+Current Heidekönig rules:
 
 - Dogs are generally allowed and are only noted. Drafts must not say dogs are guaranteed no problem
   or always possible.
@@ -163,7 +181,9 @@ Gorms.res evaluates guest messages and guest count with fixed Heidekönig rules:
   promise is allowed.
 - Birthdays, weddings, funerals, anniversaries or other occasions are noted only. Decoration,
   surprises or special services are not promised.
-- From 30 guests, the fixed policy block states that a 100 Euro deposit is required.
+- From 30 guests, the fixed policy block states that a 100 Euro deposit is required. Below 30 guests,
+  deposit questions may be answered with the fixed rule that deposits are required only from 30
+  guests.
 
 When multiple wishes are detected, the engine combines them by priority and keeps mandatory allergy
 and deposit blocks. For three or more wishes, it uses a compact general note plus mandatory blocks
@@ -171,3 +191,18 @@ instead of stacking every possible sentence.
 
 The admin detail page shows the stored manual review reasons from this policy engine. These notes
 are staff guidance only; they do not decide, send or change status automatically.
+
+## Policy Polish
+
+Policy polish follows this order:
+
+1. Gorms.res detects policies and builds a safe `baseContent` block.
+2. Ollama receives `baseContent` plus structured policy context.
+3. Ollama may only polish wording and combine allowed hints.
+4. The polished block is validated with the same hard AI validation.
+5. Required facts from the base text, such as `100 €`, `Innenbereich`, allergy on-site notes,
+   A-/B-table rules or `nicht verbindlich`, must still be present.
+6. If anything fails, the safe Gorms.res block is inserted.
+
+Ollama therefore handles language only. Rules, final decision, send action and status changes remain
+with Gorms.res and the staff member.

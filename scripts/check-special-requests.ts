@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { validateAiDraftContent } from "@/src/server/ai/content-validation";
+import { buildAiDraftPrompt } from "@/src/server/ai/prompts";
 import {
   buildSpecialRequestContentForDecision,
   DEPOSIT_REQUIRED_AMOUNT_EUR,
@@ -53,6 +54,37 @@ function assertCategory(message: string, category: string, guestCount = 8) {
   );
 }
 
+{
+  const result = assertCategory("Können wir draußen sitzen?", "terrace");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_outdoor_seating"),
+    true,
+  );
+  assert.deepEqual(
+    result.structuredPolicies[0]?.neverSay.includes("Terrasse ist reserviert."),
+    true,
+  );
+  assert.match(result.structuredPolicies[0]?.safeFacts.join(" ") ?? "", /Innenbereich/);
+}
+
+{
+  const result = assertCategory("Dürfen wir einen Hund mitbringen?", "dog");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_dog_allowed"),
+    true,
+  );
+  assert.match(result.structuredPolicies[0]?.answerText ?? "", /Hunde sind.*erlaubt/);
+}
+
+{
+  const result = assertCategory("Gibt es Hochstühle?", "high_chair");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_high_chair"),
+    true,
+  );
+  assert.match(result.structuredPolicies[0]?.safeFacts.join(" ") ?? "", /nicht verbindlich/);
+}
+
 for (const tableCode of ["C1", "C9", "R3"]) {
   const result = assertCategory(
     `Wir würden gerne am Tisch ${tableCode} sitzen.`,
@@ -63,6 +95,22 @@ for (const tableCode of ["C1", "C9", "R3"]) {
   assert.match(
     buildSpecialRequestContentForDecision("question", result),
     new RegExp(`Tisch ${tableCode}`),
+  );
+}
+
+{
+  const result = assertCategory("Können wir Tisch C1 bekommen?", "specific_table_reservable");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_specific_table"),
+    true,
+  );
+}
+
+{
+  const result = assertCategory("Können wir A1 reservieren?", "specific_table_not_reservable");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_specific_table"),
+    true,
   );
 }
 
@@ -118,6 +166,60 @@ for (const guestCount of [30, 45]) {
 }
 
 {
+  const result = evaluate("Müssen wir anzahlen?", 30);
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_deposit"),
+    true,
+  );
+  assert.match(result.structuredPolicies[0]?.answerText ?? "", /100 €/);
+}
+
+{
+  const result = evaluate("Müssen wir anzahlen?", 8);
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_deposit"),
+    true,
+  );
+  assert.match(result.structuredPolicies[0]?.answerText ?? "", /erst bei Reservierungen ab 30/);
+}
+
+{
+  const result = assertCategory("Kann ich mit Allergie kommen?", "allergy");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_allergy"),
+    true,
+  );
+}
+
+{
+  const result = assertCategory("Ist das barrierefrei?", "accessibility");
+  assert.equal(
+    result.structuredPolicies[0]?.guestQuestionCategories.includes("asks_accessibility"),
+    true,
+  );
+}
+
+{
+  const result = evaluate("Können wir draußen sitzen?", 8);
+  const prompt = buildAiDraftPrompt({
+    reservation: {
+      availabilityNotes: [],
+      baseContent: result.acceptanceNotes.join("\n\n"),
+      guestCount: 8,
+      requestedDate: "2026-06-19",
+      requestedTime: "14:00:00",
+      specialRequests: result.structuredPolicies,
+    },
+    task: "policy_polish",
+  });
+
+  assert.match(prompt, /specialRequests/);
+  assert.match(prompt, /safeFacts/);
+  assert.match(prompt, /neverSay/);
+  assert.match(prompt, /baseContent/);
+}
+
+{
   const result = validateAiDraftContent({ content: "Eine Anzahlung von 50 € ist erforderlich." });
   assert.equal(result.ok, false);
   assert.equal(result.blockingIssues.includes("price_amount"), true);
@@ -127,6 +229,23 @@ for (const guestCount of [30, 45]) {
   const result = validateAiDraftContent({ content: "Anzahlung entfällt." });
   assert.equal(result.ok, false);
   assert.equal(result.blockingIssues.includes("deposit_policy_violation"), true);
+}
+
+for (const content of [
+  "Terrasse ist möglich.",
+  "Terrasse ist verfügbar.",
+  "Außenbereich ist reserviert.",
+  "Draußen ist reserviert.",
+  "Tisch C1 ist verfügbar.",
+  "Tisch C1 ist reserviert.",
+  "Tisch R3 ist reserviert.",
+  "A1 ist reserviert.",
+  "B2 ist reserviert.",
+]) {
+  const result = validateAiDraftContent({ content }, "acceptance_note");
+
+  assert.equal(result.ok, false, `Expected blocked content: ${content}`);
+  assert.equal(result.blockingIssues.includes("special_request_forbidden_claim"), true);
 }
 
 {

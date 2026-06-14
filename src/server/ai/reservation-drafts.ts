@@ -15,6 +15,7 @@ import {
   buildSpecialRequestContentForDecision,
   DEPOSIT_REQUIRED_AMOUNT_EUR,
   evaluateSpecialRequests,
+  type SpecialRequestEvaluation,
 } from "@/src/server/reservation-special-requests";
 
 const decisionTaskMap: Record<ReservationDecisionType, AiDraftTask> = {
@@ -106,6 +107,20 @@ function formatBlockingIssueMessage(issues: AiDraftContentBlockingIssue[]) {
   return `KI-Entwurf wurde nicht übernommen: ${labels.join(", ")}.`;
 }
 
+function preservesRequiredPolicyFacts(baseContent: string, candidateContent: string) {
+  const requiredPatterns = [
+    /100\s*€/,
+    /innenbereich/i,
+    /vor ort zusätzlich/i,
+    /a-\s*und\s*b-tische/i,
+    /nicht verbindlich/i,
+  ];
+
+  return requiredPatterns.every(
+    (pattern) => !pattern.test(baseContent) || pattern.test(candidateContent),
+  );
+}
+
 async function buildStandardTemplateResult({
   decision,
   detail,
@@ -145,11 +160,13 @@ async function buildRuleBasedTemplateResult({
   content,
   decision,
   detail,
+  specialRequestEvaluation,
   session,
 }: {
   content: string;
   decision: ReservationDecisionType;
   detail: NonNullable<Awaited<ReturnType<typeof getAdminReservationDetail>>>;
+  specialRequestEvaluation: SpecialRequestEvaluation;
   session: AuthenticatedSession;
 }): Promise<ReservationAiDraftResult> {
   const aiTask = decisionTaskMap[decision];
@@ -176,11 +193,98 @@ async function buildRuleBasedTemplateResult({
     };
   }
 
-  const validationWarnings = validation.warnings.map((warning) => warningMessages[warning]);
+  const baseValidationWarnings = validation.warnings.map((warning) => warningMessages[warning]);
+  const baseRiskNotes = [
+    "Sonderwunsch-Baustein wurde aus festen Gorms.res-Regeln erstellt.",
+    ...baseValidationWarnings,
+  ].slice(0, 10);
+  const polishResult = await generateAiDraft({
+    reservation: {
+      availabilityNotes: [
+        ...buildAvailabilityNotes(detail.availabilityCheck),
+        ...specialRequestEvaluation.policyNotes,
+      ].slice(0, 20),
+      baseContent: content,
+      guestCount: detail.reservation.guestCount,
+      guestMessage: detail.reservation.message ?? undefined,
+      requestedDate: detail.reservation.requestedDate,
+      requestedTime: detail.reservation.requestedTime,
+      specialRequests: specialRequestEvaluation.structuredPolicies,
+    },
+    task: "policy_polish",
+  });
+
+  if (polishResult.ok && polishResult.draft.content) {
+    const polishValidation = validateAiDraftContent(polishResult.draft, aiTask, {
+      allowedPriceAmounts: getAllowedPriceAmounts(detail.reservation.guestCount),
+    });
+    const requiredFactsPreserved = preservesRequiredPolicyFacts(
+      content,
+      polishResult.draft.content,
+    );
+
+    if (polishValidation.ok && requiredFactsPreserved) {
+      const polishValidationWarnings = polishValidation.warnings.map(
+        (warning) => warningMessages[warning],
+      );
+      const polishedDraft = buildReservationDecisionDraft(
+        decision,
+        detail.reservation,
+        polishResult.draft.content,
+      );
+      const riskNotes = [
+        ...baseRiskNotes,
+        "KI hat den Baustein nur sprachlich geglättet.",
+        ...polishResult.draft.riskNotes,
+        ...polishValidationWarnings,
+      ].slice(0, 10);
+
+      await db.insert(auditLog).values({
+        action: "reservation.policy_draft_polished",
+        entityId: detail.reservation.id,
+        entityType: "reservation_request",
+        metadata: {
+          decision,
+          warningCount: polishValidation.warnings.length,
+          warnings: polishValidation.warnings,
+        },
+        userId: session.userId,
+      });
+
+      return {
+        draft: {
+          body: polishedDraft.body,
+          riskNotes,
+          subject: polishedDraft.subject,
+        },
+        message:
+          "KI hat den sicheren Gorms.res-Regelbaustein sprachlich geglättet. Bitte vor dem Senden prüfen.",
+        ok: true,
+      };
+    }
+
+    await db.insert(auditLog).values({
+      action: "reservation.policy_polish_rejected",
+      entityId: detail.reservation.id,
+      entityType: "reservation_request",
+      metadata: {
+        decision,
+        blockingIssueCount: polishValidation.blockingIssues.length,
+        blockingIssues: polishValidation.blockingIssues,
+        requiredFactsPreserved,
+        warningCount: polishValidation.warnings.length,
+        warnings: polishValidation.warnings,
+      },
+      userId: session.userId,
+    });
+  }
+
   const draft = buildReservationDecisionDraft(decision, detail.reservation, content);
   const riskNotes = [
-    "Sonderwunsch-Baustein wurde aus festen Gorms.res-Regeln erstellt.",
-    ...validationWarnings,
+    ...baseRiskNotes,
+    polishResult.ok
+      ? "KI konnte den Regelbaustein nicht sicher verbessern. Sicherer Gorms.res-Baustein wurde eingefügt."
+      : `${getAiFailureMessage(polishResult.reason)} Sicherer Gorms.res-Baustein wurde eingefügt.`,
   ].slice(0, 10);
 
   await db.insert(auditLog).values({
@@ -202,7 +306,7 @@ async function buildRuleBasedTemplateResult({
       subject: draft.subject,
     },
     message:
-      "Gorms.res-Regelbaustein wurde in das sichere Template eingefügt. Bitte vor dem Senden prüfen.",
+      "KI konnte den Regelbaustein nicht verbessern. Sicherer Gorms.res-Baustein wurde eingefügt.",
     ok: true,
   };
 }
@@ -246,6 +350,7 @@ export async function generateReservationDecisionAiDraft({
       content: ruleBasedContent,
       decision,
       detail,
+      specialRequestEvaluation,
       session,
     });
   }
@@ -270,6 +375,7 @@ export async function generateReservationDecisionAiDraft({
       guestMessage: detail.reservation.message ?? undefined,
       requestedDate: detail.reservation.requestedDate,
       requestedTime: detail.reservation.requestedTime,
+      specialRequests: specialRequestEvaluation.structuredPolicies,
     },
     task: decisionTaskMap[decision],
   });

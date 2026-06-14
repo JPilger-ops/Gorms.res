@@ -77,16 +77,37 @@ assertNoBlockingPhone("Wir bestätigen Ihre Reservierung am 14.06.2026 um 18:00 
 for (const content of [
   "Hund ist garantiert kein Problem.",
   "Hochstuhl ist garantiert verfügbar.",
+  "Terrasse ist möglich.",
+  "Terrasse ist verfügbar.",
   "Terrasse ist reserviert.",
+  "Außenbereich ist reserviert.",
   "Außenplatz ist reserviert.",
+  "Draußen ist reserviert.",
   "Allergie kann sicher berücksichtigt werden.",
   "garantiert allergenfrei.",
   "Dekoration wird vorbereitet.",
   "Sonderleistung ist zugesagt.",
+  "Tisch C1 ist verfügbar.",
+  "Tisch C1 ist reserviert.",
+  "Tisch R3 ist reserviert.",
+  "A1 ist reserviert.",
+  "B2 ist reserviert.",
 ]) {
   const result = validate(content, "acceptance_note");
   assert.equal(result.ok, false);
   assert.equal(result.blockingIssues.includes("special_request_forbidden_claim"), true);
+}
+
+for (const content of [
+  "Hunde sind grundsätzlich erlaubt. Den Hinweis, dass Sie mit Hund kommen, haben wir notiert.",
+  "Hochstühle sind vorhanden, aber nicht garantiert.",
+  "Reservierungen gelten nur für den Innenbereich.",
+  "Bei gutem Wetter können Sie sich vor Ort gerne an freie Tische im Außenbereich setzen.",
+  "Ihren Wunsch haben wir notiert.",
+  "Bitte sprechen Sie unser Team vor Ort zusätzlich darauf an.",
+]) {
+  const result = validate(content, "acceptance_note");
+  assert.equal(result.ok, true, `Expected allowed content: ${content}`);
 }
 
 {

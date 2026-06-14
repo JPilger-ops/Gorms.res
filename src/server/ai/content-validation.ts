@@ -106,9 +106,11 @@ const questionWrongFlowPatterns = [
 const specialRequestForbiddenClaimPatterns = [
   /\bhund\s+ist\s+(?:garantiert\s+)?(?:kein\s+problem|immer\s+m[öo]glich)\b/i,
   /\bhochstuhl\s+ist\s+garantiert\s+verf[üu]gbar\b/i,
-  /\b(?:terrasse|au[ßs]enplatz|aussenplatz)\s+(?:ist|wurde)\s+reserviert\b/i,
-  /\b(?:terrasse|au[ßs]enbereich|aussenbereich)\s+ist\s+(?:garantiert|verf[üu]gbar)\b/i,
+  /\b(?:terrasse|au[ßs]enbereich|aussenbereich|au[ßs]enplatz|aussenplatz)\s+(?:ist|wurde)\s+reserviert\b/i,
+  /\b(?:terrasse|au[ßs]enbereich|aussenbereich)\s+ist\s+(?:garantiert|m[öo]glich|verf[üu]gbar)\b/i,
+  /\bdrau[ßs]en\s+(?:ist|wurde)\s+reserviert\b/i,
   /\b[ab]\s*[-_.]?\s*\d{1,2}\s+(?:ist|wurde)\s+reserviert\b/i,
+  /\b[cr]\s*[-_.]?\s*\d{1,2}\s+(?:ist|wurde)\s+(?:reserviert|verf[üu]gbar)\b/i,
   /\ballergie\b.{0,80}\bsicher\s+ber[üu]cksichtigt\b/i,
   /\bgarantiert\s+allergenfrei\b/i,
   /\bkein\s+risiko\b/i,
