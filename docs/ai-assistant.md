@@ -43,14 +43,19 @@ The prepared server modules are deliberately narrow:
   and validates both request and response.
 - `src/server/ai/reservation-drafts.ts` refuses draft generation unless both `AI_ENABLED` and
   `AI_DRAFTS_ENABLED` are enabled.
-- `src/server/ai/content-validation.ts` blocks generated drafts that contain placeholders, subject
-  lines in the body, guarantee wording, opening-hour claims, phone numbers, e-mail addresses or
-  price statements.
+- `src/server/ai/content-validation.ts` separates blocking issues from warnings. Blocking issues
+  prevent insertion into the form; warnings are shown as KI-Prüfhinweise and still require staff
+  review before sending.
 - `app/admin/reservations/[id]/actions.ts` exposes AI only as a draft action. It returns text to the
   form and does not call SMTP, status updates or calendar generation.
 
 The prompt input schema intentionally omits e-mail address, phone number, session data, SMTP
 settings and audit internals.
+
+Blocking validation covers guaranteed table, terrace, outdoor, quiet-area or availability claims,
+invented phone numbers or e-mail addresses, concrete money amounts, placeholders, subject lines in
+the body and broken template/signature hints. General notes about deposits, opening hours, special
+requests or cautious availability wording are warnings only.
 
 `AI_TIMEOUT_MS` defaults to 120 seconds because the first local model load can be noticeably slower
 than warm follow-up requests.

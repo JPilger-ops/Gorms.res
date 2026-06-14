@@ -1,6 +1,10 @@
 import { auditLog } from "@/db/schema";
 import type { ReservationDecisionType } from "@/src/lib/reservation-decision-validation";
-import { validateAiDraftContent } from "@/src/server/ai/content-validation";
+import {
+  validateAiDraftContent,
+  type AiDraftContentBlockingIssue,
+  type AiDraftContentWarning,
+} from "@/src/server/ai/content-validation";
 import { generateAiDraft } from "@/src/server/ai/ollama-client";
 import type { AiDraftTask } from "@/src/server/ai/schemas";
 import { db } from "@/src/server/db";
@@ -11,6 +15,25 @@ const decisionTaskMap: Record<ReservationDecisionType, AiDraftTask> = {
   accept: "acceptance",
   decline: "decline",
   question: "question",
+};
+
+const blockingIssueMessages: Record<AiDraftContentBlockingIssue, string> = {
+  body_too_long: "Text ist zu lang",
+  email_address: "mögliche erfundene E-Mail-Adresse erkannt",
+  guarantee_phrase: "garantierte Tisch- oder Verfügbarkeitszusage erkannt",
+  phone_number: "mögliche erfundene Telefonnummer erkannt",
+  placeholder: "möglicher Platzhalter erkannt",
+  price_amount: "konkreter Betrag oder Preis erkannt",
+  signature_placeholder: "kaputter Template- oder Signaturhinweis erkannt",
+  subject_in_body: "Betreffzeile im E-Mail-Text erkannt",
+};
+
+const warningMessages: Record<AiDraftContentWarning, string> = {
+  availability_cautious: "Hinweis: vorsichtige Formulierung zur Verfügbarkeit prüfen.",
+  deposit_notice: "Hinweis: allgemeine Anzahlung erwähnt. Bitte fachlich prüfen.",
+  opening_hours:
+    "Hinweis: Öffnungszeiten erwähnt. Bitte mit den aktuellen Einstellungen abgleichen.",
+  special_requests: "Hinweis: Sonderwünsche erwähnt. Bitte vor dem Versand prüfen.",
 };
 
 export type ReservationAiDraftResult =
@@ -57,6 +80,12 @@ function getAiFailureMessage(reason: string) {
   }
 
   return "KI-Vorlage konnte nicht erstellt werden.";
+}
+
+function formatBlockingIssueMessage(issues: AiDraftContentBlockingIssue[]) {
+  const labels = issues.map((issue) => blockingIssueMessages[issue]);
+
+  return `KI-Entwurf wurde nicht übernommen: ${labels.join(", ")}.`;
 }
 
 export async function generateReservationDecisionAiDraft({
@@ -111,18 +140,22 @@ export async function generateReservationDecisionAiDraft({
       entityType: "reservation_request",
       metadata: {
         decision,
-        issueCount: validation.issues.length,
-        issues: validation.issues,
+        blockingIssueCount: validation.blockingIssues.length,
+        blockingIssues: validation.blockingIssues,
+        warningCount: validation.warnings.length,
+        warnings: validation.warnings,
       },
       userId: session.userId,
     });
 
     return {
-      message:
-        "KI-Entwurf wurde aus Sicherheitsgründen nicht übernommen. Bitte manuell weiterarbeiten.",
+      message: formatBlockingIssueMessage(validation.blockingIssues),
       ok: false,
     };
   }
+
+  const validationWarnings = validation.warnings.map((warning) => warningMessages[warning]);
+  const riskNotes = [...result.draft.riskNotes, ...validationWarnings].slice(0, 10);
 
   await db.insert(auditLog).values({
     action: "reservation.ai_draft_generated",
@@ -130,7 +163,9 @@ export async function generateReservationDecisionAiDraft({
     entityType: "reservation_request",
     metadata: {
       decision,
-      riskNoteCount: result.draft.riskNotes.length,
+      riskNoteCount: riskNotes.length,
+      warningCount: validation.warnings.length,
+      warnings: validation.warnings,
     },
     userId: session.userId,
   });
@@ -138,7 +173,7 @@ export async function generateReservationDecisionAiDraft({
   return {
     draft: {
       body: result.draft.body,
-      riskNotes: result.draft.riskNotes,
+      riskNotes,
       subject: result.draft.title,
     },
     ok: true,

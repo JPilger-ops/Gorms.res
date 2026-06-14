@@ -103,7 +103,7 @@ async function sendInternalAcceptanceNotification(
 
   try {
     await sendInternalReservationAcceptedEmail(emailData, internalEmail);
-  } catch (error) {
+  } catch {
     await recordReservationOutgoingEmail({
       body: internalEmail.text,
       recipient: internalEmail.recipient,
@@ -232,7 +232,7 @@ export async function sendReservationDecision(
       replyTo: session.email,
       subject: input.subject,
     });
-  } catch (error) {
+  } catch {
     await recordReservationOutgoingEmail({
       body: input.body,
       recipient: reservation.guestEmail,
