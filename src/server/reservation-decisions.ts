@@ -59,9 +59,15 @@ const decisionConfig: Record<
 function formatDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
 
-  return new Intl.DateTimeFormat("de-DE", {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const weekday = new Intl.DateTimeFormat("de-DE", {
+    weekday: "long",
+  }).format(date);
+  const formattedDate = new Intl.DateTimeFormat("de-DE", {
     dateStyle: "long",
-  }).format(new Date(Date.UTC(year, month - 1, day)));
+  }).format(date);
+
+  return `${weekday}, den ${formattedDate.replace(/^[^,]+,\s*/, "")}`;
 }
 
 function reservationSummary(reservation: DecisionDraftReservation) {
@@ -135,15 +141,20 @@ async function sendInternalAcceptanceNotification(
 export function buildReservationDecisionDraft(
   decision: ReservationDecisionType,
   reservation: DecisionDraftReservation,
+  aiContent = "",
 ) {
   const summary = reservationSummary(reservation);
+  const optionalContent = aiContent.trim();
 
   if (decision === "accept") {
     return {
       body: [
+        `Guten Tag ${reservation.guestName},`,
+        "",
         `vielen Dank für Ihre Reservierungsanfrage.`,
         "",
-        `Wir bestätigen Ihre Reservierung am ${summary}.`,
+        `Hiermit bestätigen wir Ihre Reservierung am ${summary}.`,
+        ...(optionalContent ? ["", optionalContent] : []),
         "",
         "Falls sich an Ihrer Personenanzahl oder Ankunftszeit etwas ändert, geben Sie uns bitte kurz Bescheid.",
         "",
@@ -157,9 +168,12 @@ export function buildReservationDecisionDraft(
   if (decision === "decline") {
     return {
       body: [
-        `vielen Dank für Ihre Reservierungsanfrage am ${summary}.`,
+        `Guten Tag ${reservation.guestName},`,
+        "",
+        `vielen Dank für Ihre Reservierungsanfrage für ${summary}.`,
         "",
         "Leider können wir Ihre Anfrage für diesen Termin nicht bestätigen.",
+        ...(optionalContent ? ["", optionalContent] : []),
         "",
         "Gerne können Sie uns für einen alternativen Termin erneut kontaktieren.",
         "",
@@ -172,11 +186,13 @@ export function buildReservationDecisionDraft(
 
   return {
     body: [
-      `vielen Dank für Ihre Reservierungsanfrage am ${summary}.`,
+      `Guten Tag ${reservation.guestName},`,
+      "",
+      `vielen Dank für Ihre Reservierungsanfrage für ${summary}.`,
       "",
       "Für die weitere Bearbeitung haben wir noch eine kurze Rückfrage:",
       "",
-      "[Bitte Rückfrage ergänzen]",
+      optionalContent || "Bitte ergänzen Sie hier Ihre konkrete Rückfrage vor dem Versand.",
       "",
       "Wichtig: Ihre Reservierung ist erst nach unserer persönlichen Bestätigung gültig.",
       "",

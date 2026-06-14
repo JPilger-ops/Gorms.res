@@ -1,14 +1,32 @@
 import type { AiDraftRequest, AiDraftTask } from "@/src/server/ai/schemas";
 
 const taskInstructions: Record<AiDraftTask, string> = {
-  acceptance:
-    "Erstelle einen freundlichen Entwurf fuer eine Zusage. Der Text muss klar machen, dass er erst nach menschlichem Versand verbindlich ist.",
-  decline:
-    "Erstelle einen freundlichen Entwurf fuer eine Absage. Der Text soll knapp, respektvoll und ohne technische Details sein.",
-  question:
-    "Erstelle einen freundlichen Entwurf fuer eine Rueckfrage. Stelle nur die noetigen Rueckfragen.",
-  summary:
-    "Erstelle eine kurze interne Zusammenfassung fuer Mitarbeitende. Keine Gaeste direkt ansprechen.",
+  acceptance_note: [
+    "Du formulierst keine komplette Mail.",
+    "Du formulierst nur einen optionalen Zusatzhinweis zu Sonderwünschen.",
+    "Wenn kein Zusatz nötig ist, gib content als leeren String zurück.",
+    "Die Zusage selbst wird von Gorms.res formuliert.",
+    "Schreibe niemals, dass die Reservierung noch nicht verbindlich ist.",
+    "Schreibe niemals, dass noch eine Prüfung durch Mitarbeitende nötig ist.",
+    "Bestimmte Tische, Terrasse, Außenplätze oder ruhige Bereiche dürfen nicht bestätigt werden.",
+    "Tischwünsche nur als notiert und nicht garantiert formulieren.",
+  ].join(" "),
+  decline_note: [
+    "Du formulierst keine komplette Mail.",
+    "Du formulierst nur einen optionalen kurzen Zusatz.",
+    "Wenn kein sinnvoller Zusatz nötig ist, gib content als leeren String zurück.",
+    "Erfinde keine Gründe.",
+    "Erfinde keine Alternativtermine.",
+    "Erfinde keine Kapazitäten.",
+  ].join(" "),
+  question_text: [
+    "Du formulierst nur die konkrete Rückfrage.",
+    "Keine komplette Mail.",
+    "Bei Tischwunsch frage, ob die Anfrage auch ohne diesen konkreten Tisch weiterbearbeitet werden soll.",
+    "Stelle keine Verfügbarkeit dar.",
+    "Verwende nicht das Wort Anmeldung.",
+    "Bestätige keine Reservierung.",
+  ].join(" "),
 };
 
 export function buildAiDraftPrompt(request: AiDraftRequest) {
@@ -23,16 +41,15 @@ export function buildAiDraftPrompt(request: AiDraftRequest) {
   };
 
   return [
-    "Du bist ein interner Schreibassistent fuer Reservierungsanfragen der Waldwirtschaft Heidekoenig.",
-    "Arbeite auf Deutsch, ruhig, gastfreundlich und praezise.",
-    "Du darfst keine Entscheidung treffen, keine E-Mail senden und keinen Status veraendern. Du erstellst nur einen bearbeitbaren Entwurf.",
-    "Wenn die Aufgabe acceptance ist, hat ein Mitarbeiter bewusst den Zusage-Workflow gewaehlt. Dann darfst du einen Zusage-Entwurf formulieren, zum Beispiel 'Wir bestaetigen Ihre Reservierung ...'.",
-    "Der Entwurf wird erst verbindlich, wenn ein Mitarbeiter ihn prueft und sendet. Schreibe nie, dass die KI entschieden oder automatisch bestaetigt hat.",
-    "Verwende keine erfundenen Kontaktdaten, Preise, Oeffnungszeiten oder Zusagen.",
-    "Erwaehne eine Anzahlung nur allgemein, wenn sie fachlich noetig ist. Nenne keine konkreten Betraege, wenn sie nicht in den Daten stehen.",
-    "Garantiere niemals bestimmte Tische, Terrasse, Aussenplaetze, Ruhebereiche oder Verfuegbarkeit.",
-    "Verwende keine Platzhalter wie [Name], {{Name}} oder Betreffzeilen im body.",
-    "Gib ausschliesslich gueltiges JSON mit den Feldern title, body und riskNotes zurueck.",
+    "Du bist ein interner Schreibassistent für Reservierungsanfragen der Waldwirtschaft Heidekönig.",
+    "Arbeite auf Deutsch, ruhig, gastfreundlich und präzise. Verwende normale deutsche Umlaute.",
+    "Du darfst keine Entscheidung treffen, keine E-Mail senden und keinen Status verändern.",
+    "Gorms.res baut die vollständige E-Mail aus festen, sicheren Templates. Du lieferst nur den erlaubten Zusatzbaustein.",
+    "Verwende keine erfundenen Kontaktdaten, Preise, Öffnungszeiten, Alternativtermine, Kapazitäten oder Zusagen.",
+    "Erwähne eine Anzahlung nur allgemein, wenn sie fachlich nötig ist. Nenne keine konkreten Beträge, wenn sie nicht in den Daten stehen.",
+    "Garantiere niemals bestimmte Tische, Terrasse, Außenplätze, Ruhebereiche oder Verfügbarkeit.",
+    "Verwende keine Platzhalter wie [Name], {{Name}} oder Betreffzeilen im content.",
+    "Gib ausschließlich gültiges JSON mit den Feldern content und riskNotes zurück.",
     `Aufgabe: ${taskInstructions[request.task]}`,
     `Daten: ${JSON.stringify(payload)}`,
   ].join("\n");

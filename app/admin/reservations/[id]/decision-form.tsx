@@ -109,8 +109,9 @@ export function ReservationDecisionForm({
             <div>
               <p className="text-sm font-bold">KI-Vorlage</p>
               <p className="mt-1 text-sm leading-6 text-muted">
-                {aiMessage} Fügt nur Text in Betreff und E-Mail-Text ein und versendet nie
-                automatisch.
+                {aiMessage} Die KI erstellt nur einen geprüften Zusatzbaustein. Die vollständige
+                E-Mail wird aus sicheren Gorms.res-Templates aufgebaut und nie automatisch
+                versendet.
               </p>
             </div>
             <span className="w-fit rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-bold uppercase text-warning">
@@ -125,9 +126,9 @@ export function ReservationDecisionForm({
             type="submit"
           >
             {aiPending
-              ? "KI-Vorlage wird erstellt..."
+              ? "KI-Baustein wird erstellt..."
               : aiEnabled
-                ? "KI-Vorlage in Felder einfügen"
+                ? "KI-Baustein in Template einfügen"
                 : "KI-Entwürfe nicht freigegeben"}
           </button>
           <FormFeedback state={aiState} />

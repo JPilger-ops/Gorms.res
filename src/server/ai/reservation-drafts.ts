@@ -9,21 +9,26 @@ import { generateAiDraft } from "@/src/server/ai/ollama-client";
 import type { AiDraftTask } from "@/src/server/ai/schemas";
 import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
+import { buildReservationDecisionDraft } from "@/src/server/reservation-decisions";
 import { getAdminReservationDetail } from "@/src/server/reservation-detail";
 
 const decisionTaskMap: Record<ReservationDecisionType, AiDraftTask> = {
-  accept: "acceptance",
-  decline: "decline",
-  question: "question",
+  accept: "acceptance_note",
+  decline: "decline_note",
+  question: "question_text",
 };
 
 const blockingIssueMessages: Record<AiDraftContentBlockingIssue, string> = {
+  acceptance_pending_phrase: "falscher Hinweis zur Verbindlichkeit in einer Zusage erkannt",
+  ascii_umlaut: "ASCII-Ersatz statt deutscher Umlaute erkannt",
   body_too_long: "Text ist zu lang",
   email_address: "mögliche erfundene E-Mail-Adresse erkannt",
   guarantee_phrase: "garantierte Tisch- oder Verfügbarkeitszusage erkannt",
   phone_number: "mögliche erfundene Telefonnummer erkannt",
   placeholder: "möglicher Platzhalter erkannt",
   price_amount: "konkreter Betrag oder Preis erkannt",
+  question_wrong_flow: "fachlich falsche Rückfrageformulierung erkannt",
+  specific_place_reserved: "bestimmter Tisch oder Platz wurde als reserviert dargestellt",
   signature_placeholder: "kaputter Template- oder Signaturhinweis erkannt",
   subject_in_body: "Betreffzeile im E-Mail-Text erkannt",
 };
@@ -43,6 +48,7 @@ export type ReservationAiDraftResult =
         riskNotes: string[];
         subject: string;
       };
+      message: string;
       ok: true;
     }
   | {
@@ -131,7 +137,8 @@ export async function generateReservationDecisionAiDraft({
     };
   }
 
-  const validation = validateAiDraftContent(result.draft);
+  const aiTask = decisionTaskMap[decision];
+  const validation = validateAiDraftContent(result.draft, aiTask);
 
   if (!validation.ok) {
     await db.insert(auditLog).values({
@@ -156,6 +163,14 @@ export async function generateReservationDecisionAiDraft({
 
   const validationWarnings = validation.warnings.map((warning) => warningMessages[warning]);
   const riskNotes = [...result.draft.riskNotes, ...validationWarnings].slice(0, 10);
+  const finalDraft = buildReservationDecisionDraft(
+    decision,
+    detail.reservation,
+    result.draft.content,
+  );
+  const successMessage = result.draft.content
+    ? "KI-Baustein wurde in das sichere Gorms.res-Template eingefügt. Bitte vor dem Senden prüfen."
+    : "KI hatte keinen zusätzlichen Hinweis. Das sichere Gorms.res-Standardtemplate wurde eingefügt.";
 
   await db.insert(auditLog).values({
     action: "reservation.ai_draft_generated",
@@ -163,6 +178,7 @@ export async function generateReservationDecisionAiDraft({
     entityType: "reservation_request",
     metadata: {
       decision,
+      contentEmpty: result.draft.content.length === 0,
       riskNoteCount: riskNotes.length,
       warningCount: validation.warnings.length,
       warnings: validation.warnings,
@@ -172,10 +188,11 @@ export async function generateReservationDecisionAiDraft({
 
   return {
     draft: {
-      body: result.draft.body,
+      body: finalDraft.body,
       riskNotes,
-      subject: result.draft.title,
+      subject: finalDraft.subject,
     },
+    message: successMessage,
     ok: true,
   };
 }

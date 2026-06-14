@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const aiDraftTaskSchema = z.enum(["summary", "acceptance", "decline", "question"]);
+export const aiDraftTaskSchema = z.enum(["acceptance_note", "decline_note", "question_text"]);
 
 export type AiDraftTask = z.infer<typeof aiDraftTaskSchema>;
 
@@ -23,9 +23,8 @@ export const aiDraftRequestSchema = z.object({
 export type AiDraftRequest = z.infer<typeof aiDraftRequestSchema>;
 
 export const aiDraftResponseSchema = z.object({
-  body: z.string().trim().min(1).max(4000),
+  content: z.string().trim().max(1200).default(""),
   riskNotes: z.array(z.string().trim().min(1).max(240)).max(10).default([]),
-  title: z.string().trim().min(1).max(120),
 });
 
 export type AiDraftResponse = z.infer<typeof aiDraftResponseSchema>;

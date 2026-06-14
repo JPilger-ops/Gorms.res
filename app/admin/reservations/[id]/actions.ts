@@ -103,7 +103,7 @@ export async function generateReservationAiDraftAction(
 
   return {
     draft: result.draft,
-    message: "KI-Vorlage wurde eingefügt. Bitte vor dem Senden sorgfältig prüfen und bearbeiten.",
+    message: result.message,
     success: true,
   };
 }

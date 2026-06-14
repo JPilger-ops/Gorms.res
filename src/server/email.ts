@@ -481,7 +481,6 @@ export async function sendGuestReservationDecisionEmail(input: ReservationDecisi
     text: input.body,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #171712;">
-        <p>Guten Tag ${escapeHtml(input.guestName)},</p>
         <div>${textToHtml(input.body)}</div>
       </div>
     `,

@@ -1,12 +1,17 @@
 import type { AiDraftResponse } from "@/src/server/ai/schemas";
+import type { AiDraftTask } from "@/src/server/ai/schemas";
 
 export type AiDraftContentBlockingIssue =
+  | "acceptance_pending_phrase"
+  | "ascii_umlaut"
   | "body_too_long"
   | "email_address"
   | "guarantee_phrase"
   | "phone_number"
   | "placeholder"
   | "price_amount"
+  | "question_wrong_flow"
+  | "specific_place_reserved"
   | "signature_placeholder"
   | "subject_in_body";
 
@@ -33,6 +38,9 @@ const guaranteePatterns = [
   /\bterrasse ist garantiert\b/i,
   /\bdrau[ßs]en ist garantiert\b/i,
 ];
+
+const negatedGuaranteeContextPattern =
+  /\b(?:nicht|kein(?:e|en|em|er|es)?|k[öo]nnen\s+(?:wir\s+)?nicht|nicht\s+verbindlich)\b/i;
 
 const availabilityCautiousPatterns = [
   /\bnach verf[üu]gbarkeit\b/i,
@@ -66,6 +74,29 @@ const germanDomesticPhonePattern = /(?:^|[^\w])0\d(?:[\s()./-]*\d){6,}(?=$|[^\w]
 const longDigitPhonePattern = /\b\d{9,}\b/;
 const priceAmountPattern = /\b\d{1,5}(?:[,.]\d{2})?\s*(?:€|eur|euro)(?=$|[^\p{L}\p{N}_])/iu;
 const depositNoticePattern = /\banzahlung\b/i;
+const asciiUmlautPattern =
+  /\b(?:fuer|bestaetigen|bestaetigt|zukuenftig|gruessen|heidekoenig|gewaehlt|pruefung|persoenlich|verfuegbar|rueckfrage|aussenplaetze?|aussenbereich)\b/i;
+
+const acceptancePendingPatterns = [
+  /\bnoch\s+nicht\s+verbindlich\b/i,
+  /\berst\s+nach\s+(?:unserer\s+)?(?:pers[öo]nlicher\s+)?best[äa]tigung\b/i,
+  /\berst\s+nach\s+pr[üu]fung\b/i,
+  /\bwird\s+erst\s+nach\s+pr[üu]fung\b.{0,80}\bverbindlich\b/i,
+  /\bwird\s+erst\s+nach\s+pers[öo]nlicher\s+best[äa]tigung\b.{0,80}\b(?:g[üu]ltig|verbindlich)\b/i,
+];
+
+const specificPlaceReservedPatterns = [
+  /\btisch\s+[\p{L}\p{N}._-]+\s+(?:wurde\s+)?(?:reserviert|gew[äa]hlt)\b/iu,
+  /\bsie\s+haben\s+tisch\s+[\p{L}\p{N}._-]+\s+gew[äa]hlt\b/iu,
+  /\b(?:terrasse|au[ßs]enplatz|aussenplatz|ruhiger\s+tisch)\s+(?:wurde\s+)?reserviert\b/i,
+];
+
+const questionWrongFlowPatterns = [
+  /\banmeldung\b/i,
+  /\btisch\s+[\p{L}\p{N}._-]+\s+ist\s+(?:verf[üu]gbar|geeignet)\b/iu,
+  /\btisch\s+[\p{L}\p{N}._-]+\s+wurde\s+reserviert\b/iu,
+  /\breservierung\s+best[äa]tigt\b/i,
+];
 
 function addIssue(
   issues: Set<AiDraftContentBlockingIssue>,
@@ -91,6 +122,24 @@ function matchesAny(value: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(value));
 }
 
+function matchesAnyUnsafeGuarantee(value: string) {
+  return guaranteePatterns.some((pattern) => {
+    const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+    const globalPattern = new RegExp(pattern.source, flags);
+
+    for (const match of value.matchAll(globalPattern)) {
+      const index = match.index ?? 0;
+      const context = value.slice(Math.max(0, index - 90), index + match[0].length + 40);
+
+      if (!negatedGuaranteeContextPattern.test(context)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+}
+
 function hasPhoneNumber(value: string) {
   return (
     internationalPhonePattern.test(value) ||
@@ -100,24 +149,47 @@ function hasPhoneNumber(value: string) {
 }
 
 export function validateAiDraftContent(
-  draft: Pick<AiDraftResponse, "body" | "title">,
+  draft: Pick<AiDraftResponse, "content">,
+  task?: AiDraftTask,
 ): AiDraftContentValidationResult {
   const blockingIssues = new Set<AiDraftContentBlockingIssue>();
   const warnings = new Set<AiDraftContentWarning>();
-  const combined = `${draft.title}\n${draft.body}`;
+  const combined = draft.content;
 
-  addIssue(blockingIssues, "body_too_long", draft.body.length > 2500);
-  addIssue(blockingIssues, "guarantee_phrase", matchesAny(combined, guaranteePatterns));
+  addIssue(blockingIssues, "body_too_long", draft.content.length > 1200);
+  addIssue(blockingIssues, "guarantee_phrase", matchesAnyUnsafeGuarantee(combined));
+  addIssue(blockingIssues, "ascii_umlaut", asciiUmlautPattern.test(combined));
   addIssue(blockingIssues, "placeholder", matchesAny(combined, placeholderPatterns));
   addIssue(
     blockingIssues,
     "signature_placeholder",
     /\b(?:signatur|unterschrift|template)\b/i.test(combined),
   );
-  addIssue(blockingIssues, "subject_in_body", subjectInBodyPattern.test(draft.body));
+  addIssue(blockingIssues, "subject_in_body", subjectInBodyPattern.test(draft.content));
   addIssue(blockingIssues, "email_address", emailPattern.test(combined));
   addIssue(blockingIssues, "phone_number", hasPhoneNumber(combined));
   addIssue(blockingIssues, "price_amount", priceAmountPattern.test(combined));
+
+  if (task === "acceptance_note") {
+    addIssue(
+      blockingIssues,
+      "acceptance_pending_phrase",
+      matchesAny(combined, acceptancePendingPatterns),
+    );
+    addIssue(
+      blockingIssues,
+      "specific_place_reserved",
+      matchesAny(combined, specificPlaceReservedPatterns),
+    );
+  }
+
+  if (task === "question_text") {
+    addIssue(
+      blockingIssues,
+      "question_wrong_flow",
+      matchesAny(combined, questionWrongFlowPatterns),
+    );
+  }
 
   addWarning(warnings, "availability_cautious", matchesAny(combined, availabilityCautiousPatterns));
   addWarning(warnings, "deposit_notice", depositNoticePattern.test(combined));
