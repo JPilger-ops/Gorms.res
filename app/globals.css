@@ -1,5 +1,122 @@
 @import "tailwindcss";
 
+/* Table-plan tooling shares the existing admin tokens without changing public surfaces. */
+.table-plan-surface {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+.table-plan-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+}
+.table-plan-table {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+  background: #e4eddf;
+  border: 1.5px solid #52765f;
+  color: #172018;
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
+}
+.table-plan-table span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+.table-plan-table small {
+  font-size: 10px;
+}
+.table-plan-table[data-inactive="true"] {
+  background: #f2f2ef;
+}
+.table-plan-editor {
+  display: grid;
+  gap: 16px;
+}
+.table-plan-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.table-plan-editor-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  align-items: start;
+}
+.table-plan-inspector {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.table-plan-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.table-plan-tabs .admin-filter-chip {
+  min-height: 40px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.table-plan-resource-list {
+  display: grid;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.table-plan-icon {
+  flex: 0 0 44px;
+  min-height: 44px;
+  width: 44px;
+  padding-inline: 0;
+  font-size: 24px;
+}
+.table-plan-canvas {
+  touch-action: none;
+}
+.table-plan-dialog {
+  width: min(680px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+.table-plan-dialog::backdrop {
+  background: rgb(23 32 24 / 40%);
+}
+@media (max-width: 1199px) {
+  .table-plan-editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 :root {
   color-scheme: light;
   --background: #fbf8f0;

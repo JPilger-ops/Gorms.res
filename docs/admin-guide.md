@@ -88,3 +88,29 @@ shown; the UI only lets admins replace the password.
 ## Users
 
 Admins can create, edit, deactivate and reset passwords for users. Deactivated users cannot log in.
+
+## Venue Context
+
+Admin pages preserve the explicit `?venue=<UUID>` query in links and forms. A cookie is only a
+start preference. Two tabs can independently use Heidekoenig and Telegraph. Missing/contradictory
+form context is rejected rather than changing the wrong venue. Users/sessions and security remain
+global; role checks still apply to every action.
+
+Admins can select Telegraph after migration 0004. Its navigation contains Tischplan, global users
+and system/security, not Heidekoenig's CAPACITY workflows. Employees have no TABLES/editor access.
+The selector appears only when multiple supported active venues exist.
+
+## Telegraph Table Plan
+
+Open Tischplan, select/create an area, then Bearbeiten. Tische, Kombinationen and Grundriss provide
+separate compact controls. Capacity and wheelchair suitability are set explicitly, not inferred
+from table geometry or combinations. Saved resources are archived rather than deleted; rename
+before restoring if another live resource now uses that name.
+
+Save explicitly. Verwerfen loads the latest saved plan but leaves editing open. Undo/redo operates
+only on the local draft. A changed plan revision causes a conflict message and retains your draft;
+inspect/reload rather than overwriting someone else's edit. Images with a new aspect ratio require
+preview confirmation and manual review of positions against the new building.
+
+This editor does not assign reservations or enable Telegraph public booking. See
+[Table Plan](table-plan.md) for full workflow, bounds, permissions and backup/cleanup requirements.

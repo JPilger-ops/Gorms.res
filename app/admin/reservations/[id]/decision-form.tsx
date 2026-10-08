@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState } from "react";
 import {
   generateReservationAiDraftAction,
@@ -68,6 +70,7 @@ export function ReservationDecisionForm({
 
   return (
     <form action={formAction} className="admin-decision-card" data-decision={draft.decision}>
+      <VenueField />
       <input name="decision" type="hidden" value={draft.decision} />
       <input name="expectedStatus" type="hidden" value={expectedStatus} />
       <input name="id" type="hidden" value={reservationId} />

@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { adminUrl } from "@/src/lib/admin-urls";
 import { ReservationStatusForm } from "@/app/admin/reservations/reservation-status-form";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { hasPermission } from "@/src/lib/permissions";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import {
   getAdminReservationRequests,
   normalizeReservationStatusFilter,
@@ -39,6 +40,7 @@ function formatDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
 
   return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "UTC",
     day: "2-digit",
     month: "2-digit",
     weekday: "short",
@@ -48,6 +50,7 @@ function formatDate(value: string) {
 
 function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
     dateStyle: "short",
     timeStyle: "short",
   }).format(value);
@@ -66,13 +69,15 @@ export default async function ReservationsPage({
 }: {
   searchParams: Promise<{ status?: string | string[] }>;
 }) {
-  const session = await requirePermission("reservations:read");
+  const { session, venue } = await requireVenuePermission("reservations:read");
   const canOverrideStatus = hasPermission(session.role, "reservations:status_override");
   const status = normalizeReservationStatusFilter((await searchParams).status);
-  const { countsByStatus, reservations, total } = await getAdminReservationRequests({ status });
+  const { countsByStatus, reservations, total } = await getAdminReservationRequests(venue, {
+    status,
+  });
 
   return (
-    <AdminShell session={session}>
+    <AdminShell session={session} venue={venue}>
       <div className="space-y-6">
         <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
@@ -97,9 +102,10 @@ export default async function ReservationsPage({
                   aria-current={active ? "page" : undefined}
                   className="admin-filter-chip"
                   data-active={active ? "true" : undefined}
-                  href={
-                    item === "all" ? "/admin/reservations" : `/admin/reservations?status=${item}`
-                  }
+                  href={adminUrl(
+                    item === "all" ? "/admin/reservations" : `/admin/reservations?status=${item}`,
+                    venue.id,
+                  )}
                   key={item}
                 >
                   {statusLabels[item]} · {statusCount(item, countsByStatus, total)}
@@ -122,7 +128,7 @@ export default async function ReservationsPage({
                       <h3 className="text-2xl font-semibold">
                         <Link
                           className="break-words underline-offset-4 hover:underline"
-                          href={`/admin/reservations/${reservation.id}`}
+                          href={adminUrl(`/admin/reservations/${reservation.id}`, venue.id)}
                         >
                           {reservation.guestName}
                         </Link>
@@ -183,7 +189,7 @@ export default async function ReservationsPage({
                   <Link
                     className="primary-action inline-flex"
                     aria-label={`Details zu ${reservation.guestName} öffnen`}
-                    href={`/admin/reservations/${reservation.id}`}
+                    href={adminUrl(`/admin/reservations/${reservation.id}`, venue.id)}
                   >
                     Anfrage bearbeiten
                   </Link>

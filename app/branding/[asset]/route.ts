@@ -1,5 +1,11 @@
 import { getBrandingAsset } from "@/src/server/branding";
 
+import { getPublicRequestVenue, isAdminHostRequest } from "@/src/server/host-guard";
+import { getCurrentSession } from "@/src/server/sessions";
+import { getAdminVenue } from "@/src/server/guards";
+import { getVenueById } from "@/src/server/venues";
+import { HEIDEKOENIG_VENUE_ID } from "@/src/lib/venue-defaults.mjs";
+
 export const dynamic = "force-dynamic";
 
 function fallbackFavicon() {
@@ -24,7 +30,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ass
     return new Response("Not found", { status: 404 });
   }
 
-  const brandingAsset = await getBrandingAsset(asset);
+  let venue = await getPublicRequestVenue();
+  if (!venue && (await isAdminHostRequest())) {
+    venue = (await getCurrentSession())
+      ? await getAdminVenue()
+      : await getVenueById(HEIDEKOENIG_VENUE_ID);
+  }
+  if (!venue?.isActive) return new Response("Not found", { status: 404 });
+  const brandingAsset = await getBrandingAsset(venue, asset);
 
   if (!brandingAsset) {
     return asset === "favicon" ? fallbackFavicon() : new Response("Not found", { status: 404 });

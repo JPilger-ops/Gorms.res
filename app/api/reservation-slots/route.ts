@@ -1,24 +1,33 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { isPublicHostRequest } from "@/src/server/host-guard";
+import { getPublicRequestVenue } from "@/src/server/host-guard";
 import { checkRateLimit } from "@/src/server/rate-limit";
 import { getClientRateLimitKey } from "@/src/server/request-security";
 import { getReservationSlotsForDate } from "@/src/server/reservation-availability";
 import { getSetupStatus } from "@/src/server/setup";
 
+import { addCalendarDays, isIsoDate } from "@/src/lib/dates";
+import { assertCapacityStrategy } from "@/src/server/venues";
+
 export const dynamic = "force-dynamic";
 
 const reservationSlotsQuerySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: z.string().refine(isIsoDate),
   days: z.coerce.number().int().min(1).max(21).optional(),
   guestCount: z.coerce.number().int().min(1).max(500).default(1),
 });
 
 export async function GET(request: Request) {
-  if (!(await isPublicHostRequest())) {
+  const venue = await getPublicRequestVenue();
+  if (!venue) {
     return NextResponse.json({ message: "Nicht verfügbar." }, { status: 404 });
   }
 
+  try {
+    assertCapacityStrategy(venue);
+  } catch {
+    return NextResponse.json({ message: "Nicht verfügbar." }, { status: 503 });
+  }
   const setupStatus = await getSetupStatus();
 
   if (!setupStatus.setupCompleted) {
@@ -46,14 +55,10 @@ export async function GET(request: Request) {
   }
 
   if (parsed.data.days) {
-    const start = new Date(`${parsed.data.date}T00:00:00`);
     const days = await Promise.all(
       Array.from({ length: parsed.data.days }, (_, index) => {
-        const date = new Date(start);
-        date.setDate(start.getDate() + index);
-
-        return getReservationSlotsForDate({
-          date: date.toISOString().slice(0, 10),
+        return getReservationSlotsForDate(venue, {
+          date: addCalendarDays(parsed.data.date, index),
           guestCount: parsed.data.guestCount,
         });
       }),
@@ -69,7 +74,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const result = await getReservationSlotsForDate(parsed.data);
+  const result = await getReservationSlotsForDate(venue, parsed.data);
 
   return NextResponse.json(result, {
     headers: {

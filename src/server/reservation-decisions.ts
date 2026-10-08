@@ -15,6 +15,7 @@ import { buildAdminReservationUrl } from "@/src/server/reservation-ics";
 import { recordReservationOutgoingEmail } from "@/src/server/reservation-outgoing-emails";
 import type { ReservationStatus } from "@/src/server/reservations";
 import { getEmailTemplateSettings } from "@/src/server/settings";
+import { assertCapacityStrategy, type VenueContext } from "@/src/server/venues";
 
 type DecisionDraftReservation = {
   guestCount: number;
@@ -61,9 +62,11 @@ function formatDate(value: string) {
 
   const date = new Date(Date.UTC(year, month - 1, day));
   const weekday = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "UTC",
     weekday: "long",
   }).format(date);
   const formattedDate = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "UTC",
     dateStyle: "long",
   }).format(date);
 
@@ -79,12 +82,13 @@ function sanitizeSmtpError() {
 }
 
 function toInternalReservationEmailData(
+  venue: VenueContext,
   reservation: DecisionDraftReservation,
   session: AuthenticatedSession,
 ) {
   return {
     acceptedByName: session.name,
-    adminUrl: buildAdminReservationUrl(reservation.id),
+    adminUrl: buildAdminReservationUrl(venue, reservation.id),
     date: reservation.requestedDate,
     email: reservation.guestEmail,
     guestCount: reservation.guestCount,
@@ -97,20 +101,21 @@ function toInternalReservationEmailData(
 }
 
 async function sendInternalAcceptanceNotification(
+  venue: VenueContext,
   reservation: DecisionDraftReservation,
   session: AuthenticatedSession,
 ) {
-  const templates = await getEmailTemplateSettings();
-  const emailData = toInternalReservationEmailData(reservation, session);
+  const templates = await getEmailTemplateSettings(venue);
+  const emailData = toInternalReservationEmailData(venue, reservation, session);
   const internalEmail = buildInternalReservationAcceptedEmailContent(
     emailData,
     templates.reservationNotificationEmail,
   );
 
   try {
-    await sendInternalReservationAcceptedEmail(emailData, internalEmail);
+    await sendInternalReservationAcceptedEmail(venue, emailData, internalEmail);
   } catch {
-    await recordReservationOutgoingEmail({
+    await recordReservationOutgoingEmail(venue, {
       body: internalEmail.text,
       recipient: internalEmail.recipient,
       reservationRequestId: reservation.id,
@@ -124,7 +129,7 @@ async function sendInternalAcceptanceNotification(
     return false;
   }
 
-  await recordReservationOutgoingEmail({
+  await recordReservationOutgoingEmail(venue, {
     body: internalEmail.text,
     recipient: internalEmail.recipient,
     reservationRequestId: reservation.id,
@@ -139,6 +144,7 @@ async function sendInternalAcceptanceNotification(
 }
 
 export function buildReservationDecisionDraft(
+  venue: VenueContext,
   decision: ReservationDecisionType,
   reservation: DecisionDraftReservation,
   aiContent = "",
@@ -159,9 +165,9 @@ export function buildReservationDecisionDraft(
         "Falls sich an Ihrer Personenanzahl oder Ankunftszeit etwas ändert, geben Sie uns bitte kurz Bescheid.",
         "",
         "Mit freundlichen Grüßen",
-        "Waldwirtschaft Heidekönig",
+        venue.name,
       ].join("\n"),
-      subject: "Ihre Reservierung bei der Waldwirtschaft Heidekönig",
+      subject: `Ihre Reservierung bei der ${venue.name}`,
     };
   }
 
@@ -178,9 +184,9 @@ export function buildReservationDecisionDraft(
         "Gerne können Sie uns für einen alternativen Termin erneut kontaktieren.",
         "",
         "Mit freundlichen Grüßen",
-        "Waldwirtschaft Heidekönig",
+        venue.name,
       ].join("\n"),
-      subject: "Ihre Reservierungsanfrage bei der Waldwirtschaft Heidekönig",
+      subject: `Ihre Reservierungsanfrage bei der ${venue.name}`,
     };
   }
 
@@ -197,16 +203,18 @@ export function buildReservationDecisionDraft(
       "Wichtig: Ihre Reservierung ist erst nach unserer persönlichen Bestätigung gültig.",
       "",
       "Mit freundlichen Grüßen",
-      "Waldwirtschaft Heidekönig",
+      venue.name,
     ].join("\n"),
     subject: "Rückfrage zu Ihrer Reservierungsanfrage",
   };
 }
 
 export async function sendReservationDecision(
+  venue: VenueContext,
   input: ReservationDecisionInput,
   session: AuthenticatedSession,
 ) {
+  assertCapacityStrategy(venue);
   const [reservation] = await db
     .select({
       guestCount: reservationRequests.guestCount,
@@ -220,7 +228,7 @@ export async function sendReservationDecision(
       status: reservationRequests.status,
     })
     .from(reservationRequests)
-    .where(eq(reservationRequests.id, input.id))
+    .where(and(eq(reservationRequests.id, input.id), eq(reservationRequests.venueId, venue.id)))
     .limit(1);
 
   if (!reservation) {
@@ -241,7 +249,8 @@ export async function sendReservationDecision(
   const config = decisionConfig[input.decision];
 
   try {
-    await sendGuestReservationDecisionEmail({
+    await sendGuestReservationDecisionEmail(venue, {
+      id: reservation.id,
       body: input.body,
       guestEmail: reservation.guestEmail,
       guestName: reservation.guestName,
@@ -249,7 +258,7 @@ export async function sendReservationDecision(
       subject: input.subject,
     });
   } catch {
-    await recordReservationOutgoingEmail({
+    await recordReservationOutgoingEmail(venue, {
       body: input.body,
       recipient: reservation.guestEmail,
       reservationRequestId: reservation.id,
@@ -276,6 +285,7 @@ export async function sendReservationDecision(
         })
         .where(
           and(
+            eq(reservationRequests.venueId, venue.id),
             eq(reservationRequests.id, input.id),
             eq(reservationRequests.status, input.expectedStatus),
           ),
@@ -293,6 +303,7 @@ export async function sendReservationDecision(
 
     await tx.insert(auditLog).values({
       action: config.auditAction,
+      venueId: venue.id,
       entityId: input.id,
       entityType: "reservation_request",
       metadata: {
@@ -309,7 +320,7 @@ export async function sendReservationDecision(
     };
   });
 
-  await recordReservationOutgoingEmail({
+  await recordReservationOutgoingEmail(venue, {
     body: input.body,
     recipient: reservation.guestEmail,
     reservationRequestId: reservation.id,
@@ -321,7 +332,11 @@ export async function sendReservationDecision(
   });
 
   if (result.ok && input.decision === "accept") {
-    const internalNotificationSent = await sendInternalAcceptanceNotification(reservation, session);
+    const internalNotificationSent = await sendInternalAcceptanceNotification(
+      venue,
+      reservation,
+      session,
+    );
 
     if (!internalNotificationSent) {
       return {

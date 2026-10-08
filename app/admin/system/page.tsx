@@ -1,6 +1,6 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import type { SystemCheckStatus } from "@/src/server/system-check";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { getSystemSecurityOverview } from "@/src/server/system-status";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ const checkClasses: Record<SystemCheckStatus, string> = {
 
 function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
     dateStyle: "short",
     timeStyle: "short",
   }).format(value);
@@ -34,11 +35,11 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 }
 
 export default async function SystemPage() {
-  const session = await requirePermission("system:read");
-  const overview = await getSystemSecurityOverview();
+  const { session, venue } = await requireVenuePermission("system:read");
+  const overview = await getSystemSecurityOverview(venue);
 
   return (
-    <AdminShell session={session}>
+    <AdminShell session={session} venue={venue}>
       <div className="space-y-6">
         <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="grid gap-4 xl:grid-cols-[minmax(240px,0.7fr)_minmax(320px,1fr)] xl:items-end">

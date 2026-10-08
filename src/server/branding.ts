@@ -1,12 +1,14 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { appSettings, auditLog } from "@/db/schema";
+import { venueSettings, auditLog } from "@/db/schema";
 import { env } from "@/src/lib/env";
 import type { BrandingSettingsInput } from "@/src/lib/branding-validation";
 import { db } from "@/src/server/db";
 import type { AuthenticatedSession } from "@/src/server/guards";
+import type { VenueContext } from "@/src/server/venues";
+import { getVenueSettingMap } from "@/src/server/settings";
 
 const brandingKeys = [
   "branding_accent_color",
@@ -74,13 +76,8 @@ function assetUrl(kind: BrandingAssetKind, fileName: string | undefined) {
   return fileName ? `/branding/${kind}` : undefined;
 }
 
-async function getBrandingSettingMap() {
-  const rows = await db
-    .select({ key: appSettings.key, value: appSettings.value })
-    .from(appSettings)
-    .where(inArray(appSettings.key, [...brandingKeys]));
-
-  return new Map(rows.map((row) => [row.key, row.value]));
+async function getBrandingSettingMap(venue: VenueContext) {
+  return getVenueSettingMap(venue, brandingKeys);
 }
 
 async function deletePreviousFile(fileName: string | undefined) {
@@ -91,8 +88,8 @@ async function deletePreviousFile(fileName: string | undefined) {
   await rm(join(brandingDir, basename(fileName)), { force: true });
 }
 
-export async function getBrandingSettings(): Promise<BrandingSettings> {
-  const settings = await getBrandingSettingMap();
+export async function getBrandingSettings(venue: VenueContext): Promise<BrandingSettings> {
+  const settings = await getBrandingSettingMap(venue);
 
   return {
     accentColor: settings.get("branding_accent_color") ?? "#234235",
@@ -101,8 +98,8 @@ export async function getBrandingSettings(): Promise<BrandingSettings> {
   };
 }
 
-export async function getBrandingAsset(kind: BrandingAssetKind) {
-  const settings = await getBrandingSettingMap();
+export async function getBrandingAsset(venue: VenueContext, kind: BrandingAssetKind) {
+  const settings = await getBrandingSettingMap(venue);
   const fileName = settings.get(assetKey(kind));
 
   if (!fileName) {
@@ -124,20 +121,22 @@ export async function getBrandingAsset(kind: BrandingAssetKind) {
 }
 
 export async function updateBrandingSettings(
+  venue: VenueContext,
   input: BrandingSettingsInput,
   session: AuthenticatedSession,
 ) {
   await db.transaction(async (tx) => {
     await tx
-      .insert(appSettings)
+      .insert(venueSettings)
       .values({
+        venueId: venue.id,
         key: "branding_accent_color",
         value: input.accentColor,
         isSecret: false,
         updatedByUserId: session.userId,
       })
       .onConflictDoUpdate({
-        target: appSettings.key,
+        target: [venueSettings.venueId, venueSettings.key],
         set: {
           isSecret: false,
           updatedByUserId: session.userId,
@@ -149,6 +148,7 @@ export async function updateBrandingSettings(
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: "branding.update",
+      venueId: venue.id,
       entityType: "app_settings",
       entityId: "branding",
       metadata: { keys: ["branding_accent_color"] },
@@ -157,10 +157,12 @@ export async function updateBrandingSettings(
 }
 
 export async function updateBrandingAsset({
+  venue,
   file,
   kind,
   session,
 }: {
+  venue: VenueContext;
   file: File;
   kind: BrandingAssetKind;
   session: AuthenticatedSession;
@@ -178,7 +180,7 @@ export async function updateBrandingAsset({
 
   await mkdir(brandingDir, { recursive: true, mode: 0o755 });
 
-  const settings = await getBrandingSettingMap();
+  const settings = await getBrandingSettingMap(venue);
   const previousFileName = settings.get(assetKey(kind));
   const nextFileName = `${kind}-${randomUUID()}.${detected.extension}`;
 
@@ -186,15 +188,16 @@ export async function updateBrandingAsset({
 
   await db.transaction(async (tx) => {
     await tx
-      .insert(appSettings)
+      .insert(venueSettings)
       .values({
+        venueId: venue.id,
         key: assetKey(kind),
         value: nextFileName,
         isSecret: false,
         updatedByUserId: session.userId,
       })
       .onConflictDoUpdate({
-        target: appSettings.key,
+        target: [venueSettings.venueId, venueSettings.key],
         set: {
           isSecret: false,
           updatedByUserId: session.userId,
@@ -206,6 +209,7 @@ export async function updateBrandingAsset({
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: `branding.${kind}.upload`,
+      venueId: venue.id,
       entityType: "app_settings",
       entityId: assetKey(kind),
       metadata: {
@@ -220,16 +224,23 @@ export async function updateBrandingAsset({
   return { ok: true as const };
 }
 
-export async function removeBrandingAsset(kind: BrandingAssetKind, session: AuthenticatedSession) {
-  const settings = await getBrandingSettingMap();
+export async function removeBrandingAsset(
+  venue: VenueContext,
+  kind: BrandingAssetKind,
+  session: AuthenticatedSession,
+) {
+  const settings = await getBrandingSettingMap(venue);
   const previousFileName = settings.get(assetKey(kind));
 
   await db.transaction(async (tx) => {
-    await tx.delete(appSettings).where(eq(appSettings.key, assetKey(kind)));
+    await tx
+      .delete(venueSettings)
+      .where(and(eq(venueSettings.venueId, venue.id), eq(venueSettings.key, assetKey(kind))));
 
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: `branding.${kind}.remove`,
+      venueId: venue.id,
       entityType: "app_settings",
       entityId: assetKey(kind),
       metadata: {},

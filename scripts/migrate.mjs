@@ -1,6 +1,8 @@
+import "dotenv/config";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { importLegacyPublicHosts } from "./venue-hosts-lib.mjs";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -16,7 +18,16 @@ const pool = new Pool({
 try {
   const db = drizzle(pool);
   await migrate(db, { migrationsFolder: "db/migrations" });
+  await importLegacyPublicHosts(pool, {
+    publicHosts: process.env.PUBLIC_ALLOWED_HOSTS,
+    adminHosts: process.env.ADMIN_ALLOWED_HOSTS,
+  });
   console.log("Database migrations completed.");
+} catch {
+  console.error(
+    "Database migration or legacy host import failed. Resolve configuration and rerun the migration command.",
+  );
+  process.exitCode = 1;
 } finally {
   await pool.end();
 }

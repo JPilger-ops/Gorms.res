@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { adminUrl } from "@/src/lib/admin-urls";
 import { notFound } from "next/navigation";
 import { type ReservationDecisionDraft } from "@/app/admin/reservations/[id]/decision-form";
 import { ReservationDecisionWorkspace } from "@/app/admin/reservations/[id]/decision-workspace";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { hasPermission } from "@/src/lib/permissions";
 import { getAiAssistantStatus } from "@/src/server/ai/config";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { buildReservationDecisionDraft } from "@/src/server/reservation-decisions";
 import { getAdminReservationDetail } from "@/src/server/reservation-detail";
 import type { AvailabilityStatus } from "@/src/server/reservation-availability";
@@ -85,6 +86,7 @@ function formatDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
 
   return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "UTC",
     dateStyle: "full",
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
@@ -95,6 +97,7 @@ function formatDateTime(value: Date | null) {
   }
 
   return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
     dateStyle: "medium",
     timeStyle: "short",
   }).format(value);
@@ -190,10 +193,10 @@ export default async function ReservationDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ decision?: string | string[] }>;
 }) {
-  const session = await requirePermission("reservations:read");
+  const { session, venue } = await requireVenuePermission("reservations:read");
   const { id } = await params;
   const decisionFeedbackKey = normalizeDecisionFeedback((await searchParams).decision);
-  const detail = await getAdminReservationDetail(id);
+  const detail = await getAdminReservationDetail(venue, id);
 
   if (!detail) {
     notFound();
@@ -208,25 +211,25 @@ export default async function ReservationDetailPage({
   const decisionDrafts: ReservationDecisionDraft[] = [
     {
       decision: "accept",
-      ...buildReservationDecisionDraft("accept", reservation),
+      ...buildReservationDecisionDraft(venue, "accept", reservation),
     },
     {
       decision: "decline",
-      ...buildReservationDecisionDraft("decline", reservation),
+      ...buildReservationDecisionDraft(venue, "decline", reservation),
     },
     {
       decision: "question",
-      ...buildReservationDecisionDraft("question", reservation),
+      ...buildReservationDecisionDraft(venue, "question", reservation),
     },
   ];
 
   return (
-    <AdminShell session={session}>
+    <AdminShell session={session} venue={venue}>
       <div className="space-y-6">
         <div className="glass-panel admin-hero p-5 sm:p-7">
           <Link
             className="text-sm font-semibold text-muted hover:text-foreground"
-            href="/admin/reservations"
+            href={adminUrl("/admin/reservations", venue.id)}
           >
             Zurück zu den Anfragen
           </Link>
@@ -431,7 +434,7 @@ export default async function ReservationDetailPage({
           <div className="grid gap-4 md:grid-cols-2">
             <IcsDownloadTile
               description="Enthält die ursprüngliche Anfrage mit Status offen und Admin-Link."
-              href={`/admin/reservations/${reservation.id}/ics/request`}
+              href={adminUrl(`/admin/reservations/${reservation.id}/ics/request`, venue.id)}
               title="Anfrage-ICS"
             />
             <IcsDownloadTile
@@ -439,7 +442,7 @@ export default async function ReservationDetailPage({
               disabledReason="Erst nach Zusage verfügbar"
               href={
                 reservation.status === "accepted"
-                  ? `/admin/reservations/${reservation.id}/ics/accepted`
+                  ? adminUrl(`/admin/reservations/${reservation.id}/ics/accepted`, venue.id)
                   : undefined
               }
               title="Bestätigungs-ICS"

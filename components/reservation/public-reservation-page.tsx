@@ -4,14 +4,20 @@ import { ReservationForm } from "@/components/reservation/reservation-form";
 import { getBrandingSettings } from "@/src/server/branding";
 import { getAdminSettings } from "@/src/server/settings";
 
+import type { VenueContext } from "@/src/server/venues";
+import { todayInTimeZone } from "@/src/lib/dates";
+
 const facts = [
   "Montags, dienstags, sonntags und an Feiertagen keine Reservierungen.",
   "Ab 30 Personen: 100 € Anzahlung.",
   "Verbindlich erst nach persönlicher Zusage.",
 ];
 
-export async function PublicReservationPage() {
-  const [branding, settings] = await Promise.all([getBrandingSettings(), getAdminSettings()]);
+export async function PublicReservationPage({ venue }: { venue: VenueContext }) {
+  const [branding, settings] = await Promise.all([
+    getBrandingSettings(venue),
+    getAdminSettings(venue),
+  ]);
   const privacyUrl = settings.privacyPolicyUrl ?? "/datenschutz";
 
   return (
@@ -57,6 +63,7 @@ export async function PublicReservationPage() {
         </div>
 
         <ReservationForm
+          initialDate={todayInTimeZone(venue.timeZone)}
           imprintUrl={settings.imprintUrl}
           latestReservationTime={settings.latestReservationTime}
           earliestReservationTime={settings.earliestReservationTime}

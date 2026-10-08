@@ -27,6 +27,7 @@ export const aiSpecialRequestPolicySchema = z.object({
 export type AiSpecialRequestPolicy = z.infer<typeof aiSpecialRequestPolicySchema>;
 
 export const aiPromptReservationSchema = z.object({
+  venueName: z.string().trim().max(160).optional(),
   availabilityNotes: z.array(z.string().trim().min(1).max(240)).max(20).default([]),
   baseContent: z.string().trim().max(1600).optional(),
   guestCount: z.number().int().positive().max(200),

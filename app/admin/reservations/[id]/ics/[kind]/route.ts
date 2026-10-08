@@ -6,6 +6,8 @@ import {
 } from "@/src/server/reservation-ics";
 import { getCurrentSession } from "@/src/server/sessions";
 
+import { getAdminVenue } from "@/src/server/guards";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(
@@ -29,7 +31,7 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  const download = await getReservationIcsDownload(id, kind);
+  const download = await getReservationIcsDownload(await getAdminVenue(), id, kind);
 
   if (!download) {
     return new Response("Not found", { status: 404 });

@@ -1,5 +1,5 @@
-import { count, desc, eq, gt, sql } from "drizzle-orm";
-import { appSettings, auditLog, reservationRequests, sessions, users } from "@/db/schema";
+import { and, count, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { venueSettings, auditLog, reservationRequests, sessions, users } from "@/db/schema";
 import { env, requiredSecretStatus } from "@/src/lib/env";
 import { checkDatabaseConnection } from "@/src/server/db";
 import { getEncryptionKeyStatus } from "@/src/server/encryption";
@@ -7,8 +7,12 @@ import { getAdminAllowedHosts, getPublicAllowedHosts } from "@/src/server/host-g
 import { runSetupSystemCheck } from "@/src/server/system-check";
 import { db } from "@/src/server/db";
 
-export async function getSystemSecurityOverview() {
+import type { VenueContext } from "@/src/server/venues";
+import { getAdminSettings } from "@/src/server/settings";
+
+export async function getSystemSecurityOverview(venue: VenueContext) {
   const now = new Date();
+  const settings = await getAdminSettings(venue);
 
   const [
     databaseOk,
@@ -31,12 +35,20 @@ export async function getSystemSecurityOverview() {
       .from(users)
       .where(sql`${users.isActive} = true and ${users.role} = 'admin'`),
     db.select({ count: count() }).from(sessions).where(gt(sessions.expiresAt, now)),
-    db.select({ count: count() }).from(reservationRequests),
     db
       .select({ count: count() })
       .from(reservationRequests)
-      .where(eq(reservationRequests.status, "pending")),
-    db.select({ count: count() }).from(appSettings).where(eq(appSettings.isSecret, true)),
+      .where(eq(reservationRequests.venueId, venue.id)),
+    db
+      .select({ count: count() })
+      .from(reservationRequests)
+      .where(
+        and(eq(reservationRequests.venueId, venue.id), eq(reservationRequests.status, "pending")),
+      ),
+    db
+      .select({ count: count() })
+      .from(venueSettings)
+      .where(and(eq(venueSettings.venueId, venue.id), eq(venueSettings.isSecret, true))),
     db
       .select({
         action: auditLog.action,
@@ -46,6 +58,7 @@ export async function getSystemSecurityOverview() {
       })
       .from(auditLog)
       .leftJoin(users, eq(auditLog.userId, users.id))
+      .where(or(isNull(auditLog.venueId), eq(auditLog.venueId, venue.id)))
       .orderBy(desc(auditLog.createdAt))
       .limit(10),
   ]);
@@ -55,7 +68,7 @@ export async function getSystemSecurityOverview() {
   const setupToken = requiredSecretStatus("SETUP_TOKEN");
 
   return {
-    auditRetentionDays: env.AUDIT_LOG_RETENTION_DAYS,
+    auditRetentionDays: settings.auditLogRetentionDays,
     backupPath: env.BACKUP_CONTAINER_PATH,
     databaseOk,
     environment: process.env.NODE_ENV ?? "development",
@@ -65,7 +78,7 @@ export async function getSystemSecurityOverview() {
       publicAllowedHosts: getPublicAllowedHosts(),
     },
     recentAuditEvents,
-    reservationRetentionDays: env.RESERVATION_RETENTION_DAYS,
+    reservationRetentionDays: settings.reservationRetentionDays,
     secrets: {
       appEncryptionKeySource: appEncryptionKey.isSet ? appEncryptionKey.source : "missing",
       sessionSecretSet: sessionSecret.isSet,

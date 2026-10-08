@@ -7,7 +7,7 @@ import {
   deleteReservationEventSchema,
 } from "@/src/lib/reservation-events-validation";
 import { createBlockedDay, deleteBlockedDay } from "@/src/server/blocked-days";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { createReservationEvent, deleteReservationEvent } from "@/src/server/reservation-events";
 
 export type BlockedDayActionState = {
@@ -20,7 +20,10 @@ export async function createBlockedDayAction(
   _previousState: BlockedDayActionState,
   formData: FormData,
 ): Promise<BlockedDayActionState> {
-  const session = await requirePermission("blocked-days:manage");
+  const { session, venue } = await requireVenuePermission(
+    "blocked-days:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = createBlockedDaySchema.safeParse({
     date: formData.get("date"),
     reason: formData.get("reason"),
@@ -33,7 +36,7 @@ export async function createBlockedDayAction(
     };
   }
 
-  await createBlockedDay(parsed.data, session);
+  await createBlockedDay(venue, parsed.data, session);
   revalidatePath("/admin/blocked-days");
   revalidatePath("/admin");
 
@@ -44,7 +47,10 @@ export async function createBlockedDayAction(
 }
 
 export async function deleteBlockedDayAction(formData: FormData) {
-  const session = await requirePermission("blocked-days:manage");
+  const { session, venue } = await requireVenuePermission(
+    "blocked-days:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = deleteBlockedDaySchema.safeParse({
     id: formData.get("id"),
   });
@@ -53,7 +59,7 @@ export async function deleteBlockedDayAction(formData: FormData) {
     return;
   }
 
-  await deleteBlockedDay(parsed.data.id, session);
+  await deleteBlockedDay(venue, parsed.data.id, session);
   revalidatePath("/admin/blocked-days");
   revalidatePath("/admin");
 }
@@ -62,7 +68,10 @@ export async function createReservationEventAction(
   _previousState: BlockedDayActionState,
   formData: FormData,
 ): Promise<BlockedDayActionState> {
-  const session = await requirePermission("blocked-days:manage");
+  const { session, venue } = await requireVenuePermission(
+    "blocked-days:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = createReservationEventSchema.safeParse({
     date: formData.get("date"),
     publicNote: formData.get("publicNote"),
@@ -77,7 +86,7 @@ export async function createReservationEventAction(
     };
   }
 
-  await createReservationEvent(parsed.data, session);
+  await createReservationEvent(venue, parsed.data, session);
   revalidatePath("/admin/blocked-days");
   revalidatePath("/admin");
 
@@ -88,7 +97,10 @@ export async function createReservationEventAction(
 }
 
 export async function deleteReservationEventAction(formData: FormData) {
-  const session = await requirePermission("blocked-days:manage");
+  const { session, venue } = await requireVenuePermission(
+    "blocked-days:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = deleteReservationEventSchema.safeParse({
     id: formData.get("id"),
   });
@@ -97,7 +109,7 @@ export async function deleteReservationEventAction(formData: FormData) {
     return;
   }
 
-  await deleteReservationEvent(parsed.data.id, session);
+  await deleteReservationEvent(venue, parsed.data.id, session);
   revalidatePath("/admin/blocked-days");
   revalidatePath("/admin");
 }

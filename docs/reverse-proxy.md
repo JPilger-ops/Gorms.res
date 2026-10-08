@@ -68,6 +68,13 @@ public host may serve `/`, `/reservieren`, `/branding/*` and framework assets.
 
 ## Firewall
 
+Phase 2 private floorplans use authenticated admin routes only, not static upload paths.
+For the admin proxy host, ensure a 9 MiB multipart limit (`client_max_body_size 9m;`
+in Nginx/NPM) and no cache for `/admin/*`. Inspect existing/generated NPM directives
+before editing to avoid duplicates. Do not alter the public form's request limit,
+expose the upload volume or create a public alias to the floorplan files. The app
+also enforces bounded input and no-store responses. See [Table Plan](table-plan.md).
+
 For the VLAN/IP deployment model, allow only the reverse proxy to reach the app host on TCP `6043`.
 
 Do not expose:

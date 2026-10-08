@@ -5,7 +5,8 @@
 The app uses two configuration layers:
 
 - `.env` for deployment-level configuration and secrets
-- `app_settings` database table for admin-editable settings
+- `venue_settings` database table for venue-specific admin-editable settings
+- `app_settings` for global setup/import status and audit retention
 
 ## Required Deployment Secrets
 
@@ -30,7 +31,7 @@ must be re-entered.
 ## Secret Storage
 
 Sensitive admin-editable values such as SMTP password are encrypted before storage in
-`app_settings`. The current secret value is never returned to client components.
+`venue_settings`, keyed by venue ID and setting key. The current secret value is never returned to client components.
 
 ## Logging Rules
 
@@ -45,3 +46,11 @@ Do not log:
 ## Cookie Rules
 
 Admin session cookies must be host-only for `login.gorms.de`. Do not set `Domain=.gorms.de`.
+
+## Upgrade And ENV Fallbacks
+
+Migration 0003 transfers existing venue values, ciphertext, editor and timestamp unchanged, then
+removes the transferred global entries in the same transaction. Heidekönig retains its previous ENV
+fallbacks. New venues do not inherit its deployment SMTP credentials/recipient or privacy contacts.
+Reservation retention remains valid DB value, then Heidekönig ENV, then 30 days; audit retention is
+separate and stays global. See [Multi-Venue Foundation](multi-venue.md#settings-and-retention).

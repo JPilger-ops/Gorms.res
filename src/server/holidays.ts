@@ -1,5 +1,5 @@
 import Holidays from "date-holidays";
-import { parseLocalDate } from "@/src/lib/dates";
+import { isIsoDate, zonedDateTimeToUtc } from "@/src/lib/dates";
 import { normalizeHolidayState } from "@/src/server/settings";
 
 export type HolidayCheckResult = {
@@ -11,14 +11,19 @@ export function getHolidayProvider(country: string, state: string) {
   return new Holidays(country.toUpperCase(), normalizeHolidayState(country, state));
 }
 
-export function isPublicHoliday(date: string, country: string, state: string): HolidayCheckResult {
-  const localDate = parseLocalDate(date);
-
-  if (!localDate) {
+export function isPublicHoliday(
+  date: string,
+  country: string,
+  state: string,
+  timeZone = "Europe/Berlin",
+): HolidayCheckResult {
+  if (!isIsoDate(date)) {
     return { isHoliday: false };
   }
 
-  const holidays = getHolidayProvider(country, state).isHoliday(localDate);
+  const provider = getHolidayProvider(country, state);
+  provider.setTimezone(timeZone);
+  const holidays = provider.isHoliday(zonedDateTimeToUtc(date, "12:00", timeZone));
   const holidayList = holidays ? (Array.isArray(holidays) ? holidays : [holidays]) : [];
   const publicHoliday = holidayList.find((holiday) => holiday.type === "public");
 

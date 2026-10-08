@@ -1,4 +1,6 @@
 import { createEvent } from "ics";
+import { zonedDateTimeToUtc } from "@/src/lib/dates";
+import type { VenueContext } from "@/src/server/venues";
 
 export type CalendarReservationData = {
   adminUrl?: string;
@@ -16,10 +18,19 @@ export type AcceptedCalendarReservationData = CalendarReservationData & {
   acceptedByName?: string;
 };
 
-function parseDateTime(date: string, time: string): [number, number, number, number, number] {
-  const [year, month, day] = date.split("-").map(Number);
-  const [hour, minute] = time.split(":").map(Number);
-  return [year, month, day, hour, minute];
+function parseDateTime(
+  date: string,
+  time: string,
+  timeZone: string,
+): [number, number, number, number, number] {
+  const instant = zonedDateTimeToUtc(date, time.slice(0, 5), timeZone);
+  return [
+    instant.getUTCFullYear(),
+    instant.getUTCMonth() + 1,
+    instant.getUTCDate(),
+    instant.getUTCHours(),
+    instant.getUTCMinutes(),
+  ];
 }
 
 function formatRequestCalendarDescription(input: CalendarReservationData) {
@@ -59,14 +70,15 @@ function formatAcceptedCalendarDescription(input: AcceptedCalendarReservationDat
     .join("\n");
 }
 
-export function createReservationRequestIcs(input: CalendarReservationData) {
+export function createReservationRequestIcs(venue: VenueContext, input: CalendarReservationData) {
   const event = createEvent({
-    calName: "Waldwirtschaft Heidekönig Reservierungsanfragen",
+    calName: `${venue.name} Reservierungsanfragen`,
     description: formatRequestCalendarDescription(input),
     duration: { hours: 2 },
     productId: "gorms/heidekoenig-reservations",
-    start: parseDateTime(input.date, input.time),
-    startInputType: "local",
+    start: parseDateTime(input.date, input.time, venue.timeZone),
+    startInputType: "utc",
+    startOutputType: "utc",
     status: "TENTATIVE",
     title: `Reservierungsanfrage: ${input.guestName}, ${input.guestCount} Personen`,
     uid: `${input.id}@heidekoenig-reservations`,
@@ -79,14 +91,18 @@ export function createReservationRequestIcs(input: CalendarReservationData) {
   return event.value;
 }
 
-export function createAcceptedReservationInternalIcs(input: AcceptedCalendarReservationData) {
+export function createAcceptedReservationInternalIcs(
+  venue: VenueContext,
+  input: AcceptedCalendarReservationData,
+) {
   const event = createEvent({
-    calName: "Waldwirtschaft Heidekönig Reservierungen",
+    calName: `${venue.name} Reservierungen`,
     description: formatAcceptedCalendarDescription(input),
     duration: { hours: 2 },
     productId: "gorms/heidekoenig-reservations",
-    start: parseDateTime(input.date, input.time),
-    startInputType: "local",
+    start: parseDateTime(input.date, input.time, venue.timeZone),
+    startInputType: "utc",
+    startOutputType: "utc",
     status: "CONFIRMED",
     title: `Bestätigte Reservierung: ${input.guestName}, ${input.guestCount} Personen`,
     uid: `${input.id}-accepted@heidekoenig-reservations`,

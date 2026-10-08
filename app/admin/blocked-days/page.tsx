@@ -1,3 +1,5 @@
+import { VenueField } from "@/components/admin/venue-context";
+
 import { AdminShell } from "@/components/admin/admin-shell";
 import {
   deleteBlockedDayAction,
@@ -6,7 +8,7 @@ import {
 import { BlockedDayForm } from "@/app/admin/blocked-days/blocked-day-form";
 import { ReservationEventForm } from "@/app/admin/blocked-days/reservation-event-form";
 import { getBlockedDays } from "@/src/server/blocked-days";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { listReservationEvents } from "@/src/server/reservation-events";
 
 export const dynamic = "force-dynamic";
@@ -17,17 +19,18 @@ function formatDisplayDate(date: string) {
     month: "2-digit",
     weekday: "short",
     year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
 }
 
 export default async function BlockedDaysPage() {
-  const session = await requirePermission("blocked-days:manage");
-  const [days, events] = await Promise.all([getBlockedDays(), listReservationEvents()]);
+  const { session, venue } = await requireVenuePermission("blocked-days:manage");
+  const [days, events] = await Promise.all([getBlockedDays(venue), listReservationEvents(venue)]);
   const blockingEvents = events.filter((event) => !event.reservationsAllowed).length;
   const openEvents = events.length - blockingEvents;
 
   return (
-    <AdminShell session={session}>
+    <AdminShell session={session} venue={venue}>
       <div className="space-y-6">
         <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
@@ -95,6 +98,7 @@ export default async function BlockedDaysPage() {
                       </div>
 
                       <form action={deleteBlockedDayAction}>
+                        <VenueField />
                         <input name="id" type="hidden" value={day.id} />
                         <button className="secondary-action w-full sm:w-auto" type="submit">
                           Entfernen
@@ -147,6 +151,7 @@ export default async function BlockedDaysPage() {
                       </div>
 
                       <form action={deleteReservationEventAction}>
+                        <VenueField />
                         <input name="id" type="hidden" value={event.id} />
                         <button className="secondary-action w-full sm:w-auto" type="submit">
                           Entfernen

@@ -34,8 +34,15 @@ COPY --from=builder /app/db/migrations ./db/migrations
 COPY --from=builder /app/package.json ./package.json
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/scripts/cleanup-reservations.mjs ./scripts/cleanup-reservations.mjs
+COPY --from=builder /app/scripts/retention-lib.mjs ./scripts/retention-lib.mjs
+COPY --from=builder /app/scripts/cleanup-floorplans.mjs ./scripts/cleanup-floorplans.mjs
+COPY --from=builder /app/scripts/floorplan-cleanup-lib.mjs ./scripts/floorplan-cleanup-lib.mjs
 COPY --from=builder /app/scripts/init.sh ./scripts/init.sh
 COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder /app/scripts/venue-hosts-lib.mjs ./scripts/venue-hosts-lib.mjs
+COPY --from=builder /app/scripts/venue-hosts.mjs ./scripts/venue-hosts.mjs
+COPY --from=builder /app/src/lib/hostnames.mjs ./src/lib/hostnames.mjs
+COPY --from=builder /app/src/lib/venue-defaults.mjs ./src/lib/venue-defaults.mjs
 COPY --from=builder /app/scripts/startup-status.mjs ./scripts/startup-status.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

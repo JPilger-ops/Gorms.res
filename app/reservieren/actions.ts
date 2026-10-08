@@ -9,7 +9,8 @@ import {
   sendInternalReservationEmail,
   type ReservationOutgoingEmailContent,
 } from "@/src/server/email";
-import { assertPublicHostAction } from "@/src/server/guards";
+import { getPublicRequestVenue } from "@/src/server/host-guard";
+import { assertCapacityStrategy, type VenueContext } from "@/src/server/venues";
 import { checkRateLimit } from "@/src/server/rate-limit";
 import { recordReservationOutgoingEmail } from "@/src/server/reservation-outgoing-emails";
 import type { ReservationOutgoingEmailType } from "@/src/server/reservation-outgoing-emails";
@@ -27,19 +28,22 @@ function sanitizeSmtpError() {
   return "SMTP-Versand fehlgeschlagen.";
 }
 
-async function recordInitialOutgoingEmail({
-  content,
-  error,
-  reservationRequestId,
-  type,
-}: {
-  content: ReservationOutgoingEmailContent;
-  error?: unknown;
-  reservationRequestId: string;
-  type: Extract<ReservationOutgoingEmailType, "guest_receipt" | "staff_notification">;
-}) {
+async function recordInitialOutgoingEmail(
+  venue: VenueContext,
+  {
+    content,
+    error,
+    reservationRequestId,
+    type,
+  }: {
+    content: ReservationOutgoingEmailContent;
+    error?: unknown;
+    reservationRequestId: string;
+    type: Extract<ReservationOutgoingEmailType, "guest_receipt" | "staff_notification">;
+  },
+) {
   try {
-    await recordReservationOutgoingEmail({
+    await recordReservationOutgoingEmail(venue, {
       body: content.text,
       recipient: content.recipient,
       reservationRequestId,
@@ -58,8 +62,15 @@ export async function createReservationRequestAction(
   _previousState: ReservationFormState,
   formData: FormData,
 ): Promise<ReservationFormState> {
-  if (!(await assertPublicHostAction())) {
+  const venue = await getPublicRequestVenue();
+  if (!venue) {
     return { message: "Reservierungsanfragen sind unter dieser Adresse nicht verfügbar." };
+  }
+
+  try {
+    assertCapacityStrategy(venue);
+  } catch {
+    return { message: "Reservierungsanfragen sind für diesen Betrieb nicht verfügbar." };
   }
 
   const status = await getSetupStatus();
@@ -93,7 +104,7 @@ export async function createReservationRequestAction(
     };
   }
 
-  const result = await createReservationRequest(parsed.data);
+  const result = await createReservationRequest(venue, parsed.data);
 
   if (!result.ok) {
     return {
@@ -105,18 +116,24 @@ export async function createReservationRequestAction(
 
   try {
     internalEmailContent = await buildInternalReservationEmailContent(
+      venue,
       result.emailData,
       result.availability,
     );
-    await sendInternalReservationEmail(result.emailData, result.availability, internalEmailContent);
-    await recordInitialOutgoingEmail({
+    await sendInternalReservationEmail(
+      venue,
+      result.emailData,
+      result.availability,
+      internalEmailContent,
+    );
+    await recordInitialOutgoingEmail(venue, {
       content: internalEmailContent,
       reservationRequestId: result.id,
       type: "staff_notification",
     });
   } catch (error) {
     if (internalEmailContent) {
-      await recordInitialOutgoingEmail({
+      await recordInitialOutgoingEmail(venue, {
         content: internalEmailContent,
         error,
         reservationRequestId: result.id,
@@ -132,16 +149,16 @@ export async function createReservationRequestAction(
   let guestEmailContent: ReservationOutgoingEmailContent | null = null;
 
   try {
-    guestEmailContent = await buildGuestReservationReceiptEmailContent(result.emailData);
-    await sendGuestReservationReceiptEmail(result.emailData, guestEmailContent);
-    await recordInitialOutgoingEmail({
+    guestEmailContent = await buildGuestReservationReceiptEmailContent(venue, result.emailData);
+    await sendGuestReservationReceiptEmail(venue, result.emailData, guestEmailContent);
+    await recordInitialOutgoingEmail(venue, {
       content: guestEmailContent,
       reservationRequestId: result.id,
       type: "guest_receipt",
     });
   } catch (error) {
     if (guestEmailContent) {
-      await recordInitialOutgoingEmail({
+      await recordInitialOutgoingEmail(venue, {
         content: guestEmailContent,
         error,
         reservationRequestId: result.id,

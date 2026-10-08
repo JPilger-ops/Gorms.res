@@ -15,6 +15,10 @@ Self-hosted Next.js app for reservation requests for the outdoor gastronomy of W
 - Local uploads for logo and favicon
 - Persistent local encryption key for encrypted SMTP password storage
 - Retention cleanup for old reservation requests and audit logs
+- Admin-only Telegraph area/table-plan editor, with private floorplans and revision conflicts
+
+The Phase 2 editor is structural only: no TABLES availability, table assignments or public
+Telegraph booking. Heidekoenig's existing guest and staff reservation workflows remain in use.
 
 ## Tech Stack
 
@@ -58,6 +62,9 @@ Core documents:
 - [Production server worksheet](docs/production-server-worksheet.md)
 - [AI assistant preparation](docs/ai-assistant.md)
 - [Final project report](docs/final-project-report.md)
+- [Multi-venue foundation](docs/multi-venue.md)
+- [Telegraph table-plan editor](docs/table-plan.md)
+- [Phase 2 verification report](docs/phase-2-table-plan-report.md)
 
 ## Quickstart With Docker Compose
 
@@ -316,3 +323,21 @@ http://localhost:6043
 ```
 
 Use appropriate Host headers or local DNS entries when testing host-based routing.
+
+## V2 Phase 1: Multi-Venue Foundation
+
+Heidekönig remains the only seeded/operational venue (`CAPACITY`, `Europe/Berlin`). Forward migration
+`0003_multi_venue_foundation` preserves existing requests, settings/ciphertext and effective
+reservation retention. Venue settings/hosts are separated from global auth/setup/audit retention.
+No TABLES/Telegraph engine, PWA or automatic KI sending is implemented.
+
+Use the supported migration runner shown above: it also imports existing ENV public aliases once.
+Later aliases require both ENV allowlisting and `npm run venue:hosts -- heidekoenig 'alias.example.org'`
+(or the equivalent runtime CLI inside the target app container). Do not use `db:push` for deployment.
+
+See [Multi-Venue Foundation](docs/multi-venue.md) for the exact backfill, host upgrade, scoped admin
+context, unchanged backup layout, intentional timezone/ICS corrections, verification and risks.
+New checks: `npm run test:venue-foundation` and `npm run test:multi-venue` (Docker, isolated PG17).
+
+The implementation results, full file inventory and remaining release risks are recorded in the
+[Phase 1 completion report](docs/phase-1-multi-venue-report.md).

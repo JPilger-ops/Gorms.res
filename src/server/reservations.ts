@@ -9,6 +9,7 @@ import {
   type AvailabilityCheckResult,
 } from "@/src/server/reservation-availability";
 import { detectSpecialRequests } from "@/src/server/special-requests";
+import type { VenueContext } from "@/src/server/venues";
 
 export const reservationStatuses = ["pending", "accepted", "declined", "cancelled"] as const;
 
@@ -38,8 +39,11 @@ export function normalizeReservationStatusFilter(value: unknown): ReservationSta
   return "all";
 }
 
-export async function getAdminReservationRequests({ status }: { status: ReservationStatusFilter }) {
-  const filters: SQL[] = [];
+export async function getAdminReservationRequests(
+  venue: VenueContext,
+  { status }: { status: ReservationStatusFilter },
+) {
+  const filters: SQL[] = [eq(reservationRequests.venueId, venue.id)];
 
   if (status !== "all") {
     filters.push(eq(reservationRequests.status, status));
@@ -72,6 +76,7 @@ export async function getAdminReservationRequests({ status }: { status: Reservat
         status: reservationRequests.status,
       })
       .from(reservationRequests)
+      .where(eq(reservationRequests.venueId, venue.id))
       .groupBy(reservationRequests.status),
   ]);
 
@@ -90,9 +95,10 @@ export async function getAdminReservationRequests({ status }: { status: Reservat
 }
 
 export async function createReservationRequest(
+  venue: VenueContext,
   input: ReservationRequestInput,
 ): Promise<CreateReservationResult> {
-  const baseAvailability = await checkReservationAvailability({
+  const baseAvailability = await checkReservationAvailability(venue, {
     date: input.date,
     guestCount: input.guestCount,
     time: input.time,
@@ -121,6 +127,7 @@ export async function createReservationRequest(
     const [createdReservation] = await tx
       .insert(reservationRequests)
       .values({
+        venueId: venue.id,
         requestedDate: input.date,
         requestedTime: input.time,
         guestName: input.guestName,
@@ -165,13 +172,14 @@ export async function createReservationRequest(
 }
 
 export async function updateReservationStatus(
+  venue: VenueContext,
   input: UpdateReservationStatusInput,
   session: AuthenticatedSession,
 ) {
   const [currentReservation] = await db
     .select({ id: reservationRequests.id, status: reservationRequests.status })
     .from(reservationRequests)
-    .where(eq(reservationRequests.id, input.id))
+    .where(and(eq(reservationRequests.id, input.id), eq(reservationRequests.venueId, venue.id)))
     .limit(1);
 
   if (!currentReservation) {
@@ -195,11 +203,12 @@ export async function updateReservationStatus(
         status: input.status,
         updatedAt: new Date(),
       })
-      .where(eq(reservationRequests.id, input.id));
+      .where(and(eq(reservationRequests.id, input.id), eq(reservationRequests.venueId, venue.id)));
 
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: "reservation.status_update",
+      venueId: venue.id,
       entityType: "reservation_request",
       entityId: input.id,
       metadata: {

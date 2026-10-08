@@ -93,6 +93,7 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+export const defaultEnv = envSchema.parse({});
 
 export function requiredSecretStatus(
   name: "APP_ENCRYPTION_KEY" | "SESSION_SECRET" | "SETUP_TOKEN",

@@ -9,6 +9,7 @@ export type AdminNavItem = {
 };
 
 function isActivePath(pathname: string, href: string) {
+  href = href.split("?")[0];
   if (href === "/admin") {
     return pathname === href;
   }

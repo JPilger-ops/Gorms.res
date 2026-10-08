@@ -7,6 +7,8 @@ import {
 } from "@/app/reservieren/actions";
 import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 
+import { addCalendarDays } from "@/src/lib/dates";
+
 const initialState: ReservationFormState = {};
 const visibleDayCount = 14;
 
@@ -47,27 +49,19 @@ function slotHint(slot: Slot) {
   return "Verfügbar";
 }
 
-function localIsoDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function addDays(date: string, days: number) {
-  const next = new Date(`${date}T00:00:00`);
-  next.setDate(next.getDate() + days);
-  return localIsoDate(next);
-}
+const addDays = addCalendarDays;
 
 function formatDayParts(date: string) {
-  const parsed = new Date(`${date}T00:00:00`);
+  const parsed = new Date(`${date}T00:00:00Z`);
 
   return {
-    day: new Intl.DateTimeFormat("de-DE", { day: "2-digit" }).format(parsed),
-    month: new Intl.DateTimeFormat("de-DE", { month: "short" }).format(parsed).replace(".", ""),
-    weekday: new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(parsed).replace(".", ""),
+    day: new Intl.DateTimeFormat("de-DE", { day: "2-digit", timeZone: "UTC" }).format(parsed),
+    month: new Intl.DateTimeFormat("de-DE", { month: "short", timeZone: "UTC" })
+      .format(parsed)
+      .replace(".", ""),
+    weekday: new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" })
+      .format(parsed)
+      .replace(".", ""),
   };
 }
 
@@ -240,6 +234,7 @@ function SlotLoadingIndicator() {
 }
 
 export function ReservationForm({
+  initialDate,
   earliestReservationTime,
   imprintUrl,
   latestReservationTime,
@@ -248,6 +243,7 @@ export function ReservationForm({
   privacyNoticeText,
   privacyPolicyUrl,
 }: {
+  initialDate: string;
   earliestReservationTime: string;
   imprintUrl?: string;
   latestReservationTime: string;
@@ -258,7 +254,7 @@ export function ReservationForm({
 }) {
   const [state, formAction, pending] = useActionState(createReservationRequestAction, initialState);
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const today = useMemo(() => localIsoDate(new Date()), []);
+  const today = initialDate;
   const [rangeStart, setRangeStart] = useState(today);
   const [date, setDate] = useState(today);
   const [guestCount, setGuestCount] = useState(() => String(Math.min(2, maxGuestsPerRequest)));

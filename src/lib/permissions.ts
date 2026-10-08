@@ -14,6 +14,7 @@ export const allPermissions = [
   "branding:manage",
   "users:manage",
   "system:read",
+  "table-plan:manage",
 ] as const;
 
 export type Permission = (typeof allPermissions)[number];
@@ -31,6 +32,7 @@ const permissions: Record<UserRole, readonly Permission[]> = {
     "branding:manage",
     "users:manage",
     "system:read",
+    "table-plan:manage",
   ],
   mitarbeiter: [
     "reservations:read",

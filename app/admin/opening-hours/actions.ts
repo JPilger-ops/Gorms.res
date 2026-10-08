@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { openingHoursSchema } from "@/src/lib/opening-hours-validation";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { updateOpeningHours } from "@/src/server/settings";
 
 export type OpeningHoursActionState = {
@@ -15,7 +15,10 @@ export async function updateOpeningHoursAction(
   _previousState: OpeningHoursActionState,
   formData: FormData,
 ): Promise<OpeningHoursActionState> {
-  const session = await requirePermission("opening-hours:manage");
+  const { session, venue } = await requireVenuePermission(
+    "opening-hours:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = openingHoursSchema.safeParse({
     earliestReservationTime: formData.get("earliestReservationTime"),
     latestReservationTime: formData.get("latestReservationTime"),
@@ -28,7 +31,7 @@ export async function updateOpeningHoursAction(
     };
   }
 
-  await updateOpeningHours(parsed.data, session);
+  await updateOpeningHours(venue, parsed.data, session);
   revalidatePath("/admin/opening-hours");
   revalidatePath("/admin");
 

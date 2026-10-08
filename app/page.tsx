@@ -3,10 +3,22 @@ import { SetupMaintenancePage } from "@/components/reservation/setup-maintenance
 import { requirePublicHost } from "@/src/server/guards";
 import { getSetupStatus } from "@/src/server/setup";
 
+import { getAdminSettings } from "@/src/server/settings";
+
+export async function generateMetadata() {
+  const venue = await requirePublicHost();
+  const settings = await getAdminSettings(venue);
+  return {
+    title: { absolute: settings.appName },
+    description: `Reservierungsanfragen für ${settings.appName}.`,
+    applicationName: `${settings.appName} Reservierungen`,
+  };
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  await requirePublicHost();
+  const venue = await requirePublicHost();
 
   const setupStatus = await getSetupStatus();
 
@@ -14,5 +26,5 @@ export default async function Home() {
     return <SetupMaintenancePage />;
   }
 
-  return <PublicReservationPage />;
+  return <PublicReservationPage venue={venue} />;
 }

@@ -1,8 +1,12 @@
 import type { CSSProperties } from "react";
-import { logoutAction } from "@/app/admin/actions";
+import { logoutAction, selectVenueAction } from "@/app/admin/actions";
+import { AdminVenueProvider } from "@/components/admin/venue-context";
 import { AdminNav, type AdminNavItem } from "@/components/admin/admin-nav";
 import { getBrandingSettings } from "@/src/server/branding";
 import type { AuthenticatedSession } from "@/src/server/guards";
+import { getAdminVenue } from "@/src/server/guards";
+import { getAdminSelectableVenues, type VenueContext } from "@/src/server/venues";
+import { adminUrl } from "@/src/lib/admin-urls";
 
 const adminNav: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard" },
@@ -24,53 +28,93 @@ const employeeNav: AdminNavItem[] = [
 export async function AdminShell({
   children,
   session,
+  venue: suppliedVenue,
 }: {
   children: React.ReactNode;
   session: AuthenticatedSession;
+  venue?: VenueContext;
 }) {
-  const navItems = session.role === "admin" ? adminNav : employeeNav;
-  const branding = await getBrandingSettings();
+  const venue = suppliedVenue ?? (await getAdminVenue());
+  const navItems = (
+    venue.availabilityStrategy === "TABLES"
+      ? [
+          { href: "/admin/table-plan", label: "Tischplan" },
+          ...adminNav.filter((item) => ["/admin/users", "/admin/system"].includes(item.href)),
+        ]
+      : session.role === "admin"
+        ? adminNav
+        : employeeNav
+  ).map((item) => ({ ...item, href: adminUrl(item.href, venue.id) }));
+  const [branding, venues] = await Promise.all([
+    getBrandingSettings(venue),
+    getAdminSelectableVenues(session.role),
+  ]);
 
   return (
-    <main
-      className="app-shell"
-      id="main-content"
-      style={{ "--primary": branding.accentColor } as CSSProperties}
-    >
-      <div className="page-frame admin-frame grid min-w-0 gap-4 py-4 lg:grid-cols-[284px_minmax(0,1fr)] lg:gap-7 lg:py-10">
-        <aside className="glass-panel admin-sidebar p-4 lg:sticky lg:top-6 lg:self-start">
-          <div className="admin-user-card">
-            {branding.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                alt=""
-                className="mb-4 max-h-16 w-auto max-w-full object-contain"
-                src={branding.logoUrl}
-              />
-            ) : null}
-            <p className="eyebrow">Backend</p>
-            <div className="mt-2 flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h1 className="text-xl font-semibold">Heidekönig</h1>
-                <p className="mt-1 break-words text-sm text-muted">{session.name}</p>
+    <AdminVenueProvider key={venue.id} venueId={venue.id}>
+      <main
+        className="app-shell"
+        id="main-content"
+        style={{ "--primary": branding.accentColor } as CSSProperties}
+      >
+        <div className="page-frame admin-frame grid min-w-0 gap-4 py-4 lg:grid-cols-[284px_minmax(0,1fr)] lg:gap-7 lg:py-10">
+          <aside className="glass-panel admin-sidebar p-4 lg:sticky lg:top-6 lg:self-start">
+            <div className="admin-user-card">
+              {branding.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt=""
+                  className="mb-4 max-h-16 w-auto max-w-full object-contain"
+                  src={`${branding.logoUrl}?venue=${venue.id}`}
+                />
+              ) : null}
+              <p className="eyebrow">Backend</p>
+              <div className="mt-2 flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-semibold">{venue.shortName}</h1>
+                  <p className="mt-1 break-words text-sm text-muted">{session.name}</p>
+                </div>
+                <span className="admin-role-badge">
+                  {session.role === "admin" ? "Admin" : "Team"}
+                </span>
               </div>
-              <span className="admin-role-badge">
-                {session.role === "admin" ? "Admin" : "Team"}
-              </span>
             </div>
-          </div>
 
-          <AdminNav items={navItems} />
+            {venues.length > 1 ? (
+              <form action={selectVenueAction} className="mt-4 grid gap-2">
+                <label className="text-sm font-semibold" htmlFor="admin-venue">
+                  Betrieb
+                </label>
+                <select
+                  className="glass-control min-h-12 w-full px-3 outline-none"
+                  defaultValue={venue.id}
+                  id="admin-venue"
+                  name="venueId"
+                >
+                  {venues.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.name}
+                    </option>
+                  ))}
+                </select>
+                <button className="secondary-action" type="submit">
+                  Betrieb wechseln
+                </button>
+              </form>
+            ) : null}
 
-          <form action={logoutAction} className="mt-5">
-            <button className="secondary-action w-full" type="submit">
-              Abmelden
-            </button>
-          </form>
-        </aside>
+            <AdminNav items={navItems} />
 
-        <section className="min-w-0">{children}</section>
-      </div>
-    </main>
+            <form action={logoutAction} className="mt-5">
+              <button className="secondary-action w-full" type="submit">
+                Abmelden
+              </button>
+            </form>
+          </aside>
+
+          <section className="min-w-0">{children}</section>
+        </div>
+      </main>
+    </AdminVenueProvider>
   );
 }

@@ -1,16 +1,16 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import { OpeningHoursForm } from "@/app/admin/opening-hours/opening-hours-form";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { getBusinessSettings } from "@/src/server/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function OpeningHoursPage() {
-  const session = await requirePermission("opening-hours:manage");
-  const settings = await getBusinessSettings();
+  const { session, venue } = await requireVenuePermission("opening-hours:manage");
+  const settings = await getBusinessSettings(venue);
 
   return (
-    <AdminShell session={session}>
+    <AdminShell session={session} venue={venue}>
       <div className="space-y-6">
         <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">

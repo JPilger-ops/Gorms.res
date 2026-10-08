@@ -94,13 +94,40 @@ Stores server-side session token hashes and expiry timestamps.
 
 ### `app_settings`
 
-Stores editable application settings. Secret values are encrypted before storage.
+Stores installation-wide settings: setup completion, legacy host-import marker and audit retention.
+Unknown legacy settings are retained; recognized venue settings are moved by migration 0003.
+
+### `venues`, `venue_hosts`, `venue_settings`
+
+Venues have stable UUID identity, unique slug, names, timezone, strategy and active flag.
+Hosts use unique normalized ASCII keys. Venue settings use `(venue_id, key)` as primary key;
+SMTP passwords remain encrypted. Requests, blocked dates and independent event days require venue
+foreign keys. Blocked-day uniqueness is per venue/date. Snapshot and mail ownership is derived only
+through the reservation, not duplicated.
+
+See [Multi-Venue Foundation](multi-venue.md) for exact forward-only migration/backfill and verification.
 
 ### `audit_log`
 
-Stores security and administration events. Reservation-related audit metadata is scrubbed by
+Stores security and administration events with optional venue context. Global security/user events
+keep a null venue. Reservation-related audit metadata is scrubbed by
 retention cleanup when the related reservation request is older than the configured reservation
 retention value. Audit-log rows older than the configured audit retention value are deleted.
+
+## Telegraph Table Plan (Migration 0004)
+
+Migration `0004_telegraph_table_plan` adds seven tables: `venue_areas`, `physical_tables`,
+`table_layouts`, `table_combinations`, `table_combination_members`, `area_plan_layouts`
+and `floorplan_assets`. No reservation or availability tables are changed. Telegraph is
+bootstrapped with stable UUID, TABLES strategy and Gastraum; identity conflicts abort the
+transaction instead of overwriting another venue.
+
+Partial case-insensitive indexes reserve names only while unarchived. Composite area FKs
+protect combination members and floorplan references. Deferred cross-row triggers enforce
+two distinct members and the capacity sum at commit, allowing atomic coordinated edits.
+Deactivating/archiving members does not invalidate combinations or remove history.
+Area revisions are locked/compared for every structural save. See [Table Plan](table-plan.md#schema).
+Preserve old migration files; Drizzle snapshots do not model the custom constraint triggers.
 
 ## Reservation Status Values
 

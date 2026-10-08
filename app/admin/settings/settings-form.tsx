@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState } from "react";
 import { updateSettingsAction, type SettingsActionState } from "@/app/admin/settings/actions";
 import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
@@ -33,6 +35,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
 
   return (
     <form action={formAction} className="glass-panel admin-panel space-y-5 p-4 sm:p-6">
+      <VenueField />
       <FormFeedback state={state} />
 
       <Section

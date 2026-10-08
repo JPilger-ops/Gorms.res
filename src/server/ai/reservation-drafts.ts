@@ -1,4 +1,5 @@
 import { auditLog } from "@/db/schema";
+import { assertCapacityStrategy, type VenueContext } from "@/src/server/venues";
 import type { ReservationDecisionType } from "@/src/lib/reservation-decision-validation";
 import {
   validateAiDraftContent,
@@ -122,22 +123,25 @@ function preservesRequiredPolicyFacts(baseContent: string, candidateContent: str
 }
 
 async function buildStandardTemplateResult({
+  venue,
   decision,
   detail,
   message,
   session,
 }: {
+  venue: VenueContext;
   decision: ReservationDecisionType;
   detail: NonNullable<Awaited<ReturnType<typeof getAdminReservationDetail>>>;
   message: string;
   session: AuthenticatedSession;
 }): Promise<ReservationAiDraftResult> {
-  const draft = buildReservationDecisionDraft(decision, detail.reservation);
+  const draft = buildReservationDecisionDraft(venue, decision, detail.reservation);
 
   await db.insert(auditLog).values({
     action: "reservation.ai_draft_fallback",
     entityId: detail.reservation.id,
     entityType: "reservation_request",
+    venueId: venue.id,
     metadata: {
       decision,
       reason: message,
@@ -157,6 +161,7 @@ async function buildStandardTemplateResult({
 }
 
 async function buildRuleBasedTemplateResult({
+  venue,
   content,
   decision,
   detail,
@@ -164,6 +169,7 @@ async function buildRuleBasedTemplateResult({
   session,
 }: {
   content: string;
+  venue: VenueContext;
   decision: ReservationDecisionType;
   detail: NonNullable<Awaited<ReturnType<typeof getAdminReservationDetail>>>;
   specialRequestEvaluation: SpecialRequestEvaluation;
@@ -179,6 +185,7 @@ async function buildRuleBasedTemplateResult({
       action: "reservation.policy_draft_rejected",
       entityId: detail.reservation.id,
       entityType: "reservation_request",
+      venueId: venue.id,
       metadata: {
         decision,
         blockingIssueCount: validation.blockingIssues.length,
@@ -200,6 +207,7 @@ async function buildRuleBasedTemplateResult({
   ].slice(0, 10);
   const polishResult = await generateAiDraft({
     reservation: {
+      venueName: venue.name,
       availabilityNotes: [
         ...buildAvailabilityNotes(detail.availabilityCheck),
         ...specialRequestEvaluation.policyNotes,
@@ -228,6 +236,7 @@ async function buildRuleBasedTemplateResult({
         (warning) => warningMessages[warning],
       );
       const polishedDraft = buildReservationDecisionDraft(
+        venue,
         decision,
         detail.reservation,
         polishResult.draft.content,
@@ -243,6 +252,7 @@ async function buildRuleBasedTemplateResult({
         action: "reservation.policy_draft_polished",
         entityId: detail.reservation.id,
         entityType: "reservation_request",
+        venueId: venue.id,
         metadata: {
           decision,
           warningCount: polishValidation.warnings.length,
@@ -267,6 +277,7 @@ async function buildRuleBasedTemplateResult({
       action: "reservation.policy_polish_rejected",
       entityId: detail.reservation.id,
       entityType: "reservation_request",
+      venueId: venue.id,
       metadata: {
         decision,
         blockingIssueCount: polishValidation.blockingIssues.length,
@@ -279,7 +290,7 @@ async function buildRuleBasedTemplateResult({
     });
   }
 
-  const draft = buildReservationDecisionDraft(decision, detail.reservation, content);
+  const draft = buildReservationDecisionDraft(venue, decision, detail.reservation, content);
   const riskNotes = [
     ...baseRiskNotes,
     polishResult.ok
@@ -291,6 +302,7 @@ async function buildRuleBasedTemplateResult({
     action: "reservation.policy_draft_generated",
     entityId: detail.reservation.id,
     entityType: "reservation_request",
+    venueId: venue.id,
     metadata: {
       decision,
       warningCount: validation.warnings.length,
@@ -312,15 +324,18 @@ async function buildRuleBasedTemplateResult({
 }
 
 export async function generateReservationDecisionAiDraft({
+  venue,
   decision,
   id,
   session,
 }: {
+  venue: VenueContext;
   decision: ReservationDecisionType;
   id: string;
   session: AuthenticatedSession;
 }): Promise<ReservationAiDraftResult> {
-  const detail = await getAdminReservationDetail(id);
+  assertCapacityStrategy(venue);
+  const detail = await getAdminReservationDetail(venue, id);
 
   if (!detail) {
     return {
@@ -347,6 +362,7 @@ export async function generateReservationDecisionAiDraft({
 
   if (ruleBasedContent) {
     return await buildRuleBasedTemplateResult({
+      venue,
       content: ruleBasedContent,
       decision,
       detail,
@@ -357,6 +373,7 @@ export async function generateReservationDecisionAiDraft({
 
   if (decision === "question" && specialRequestEvaluation.hasSpecialRequest) {
     return await buildStandardTemplateResult({
+      venue,
       decision,
       detail,
       message:
@@ -367,6 +384,7 @@ export async function generateReservationDecisionAiDraft({
 
   const result = await generateAiDraft({
     reservation: {
+      venueName: venue.name,
       availabilityNotes: [
         ...buildAvailabilityNotes(detail.availabilityCheck),
         ...specialRequestEvaluation.policyNotes,
@@ -382,6 +400,7 @@ export async function generateReservationDecisionAiDraft({
 
   if (!result.ok) {
     return await buildStandardTemplateResult({
+      venue,
       decision,
       detail,
       message: `${getAiFailureMessage(result.reason)} Das sichere Gorms.res-Standardtemplate wurde eingefügt.`,
@@ -399,6 +418,7 @@ export async function generateReservationDecisionAiDraft({
       action: "reservation.ai_draft_rejected",
       entityId: id,
       entityType: "reservation_request",
+      venueId: venue.id,
       metadata: {
         decision,
         blockingIssueCount: validation.blockingIssues.length,
@@ -418,6 +438,7 @@ export async function generateReservationDecisionAiDraft({
   const validationWarnings = validation.warnings.map((warning) => warningMessages[warning]);
   const riskNotes = [...result.draft.riskNotes, ...validationWarnings].slice(0, 10);
   const finalDraft = buildReservationDecisionDraft(
+    venue,
     decision,
     detail.reservation,
     result.draft.content,
@@ -430,6 +451,7 @@ export async function generateReservationDecisionAiDraft({
     action: "reservation.ai_draft_generated",
     entityId: id,
     entityType: "reservation_request",
+    venueId: venue.id,
     metadata: {
       decision,
       contentEmpty: result.draft.content.length === 0,

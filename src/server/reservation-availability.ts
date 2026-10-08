@@ -16,6 +16,11 @@ import {
 import { db } from "@/src/server/db";
 import { isPublicHoliday } from "@/src/server/holidays";
 import {
+  assertCapacityStrategy,
+  assertReservationVenue,
+  type VenueContext,
+} from "@/src/server/venues";
+import {
   getBusinessSettings,
   getLatestReservationTimeForDate,
   getLatestReservationTimeForSeason,
@@ -108,11 +113,13 @@ function clampSlotGuestCount(value: number, maxGuestsPerRequest: number) {
 }
 
 async function getGuestsInWindow({
+  venue,
   date,
   durationMinutes,
   windowEndMinutes,
   windowStartMinutes,
 }: {
+  venue: VenueContext;
   date: string;
   durationMinutes: number;
   windowEndMinutes: number;
@@ -134,6 +141,7 @@ async function getGuestsInWindow({
     .from(reservationRequests)
     .where(
       and(
+        eq(reservationRequests.venueId, venue.id),
         eq(reservationRequests.requestedDate, date),
         inArray(reservationRequests.status, ["accepted", "pending"]),
       ),
@@ -171,12 +179,23 @@ async function getGuestsInWindow({
 }
 
 export async function checkReservationAvailability(
+  venue: VenueContext,
   input: ReservationAvailabilityInput,
+  now = new Date(),
+): Promise<AvailabilityCheckResult> {
+  assertCapacityStrategy(venue);
+  return checkCapacityAvailability(venue, input, now);
+}
+
+async function checkCapacityAvailability(
+  venue: VenueContext,
+  input: ReservationAvailabilityInput,
+  now: Date,
 ): Promise<AvailabilityCheckResult> {
   const reasons: string[] = [];
   const warnings: string[] = [];
   const manualReviewReasons: string[] = [];
-  const settings = await getBusinessSettings();
+  const settings = await getBusinessSettings(venue);
   const season = isIsoDate(input.date) ? getSeasonForDate(input.date, settings) : "summer";
   const latestReservationTime = isIsoDate(input.date)
     ? getLatestReservationTimeForDate(input.date, settings)
@@ -188,7 +207,7 @@ export async function checkReservationAvailability(
 
   if (!isIsoDate(input.date)) {
     reasons.push("Das Datum ist ungültig.");
-  } else if (isPastDate(input.date)) {
+  } else if (isPastDate(input.date, now, venue.timeZone)) {
     reasons.push("Das Datum liegt in der Vergangenheit.");
   }
 
@@ -213,7 +232,7 @@ export async function checkReservationAvailability(
   }
 
   if (isIsoDate(input.date)) {
-    const day = parseLocalDate(input.date)?.getDay();
+    const day = parseLocalDate(input.date)?.getUTCDay();
 
     if (typeof day === "number") {
       if (settings.blockMondays && day === 1) {
@@ -232,7 +251,12 @@ export async function checkReservationAvailability(
     }
 
     if (settings.blockPublicHolidays) {
-      const holiday = isPublicHoliday(input.date, settings.holidayCountry, settings.holidayState);
+      const holiday = isPublicHoliday(
+        input.date,
+        settings.holidayCountry,
+        settings.holidayState,
+        venue.timeZone,
+      );
 
       if (holiday.isHoliday) {
         reasons.push(
@@ -246,7 +270,7 @@ export async function checkReservationAvailability(
         columns: {
           reason: true,
         },
-        where: eq(blockedDays.date, input.date),
+        where: and(eq(blockedDays.date, input.date), eq(blockedDays.venueId, venue.id)),
       }),
       db.query.reservationEvents.findFirst({
         columns: {
@@ -254,6 +278,7 @@ export async function checkReservationAvailability(
           title: true,
         },
         where: and(
+          eq(reservationEvents.venueId, venue.id),
           eq(reservationEvents.date, input.date),
           eq(reservationEvents.reservationsAllowed, false),
         ),
@@ -277,6 +302,7 @@ export async function checkReservationAvailability(
   }
 
   const { acceptedGuestsInWindow, pendingGuestsInWindow } = await getGuestsInWindow({
+    venue,
     date: input.date,
     durationMinutes: settings.standardOccupancyMinutes,
     windowEndMinutes: window.endMinutes,
@@ -324,14 +350,18 @@ export async function checkReservationAvailability(
   };
 }
 
-export async function getReservationSlotsForDate({
-  date,
-  guestCount,
-}: {
-  date: string;
-  guestCount: number;
-}) {
-  const settings = await getBusinessSettings();
+export async function getReservationSlotsForDate(
+  venue: VenueContext,
+  {
+    date,
+    guestCount,
+  }: {
+    date: string;
+    guestCount: number;
+  },
+) {
+  assertCapacityStrategy(venue);
+  const settings = await getBusinessSettings(venue);
   const slotGuestCount = clampSlotGuestCount(guestCount, settings.maxGuestsPerRequest);
   const season = isIsoDate(date) ? getSeasonForDate(date, settings) : "summer";
   const latestReservationTime = isIsoDate(date)
@@ -357,7 +387,7 @@ export async function getReservationSlotsForDate({
     slotMinutes += settings.reservationSlotMinutes
   ) {
     const time = minutesToTime(slotMinutes);
-    const availability = await checkReservationAvailability({
+    const availability = await checkReservationAvailability(venue, {
       date,
       guestCount: slotGuestCount,
       time,
@@ -383,7 +413,11 @@ export async function getReservationSlotsForDate({
   };
 }
 
-export async function saveAvailabilityCheckSnapshot(input: AvailabilityCheckSnapshotInput) {
+export async function saveAvailabilityCheckSnapshot(
+  venue: VenueContext,
+  input: AvailabilityCheckSnapshotInput,
+) {
+  await assertReservationVenue(venue, input.reservationRequestId);
   const [snapshot] = await db
     .insert(reservationAvailabilityChecks)
     .values({
@@ -425,7 +459,11 @@ export async function saveAvailabilityCheckSnapshot(input: AvailabilityCheckSnap
   return snapshot;
 }
 
-export async function getAvailabilityCheckForReservation(reservationRequestId: string) {
+export async function getAvailabilityCheckForReservation(
+  venue: VenueContext,
+  reservationRequestId: string,
+) {
+  await assertReservationVenue(venue, reservationRequestId);
   return db.query.reservationAvailabilityChecks.findFirst({
     orderBy: [desc(reservationAvailabilityChecks.createdAt)],
     where: eq(reservationAvailabilityChecks.reservationRequestId, reservationRequestId),

@@ -3,6 +3,17 @@ import { validateAiDraftContent } from "@/src/server/ai/content-validation";
 import type { AiDraftTask } from "@/src/server/ai/schemas";
 import { buildReservationDecisionDraft } from "@/src/server/reservation-decisions";
 
+import type { VenueContext } from "@/src/server/venues";
+const venue: VenueContext = {
+  id: "00000000-0000-4000-8000-000000000001",
+  slug: "heidekoenig",
+  name: "Waldwirtschaft Heidekönig",
+  shortName: "Heidekönig",
+  timeZone: "Europe/Berlin",
+  availabilityStrategy: "CAPACITY",
+  isActive: true,
+};
+
 function validate(content: string, task?: AiDraftTask) {
   return validateAiDraftContent({ content }, task);
 }
@@ -196,6 +207,7 @@ for (const value of ["fuer", "bestaetigen", "Gruessen", "Heidekoenig"]) {
 
 {
   const draft = buildReservationDecisionDraft(
+    venue,
     "accept",
     sampleReservation,
     "Ihren Wunsch nach Tisch c1 haben wir notiert. Bitte haben Sie Verständnis, dass wir bestimmte Tische je nach Auslastung nicht verbindlich garantieren können.",
@@ -211,7 +223,7 @@ for (const value of ["fuer", "bestaetigen", "Gruessen", "Heidekoenig"]) {
 }
 
 {
-  const draft = buildReservationDecisionDraft("decline", sampleReservation);
+  const draft = buildReservationDecisionDraft(venue, "decline", sampleReservation);
 
   assert.match(draft.body, /Leider können wir Ihre Anfrage für diesen Termin nicht bestätigen\./);
   assert.doesNotMatch(draft.body, /Tisch c1/);
@@ -219,6 +231,7 @@ for (const value of ["fuer", "bestaetigen", "Gruessen", "Heidekoenig"]) {
 
 {
   const draft = buildReservationDecisionDraft(
+    venue,
     "question",
     sampleReservation,
     "Wir haben Ihren Wunsch nach Tisch c1 notiert. Bitte beachten Sie, dass wir bestimmte Tische nicht verbindlich zusagen können. Sollen wir Ihre Anfrage auch dann weiterbearbeiten, wenn Tisch c1 nicht verfügbar ist?",

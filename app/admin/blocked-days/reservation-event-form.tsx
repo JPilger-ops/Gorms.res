@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState } from "react";
 import {
   createReservationEventAction,
@@ -14,6 +16,7 @@ export function ReservationEventForm() {
 
   return (
     <form action={formAction} className="glass-panel admin-panel space-y-4 p-5 sm:p-6">
+      <VenueField />
       <div>
         <p className="eyebrow">Musik / Events</p>
         <h3 className="mt-2 text-2xl font-semibold">Eventtag eintragen</h3>

@@ -43,3 +43,22 @@ and favicon live in the Docker upload volume. Generated encryption key material 
 secret volume.
 
 Backups are written to an operator-mounted NFS path. The app does not mount NFS itself.
+
+## Multi-Venue Foundation
+
+Phase 1 introduces explicit `VenueContext` boundaries without replacing the existing UI or CAPACITY
+algorithm. Reservation requests, event days, blocked dates, business settings, SMTP and branding are
+venue-scoped; snapshots and mail history inherit their venue through the reservation. Users, roles,
+sessions, setup and audit retention remain global. TABLES availability is explicitly unsupported.
+
+See [Multi-Venue Foundation](multi-venue.md) for ownership, host resolution, migration and known risks.
+
+## Table Plan Domain
+
+Phase 2 adds an admin-only Telegraph table-plan domain: versioned areas, physical tables,
+separate geometry, relational combinations and private immutable floorplans. The saved viewer
+is lightweight; only editing loads Konva. Full-plan writes use a bounded, same-origin multipart
+route, area locks and 409 revision conflicts. Capabilities gate both navigation and server access.
+Admin context is URL-bound so tabs do not share mutable venue context. Cleanup/backup share a
+DB lock to protect current image files. No TABLES booking or resource assignment is implemented.
+See [Table Plan](table-plan.md).

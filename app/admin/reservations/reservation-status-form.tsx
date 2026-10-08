@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState } from "react";
 import {
   updateReservationStatusAction,
@@ -26,6 +28,7 @@ export function ReservationStatusForm({ id, status }: { id: string; status: Rese
     <details className="admin-disclosure mt-4">
       <summary>Manuellen Status als Sonderfall setzen</summary>
       <form action={formAction} className="mt-4 space-y-4">
+        <VenueField />
         <input name="id" type="hidden" value={id} />
         <div className="rounded-3xl border border-warning/25 bg-warning/10 p-4 text-sm leading-6 text-foreground">
           <p className="font-semibold">Sonderfall ohne Gast-Mail</p>

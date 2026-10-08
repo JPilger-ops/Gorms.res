@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Images use direct routes; private admin floorplans must never enter optimizer caches.
+  images: { localPatterns: [] },
   async headers() {
     return [
       {

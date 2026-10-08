@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState } from "react";
 import {
   runRetentionCleanupAction,
@@ -34,6 +36,7 @@ export function RetentionCleanupForm() {
       ) : null}
 
       <form action={formAction}>
+        <VenueField />
         <button
           className="secondary-action w-full sm:w-auto"
           disabled={pending}

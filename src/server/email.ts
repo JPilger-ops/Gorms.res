@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import type { SMTPSentMessageInfo, Transporter } from "nodemailer";
 import type { ReservationRequestInput } from "@/src/lib/reservation-validation";
 import {
   renderReservationSubjectTemplate,
@@ -16,6 +15,11 @@ import {
 } from "@/src/server/calendar";
 import { buildAdminReservationUrl } from "@/src/server/reservation-ics";
 import { getEmailTemplateSettings, getSmtpSettings } from "@/src/server/settings";
+import {
+  assertCapacityStrategy,
+  assertReservationVenue,
+  type VenueContext,
+} from "@/src/server/venues";
 
 export class EmailConfigurationError extends Error {
   constructor() {
@@ -39,6 +43,7 @@ export type InternalReservationEmailData = ReservationEmailData & {
 };
 
 export type ReservationDecisionEmailData = {
+  id: string;
   body: string;
   guestEmail: string;
   guestName: string;
@@ -72,14 +77,15 @@ export type ReservationOutgoingEmailContent = {
   text: string;
 };
 
-async function getSmtpTransporter() {
-  const settings = await getSmtpSettings();
+async function getSmtpTransporter(venue: VenueContext) {
+  assertCapacityStrategy(venue);
+  const settings = await getSmtpSettings(venue);
 
   if (!settings.user || !settings.password || !settings.fromAddress) {
     throw new EmailConfigurationError();
   }
 
-  const mailer: Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport({
+  const mailer: Transporter<SMTPSentMessageInfo> = nodemailer.createTransport({
     host: settings.host,
     port: settings.port,
     secure: settings.port === 465,
@@ -218,11 +224,11 @@ function formatReservationHtml(input: InternalReservationEmailData) {
   `;
 }
 
-function formatGuestConfirmationText(input: ReservationEmailData) {
+function formatGuestConfirmationText(venue: VenueContext, input: ReservationEmailData) {
   return [
     `Guten Tag ${input.guestName},`,
     "",
-    "vielen Dank für Ihre Anfrage bei der Waldwirtschaft Heidekönig.",
+    `vielen Dank für Ihre Anfrage bei der ${venue.name}.`,
     "Die Reservierung ist erst nach unserer persönlichen Bestätigung gültig.",
     "",
     "Ihre Anfrage:",
@@ -232,16 +238,16 @@ function formatGuestConfirmationText(input: ReservationEmailData) {
     "",
     "Wir melden uns persönlich bei Ihnen.",
     "",
-    "Waldwirtschaft Heidekönig",
+    venue.name,
   ].join("\n");
 }
 
-function formatGuestConfirmationHtml(input: ReservationEmailData) {
+function formatGuestConfirmationHtml(venue: VenueContext, input: ReservationEmailData) {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #171712;">
       <h1 style="font-size: 20px;">Vielen Dank für Ihre Anfrage</h1>
       <p>Guten Tag ${input.guestName},</p>
-      <p>vielen Dank für Ihre Anfrage bei der Waldwirtschaft Heidekönig.</p>
+      <p>vielen Dank für Ihre Anfrage bei der ${escapeHtml(venue.name)}.</p>
       <p><strong>Die Reservierung ist erst nach unserer persönlichen Bestätigung gültig.</strong></p>
       <table cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
         <tr>
@@ -258,16 +264,18 @@ function formatGuestConfirmationHtml(input: ReservationEmailData) {
         </tr>
       </table>
       <p>Wir melden uns persönlich bei Ihnen.</p>
-      <p>Waldwirtschaft Heidekönig</p>
+      <p>${escapeHtml(venue.name)}</p>
     </div>
   `;
 }
 
 export async function buildInternalReservationEmailContent(
+  venue: VenueContext,
   input: ReservationEmailData,
   availability: AvailabilityCheckResult,
 ): Promise<ReservationOutgoingEmailContent> {
-  const templates = await getEmailTemplateSettings();
+  await assertReservationVenue(venue, input.id);
+  const templates = await getEmailTemplateSettings(venue);
   const validation = validateEmailSubjectTemplate(templates.internalEmailSubjectTemplate);
 
   if (!validation.valid) {
@@ -276,7 +284,7 @@ export async function buildInternalReservationEmailContent(
 
   const internalInput: InternalReservationEmailData = {
     ...input,
-    adminUrl: buildAdminReservationUrl(input.id),
+    adminUrl: buildAdminReservationUrl(venue, input.id),
     availability,
   };
 
@@ -289,9 +297,11 @@ export async function buildInternalReservationEmailContent(
 }
 
 export async function buildGuestReservationReceiptEmailContent(
+  venue: VenueContext,
   input: ReservationEmailData,
 ): Promise<ReservationOutgoingEmailContent> {
-  const templates = await getEmailTemplateSettings();
+  await assertReservationVenue(venue, input.id);
+  const templates = await getEmailTemplateSettings(venue);
   const validation = validateEmailSubjectTemplate(templates.guestEmailSubjectTemplate);
 
   if (!validation.valid) {
@@ -299,10 +309,10 @@ export async function buildGuestReservationReceiptEmailContent(
   }
 
   return {
-    html: formatGuestConfirmationHtml(input),
+    html: formatGuestConfirmationHtml(venue, input),
     recipient: input.email,
     subject: renderReservationSubjectTemplate(templates.guestEmailSubjectTemplate, input),
-    text: formatGuestConfirmationText(input),
+    text: formatGuestConfirmationText(venue, input),
   };
 }
 
@@ -378,18 +388,21 @@ export function buildInternalReservationAcceptedEmailContent(
 }
 
 export async function sendInternalReservationEmail(
+  venue: VenueContext,
   input: ReservationEmailData,
   availability: AvailabilityCheckResult,
   content?: ReservationOutgoingEmailContent,
 ) {
-  const emailContent = content ?? (await buildInternalReservationEmailContent(input, availability));
-  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+  await assertReservationVenue(venue, input.id);
+  const emailContent =
+    content ?? (await buildInternalReservationEmailContent(venue, input, availability));
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter(venue);
   const internalInput: InternalReservationEmailData = {
     ...input,
-    adminUrl: buildAdminReservationUrl(input.id),
+    adminUrl: buildAdminReservationUrl(venue, input.id),
     availability,
   };
-  const calendar = createReservationRequestIcs({
+  const calendar = createReservationRequestIcs(venue, {
     ...internalInput,
   });
 
@@ -418,11 +431,13 @@ export async function sendInternalReservationEmail(
 }
 
 export async function sendInternalReservationAcceptedEmail(
+  venue: VenueContext,
   input: ReservationAcceptedInternalEmailData,
   content: InternalReservationAcceptedEmailContent,
 ) {
-  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
-  const calendar = createAcceptedReservationInternalIcs(input);
+  await assertReservationVenue(venue, input.id);
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter(venue);
+  const calendar = createAcceptedReservationInternalIcs(venue, input);
 
   await mailer.sendMail({
     from: {
@@ -445,11 +460,13 @@ export async function sendInternalReservationAcceptedEmail(
 }
 
 export async function sendGuestReservationReceiptEmail(
+  venue: VenueContext,
   input: ReservationEmailData,
   content?: ReservationOutgoingEmailContent,
 ) {
-  const emailContent = content ?? (await buildGuestReservationReceiptEmailContent(input));
-  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+  await assertReservationVenue(venue, input.id);
+  const emailContent = content ?? (await buildGuestReservationReceiptEmailContent(venue, input));
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter(venue);
 
   const from = {
     name: fromName,
@@ -467,8 +484,12 @@ export async function sendGuestReservationReceiptEmail(
   return emailContent;
 }
 
-export async function sendGuestReservationDecisionEmail(input: ReservationDecisionEmailData) {
-  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+export async function sendGuestReservationDecisionEmail(
+  venue: VenueContext,
+  input: ReservationDecisionEmailData,
+) {
+  await assertReservationVenue(venue, input.id);
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter(venue);
 
   await mailer.sendMail({
     from: {
@@ -487,8 +508,8 @@ export async function sendGuestReservationDecisionEmail(input: ReservationDecisi
   });
 }
 
-export async function sendSmtpTestEmail(to: string) {
-  const { fromAddress, fromName, mailer } = await getSmtpTransporter();
+export async function sendSmtpTestEmail(venue: VenueContext, to: string) {
+  const { fromAddress, fromName, mailer } = await getSmtpTransporter(venue);
 
   await mailer.sendMail({
     from: {
@@ -496,7 +517,7 @@ export async function sendSmtpTestEmail(to: string) {
       address: fromAddress,
     },
     to,
-    subject: "SMTP-Test Waldwirtschaft Heidekönig",
+    subject: `SMTP-Test ${venue.name}`,
     text: [
       "Diese Testmail wurde aus dem Adminbereich der Reservierungsanfragen-App gesendet.",
       "",

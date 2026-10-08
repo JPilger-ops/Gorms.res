@@ -10,7 +10,7 @@ import {
   updateBrandingSettings,
 } from "@/src/server/branding";
 import { sendSmtpTestEmail } from "@/src/server/email";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { checkRateLimit } from "@/src/server/rate-limit";
 import { getClientRateLimitKey } from "@/src/server/request-security";
 import { runRetentionCleanup } from "@/src/server/retention";
@@ -33,7 +33,10 @@ export async function updateSettingsAction(
   _previousState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  const session = await requirePermission("settings:manage");
+  const { session, venue } = await requireVenuePermission(
+    "settings:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = adminSettingsSchema.safeParse({
     appName: formData.get("appName"),
     auditLogRetentionDays: formData.get("auditLogRetentionDays"),
@@ -73,7 +76,7 @@ export async function updateSettingsAction(
     };
   }
 
-  await updateAdminSettings(parsed.data, session);
+  await updateAdminSettings(venue, parsed.data, session);
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin/opening-hours");
@@ -89,7 +92,10 @@ export async function updateSmtpSettingsAction(
   _previousState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  const session = await requirePermission("smtp:manage");
+  const { session, venue } = await requireVenuePermission(
+    "smtp:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = smtpSettingsSchema.safeParse({
     smtpFromAddress: formData.get("smtpFromAddress"),
     smtpFromName: formData.get("smtpFromName"),
@@ -107,7 +113,7 @@ export async function updateSmtpSettingsAction(
   }
 
   try {
-    await updateSmtpSettings(parsed.data, session);
+    await updateSmtpSettings(venue, parsed.data, session);
   } catch {
     return { message: "SMTP-Einstellungen konnten nicht gespeichert werden." };
   }
@@ -126,7 +132,10 @@ export async function sendSmtpTestAction(
   _previousState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  await requirePermission("smtp:manage");
+  const { venue } = await requireVenuePermission(
+    "smtp:manage",
+    String(formData.get("venueId") ?? ""),
+  );
 
   const rateLimitKey = await getClientRateLimitKey("smtp-test");
 
@@ -146,7 +155,7 @@ export async function sendSmtpTestAction(
   }
 
   try {
-    await sendSmtpTestEmail(parsed.data.testEmail);
+    await sendSmtpTestEmail(venue, parsed.data.testEmail);
   } catch {
     return { message: "Testmail konnte nicht gesendet werden." };
   }
@@ -161,7 +170,10 @@ export async function updateBrandingSettingsAction(
   _previousState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  const session = await requirePermission("branding:manage");
+  const { session, venue } = await requireVenuePermission(
+    "branding:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = brandingSettingsSchema.safeParse({
     accentColor: formData.get("accentColor"),
   });
@@ -173,7 +185,7 @@ export async function updateBrandingSettingsAction(
     };
   }
 
-  await updateBrandingSettings(parsed.data, session);
+  await updateBrandingSettings(venue, parsed.data, session);
   revalidatePath("/admin/settings");
   revalidatePath("/");
   revalidatePath("/reservieren");
@@ -185,14 +197,17 @@ export async function updateBrandingSettingsAction(
 }
 
 async function uploadBrandingAssetAction(formData: FormData, kind: "favicon" | "logo") {
-  const session = await requirePermission("branding:manage");
+  const { session, venue } = await requireVenuePermission(
+    "branding:manage",
+    String(formData.get("venueId") ?? ""),
+  );
   const file = formData.get(kind);
 
   if (!(file instanceof File)) {
     return { message: "Bitte eine Datei auswählen." };
   }
 
-  const result = await updateBrandingAsset({ file, kind, session });
+  const result = await updateBrandingAsset({ venue, file, kind, session });
 
   if (!result.ok) {
     return { message: result.message };
@@ -222,26 +237,35 @@ export async function uploadFaviconAction(
   return uploadBrandingAssetAction(formData, "favicon");
 }
 
-async function removeBrandingAssetAction(kind: "favicon" | "logo") {
-  const session = await requirePermission("branding:manage");
+async function removeBrandingAssetAction(formData: FormData, kind: "favicon" | "logo") {
+  const { session, venue } = await requireVenuePermission(
+    "branding:manage",
+    String(formData.get("venueId") ?? ""),
+  );
 
-  await removeBrandingAsset(kind, session);
+  await removeBrandingAsset(venue, kind, session);
   revalidatePath("/admin/settings");
   revalidatePath("/");
   revalidatePath("/reservieren");
 }
 
-export async function removeLogoAction() {
-  await removeBrandingAssetAction("logo");
+export async function removeLogoAction(formData: FormData) {
+  await removeBrandingAssetAction(formData, "logo");
 }
 
-export async function removeFaviconAction() {
-  await removeBrandingAssetAction("favicon");
+export async function removeFaviconAction(formData: FormData) {
+  await removeBrandingAssetAction(formData, "favicon");
 }
 
-export async function runRetentionCleanupAction(): Promise<RetentionCleanupActionState> {
-  const session = await requirePermission("settings:manage");
-  const result = await runRetentionCleanup({ session });
+export async function runRetentionCleanupAction(
+  _previousState: RetentionCleanupActionState,
+  formData: FormData,
+): Promise<RetentionCleanupActionState> {
+  const { session, venue } = await requireVenuePermission(
+    "settings:manage",
+    String(formData.get("venueId") ?? ""),
+  );
+  const result = await runRetentionCleanup({ venue, session });
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin/reservations");

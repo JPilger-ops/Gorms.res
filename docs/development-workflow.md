@@ -86,3 +86,13 @@ docker compose build app
 - Do not commit uploaded branding files from runtime volumes.
 - Keep migrations reviewed and committed.
 - Run `npm run check` before pushing.
+
+## Multi-Venue Verification
+
+Use Node 22. `npm run test:venue-foundation` covers pure hostname, retention, timezone and ICS rules.
+`npm run test:multi-venue` runs disposable PostgreSQL 17 upgrade/isolation/SMTP/cleanup checks behind
+an internal network without ports or deployment volumes. Optional Next/Playwright smoke and exact
+commands are documented in [Multi-Venue Foundation](multi-venue.md#verification).
+
+All supported migration commands now use `scripts/migrate.mjs`, including the one-time ENV host
+import. Do not deploy with `db:push` or direct `drizzle-kit migrate`.

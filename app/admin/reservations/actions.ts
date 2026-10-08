@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { updateReservationStatusSchema } from "@/src/lib/reservation-status-validation";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { updateReservationStatus } from "@/src/server/reservations";
 
 export type ReservationStatusActionState = {
@@ -15,7 +15,10 @@ export async function updateReservationStatusAction(
   _previousState: ReservationStatusActionState,
   formData: FormData,
 ): Promise<ReservationStatusActionState> {
-  const session = await requirePermission("reservations:status_override");
+  const { session, venue } = await requireVenuePermission(
+    "reservations:status_override",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = updateReservationStatusSchema.safeParse({
     id: formData.get("id"),
     reason: formData.get("reason"),
@@ -29,7 +32,7 @@ export async function updateReservationStatusAction(
     };
   }
 
-  const result = await updateReservationStatus(parsed.data, session);
+  const result = await updateReservationStatus(venue, parsed.data, session);
 
   if (!result.ok) {
     return { message: result.message };

@@ -46,3 +46,11 @@ The root layout points favicon links to:
 
 That route serves the configured favicon when available and falls back to default behavior when no
 custom favicon has been uploaded.
+
+## Venue Scope
+
+Logo/favicon/color references now live in `venue_settings`. Existing UUID filenames and
+`/branding/logo` / `/branding/favicon` URLs are unchanged. Asset selection follows the public
+hostname's venue or the logged-in admin selection. Before admin login it uses Heidekönig branding.
+Unknown hosts are rejected; no-store responses avoid showing another selection's cached asset.
+The local upload volume and its archive/restore layout remain unchanged.

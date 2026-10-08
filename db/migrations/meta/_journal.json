@@ -22,6 +22,20 @@
       "when": 1781277839094,
       "tag": "0002_wild_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791491373416,
+      "tag": "0003_multi_venue_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791499855582,
+      "tag": "0004_telegraph_table_plan",
+      "breakpoints": true
     }
   ]
 }

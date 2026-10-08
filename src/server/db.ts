@@ -8,7 +8,7 @@ const globalForDb = globalThis as typeof globalThis & {
   heidekoenigPool?: Pool;
 };
 
-const pool =
+export const pool =
   globalForDb.heidekoenigPool ??
   new Pool({
     connectionString: databaseUrl,

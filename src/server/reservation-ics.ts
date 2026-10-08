@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { reservationRequests } from "@/db/schema";
 import {
   createAcceptedReservationInternalIcs,
@@ -7,6 +7,8 @@ import {
 } from "@/src/server/calendar";
 import { db } from "@/src/server/db";
 import { env } from "@/src/lib/env";
+import { adminUrl } from "@/src/lib/admin-urls";
+import { assertCapacityStrategy, type VenueContext } from "@/src/server/venues";
 
 export const reservationIcsKinds = ["request", "accepted"] as const;
 
@@ -18,8 +20,8 @@ export type ReservationIcsDownload = {
   kind: ReservationIcsKind;
 };
 
-export function buildAdminReservationUrl(id: string) {
-  return new URL(`/admin/reservations/${id}`, env.ADMIN_APP_URL).toString();
+export function buildAdminReservationUrl(venue: VenueContext, id: string) {
+  return new URL(adminUrl(`/admin/reservations/${id}`, venue.id), env.ADMIN_APP_URL).toString();
 }
 
 export function normalizeReservationIcsKind(value: string): ReservationIcsKind | null {
@@ -35,10 +37,11 @@ function filenameFor(kind: ReservationIcsKind, date: string, time: string) {
 }
 
 function toCalendarReservationData(
+  venue: VenueContext,
   reservation: typeof reservationRequests.$inferSelect,
 ): CalendarReservationData {
   return {
-    adminUrl: buildAdminReservationUrl(reservation.id),
+    adminUrl: buildAdminReservationUrl(venue, reservation.id),
     date: reservation.requestedDate,
     email: reservation.guestEmail,
     guestCount: reservation.guestCount,
@@ -51,11 +54,13 @@ function toCalendarReservationData(
 }
 
 export async function getReservationIcsDownload(
+  venue: VenueContext,
   id: string,
   kind: ReservationIcsKind,
 ): Promise<ReservationIcsDownload | null> {
+  assertCapacityStrategy(venue);
   const reservation = await db.query.reservationRequests.findFirst({
-    where: eq(reservationRequests.id, id),
+    where: and(eq(reservationRequests.id, id), eq(reservationRequests.venueId, venue.id)),
   });
 
   if (!reservation) {
@@ -66,11 +71,11 @@ export async function getReservationIcsDownload(
     return null;
   }
 
-  const calendarData = toCalendarReservationData(reservation);
+  const calendarData = toCalendarReservationData(venue, reservation);
   const content =
     kind === "accepted"
-      ? createAcceptedReservationInternalIcs(calendarData)
-      : createReservationRequestIcs(calendarData);
+      ? createAcceptedReservationInternalIcs(venue, calendarData)
+      : createReservationRequestIcs(venue, calendarData);
 
   return {
     content,

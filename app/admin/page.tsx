@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { adminHome, adminUrl } from "@/src/lib/admin-urls";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { requirePermission } from "@/src/server/guards";
+import { getAdminVenue, requireVenuePermission } from "@/src/server/guards";
 import { getAdminDashboardData } from "@/src/server/dashboard";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +26,8 @@ function formatDisplayDate(date: string) {
     day: "2-digit",
     month: "2-digit",
     weekday: "short",
-  }).format(new Date(`${date}T00:00:00`));
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -37,11 +40,13 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 export default async function AdminPage() {
-  const session = await requirePermission("reservations:read");
-  const dashboard = await getAdminDashboardData();
+  const selectedVenue = await getAdminVenue();
+  if (selectedVenue.availabilityStrategy === "TABLES") redirect(adminHome(selectedVenue));
+  const { session, venue } = await requireVenuePermission("reservations:read");
+  const dashboard = await getAdminDashboardData(venue);
 
   return (
-    <AdminShell session={session}>
+    <AdminShell session={session} venue={venue}>
       <div className="space-y-6">
         <div className="glass-panel admin-hero p-5 sm:p-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -80,7 +85,7 @@ export default async function AdminPage() {
                   <Link
                     aria-label={`Details zu ${reservation.guestName} öffnen`}
                     className="admin-list-card block p-4 text-foreground no-underline"
-                    href={`/admin/reservations/${reservation.id}`}
+                    href={adminUrl(`/admin/reservations/${reservation.id}`, venue.id)}
                     key={reservation.id}
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

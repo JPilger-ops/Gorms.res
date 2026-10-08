@@ -151,3 +151,42 @@ Backups contain personal reservation data. Restrict access to:
 - offsite copies, if any
 
 Never expose backup files through the reverse proxy.
+
+## Multi-Venue Migration And Restore
+
+Phase 1 does not change `postgres.dump`, `uploads.tar.gz`, `manifest.txt` or the upload directory.
+The database dump includes venue identity, hostname mappings and venue settings. Protect the
+application encryption key separately; SMTP ciphertext is copied unchanged during migration and
+still depends on that key.
+
+Before a target-server upgrade, create/verify a backup and record the running revision and ENV
+(including effective reservation retention and public aliases). Restoring V1.1 into a clean isolated
+DB requires the supported `scripts/migrate.mjs` runner to apply 0003 and import those ENV aliases.
+Restoring an already migrated DB preserves its host-import marker: ENV changes do not reassign hosts.
+Use the matching code/schema version after restore. Do not roll back code alone after a forward
+schema migration; an agreed rollback requires the pre-upgrade DB/upload backup and preserved key.
+
+No existing deployment database or NAS backup is used by Phase 1's disposable PostgreSQL tests.
+See [Multi-Venue Foundation](multi-venue.md#upgrade-and-migration).
+
+## Floorplans And Cleanup (Phase 2)
+
+The existing dump/upload/manifest format now also includes table-plan metadata and the immutable
+`floorplans/<venue>/<area>/<asset>.png` namespace in the same upload volume. Branding paths remain
+unchanged. Files are mode 0644 so numeric backup user 3007/group 3009 can read them without changing
+the application UID or NFS permissions.
+
+The backup script holds shared PostgreSQL advisory lock 724186203 throughout dump, tar and rotation.
+Floorplan cleanup holds its exclusive counterpart; saves hold a shared transaction lock. Backup
+failures propagate a nonzero status and incomplete directories without manifests remain incomplete.
+This coordination prevents cleanup races, not all concurrent business writes or a global snapshot.
+
+The daily operator-run `node scripts/cleanup-floorplans.mjs` removes only proven unreferenced,
+retired/orphan floorplans older than 48 hours. Current pointers always protect assets, including
+archived areas and inconsistent retirement flags. No production job is installed by this phase.
+Stop app writes AND any cleanup scheduler during restore. Restore matching dump/uploads together,
+then run the supported migration runner with matching code. Keep the encryption key separately.
+
+The isolated Phase 2 launcher tests pg_dump/tar, numeric backup identity, full restoration into a
+second disposable PostgreSQL17 database and byte-identical current floorplans. It never mounts NAS
+or operator secrets and does not replace the required target-server restore rehearsal.

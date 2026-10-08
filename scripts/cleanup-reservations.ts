@@ -12,7 +12,10 @@ async function main() {
       `Outgoing emails anonymized: ${result.outgoingEmailsAnonymized}`,
       `Audit logs scrubbed: ${result.auditLogsScrubbed}`,
       `Audit logs deleted: ${result.auditLogsDeleted}`,
-      `Reservation cutoff: ${result.reservationCutoff.toISOString()}`,
+      ...result.venueResults.map(
+        (venue) =>
+          `Venue ${venue.venueId} reservation cutoff: ${venue.reservationCutoff.toISOString()}`,
+      ),
       `Audit log cutoff: ${result.auditLogCutoff.toISOString()}`,
     ].join("\n"),
   );

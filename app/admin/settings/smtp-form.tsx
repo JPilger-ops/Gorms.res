@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState } from "react";
 import {
   sendSmtpTestAction,
@@ -48,6 +50,7 @@ export function SmtpSettingsForm({
       </div>
 
       <form action={settingsAction} className="admin-settings-section">
+        <VenueField />
         <div className="admin-settings-section-header">
           <h4 className="text-lg font-semibold">SMTP-Zugang</h4>
           <p className="mt-2 text-sm leading-6 text-muted">
@@ -152,6 +155,7 @@ export function SmtpSettingsForm({
       </form>
 
       <form action={testAction} className="admin-settings-section">
+        <VenueField />
         <div className="admin-settings-section-header">
           <h4 className="text-lg font-semibold">Testmail senden</h4>
           <p className="mt-1 text-sm leading-6 text-muted">

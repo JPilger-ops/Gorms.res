@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { reservationOutgoingEmails } from "@/db/schema";
 import { db } from "@/src/server/db";
+import { assertReservationVenue, type VenueContext } from "@/src/server/venues";
 
 export type ReservationOutgoingEmailType =
   | "guest_receipt"
@@ -22,7 +23,11 @@ export type ReservationOutgoingEmailInput = {
   type: ReservationOutgoingEmailType;
 };
 
-export async function recordReservationOutgoingEmail(input: ReservationOutgoingEmailInput) {
+export async function recordReservationOutgoingEmail(
+  venue: VenueContext,
+  input: ReservationOutgoingEmailInput,
+) {
+  await assertReservationVenue(venue, input.reservationRequestId);
   const [email] = await db
     .insert(reservationOutgoingEmails)
     .values({
@@ -41,7 +46,11 @@ export async function recordReservationOutgoingEmail(input: ReservationOutgoingE
   return email;
 }
 
-export async function listOutgoingEmailsForReservation(reservationRequestId: string) {
+export async function listOutgoingEmailsForReservation(
+  venue: VenueContext,
+  reservationRequestId: string,
+) {
+  await assertReservationVenue(venue, reservationRequestId);
   return db.query.reservationOutgoingEmails.findMany({
     orderBy: [desc(reservationOutgoingEmails.createdAt)],
     where: eq(reservationOutgoingEmails.reservationRequestId, reservationRequestId),

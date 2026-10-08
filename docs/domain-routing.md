@@ -60,7 +60,12 @@ The app checks hosts server-side:
 - `/login`, `/setup`, `/admin` and admin actions require the admin host and matching Origin
 - setup is disabled after setup completion or when an admin already exists
 
-Allowed public hosts are normalized to both Unicode and ASCII/Punycode forms.
+Allowed public hosts are normalized to a common ASCII/Punycode key. A public host must ALSO have
+an active venue mapping in `venue_hosts`. Origin must resolve to the same venue, not merely any
+allowlisted public host. Admin host validation remains global. Malformed host strings fail closed.
+
+Migration imports existing ENV aliases once; subsequent aliases require the server CLI. See
+[Multi-Venue Foundation](multi-venue.md#hosts-and-domains) for the upgrade path and commands.
 
 ## Route Matrix
 
@@ -75,7 +80,9 @@ Route                 heidekönig.gorms.de / Punycode   login.gorms.de
 /_next/*              allowed                          allowed
 ```
 
-`/branding/*` is shared because logo and favicon may be needed on both public and admin hosts.
+`/branding/*` is available only on recognized public/admin hosts. Public assets use the resolved
+venue; authenticated admin assets use the selected venue. Pre-login admin branding uses Heidekönig.
+Responses remain uncached, and existing URLs and upload filenames are preserved.
 
 ## Reverse Proxy Expectations
 
@@ -99,4 +106,5 @@ Do not configure:
 Domain=.gorms.de
 ```
 
-The public reservation host must not receive or require admin cookies.
+The public reservation host must not receive or require admin cookies. `gorms_admin_venue` is also
+host-only, HttpOnly, Secure in production and SameSite=Lax; it is a preference, not authorization.

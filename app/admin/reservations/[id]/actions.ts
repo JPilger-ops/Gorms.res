@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { adminUrl } from "@/src/lib/admin-urls";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
@@ -8,7 +9,7 @@ import {
   reservationDecisionTypes,
 } from "@/src/lib/reservation-decision-validation";
 import { generateReservationDecisionAiDraft } from "@/src/server/ai/reservation-drafts";
-import { requirePermission } from "@/src/server/guards";
+import { requireVenuePermission } from "@/src/server/guards";
 import { sendReservationDecision } from "@/src/server/reservation-decisions";
 
 export type ReservationDecisionActionState = {
@@ -38,7 +39,10 @@ export async function sendReservationDecisionAction(
   _previousState: ReservationDecisionActionState,
   formData: FormData,
 ): Promise<ReservationDecisionActionState> {
-  const session = await requirePermission("reservations:respond");
+  const { session, venue } = await requireVenuePermission(
+    "reservations:respond",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = reservationDecisionSchema.safeParse({
     body: formData.get("body"),
     decision: formData.get("decision"),
@@ -54,14 +58,16 @@ export async function sendReservationDecisionAction(
     };
   }
 
-  const result = await sendReservationDecision(parsed.data, session);
+  const result = await sendReservationDecision(venue, parsed.data, session);
 
   revalidatePath(`/admin/reservations/${parsed.data.id}`);
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
 
   if (result.ok) {
-    redirect(`/admin/reservations/${parsed.data.id}?decision=${parsed.data.decision}`);
+    redirect(
+      adminUrl(`/admin/reservations/${parsed.data.id}?decision=${parsed.data.decision}`, venue.id),
+    );
   }
 
   return {
@@ -74,7 +80,10 @@ export async function generateReservationAiDraftAction(
   _previousState: ReservationAiDraftActionState,
   formData: FormData,
 ): Promise<ReservationAiDraftActionState> {
-  const session = await requirePermission("reservations:respond");
+  const { session, venue } = await requireVenuePermission(
+    "reservations:respond",
+    String(formData.get("venueId") ?? ""),
+  );
   const parsed = aiDraftActionSchema.safeParse({
     decision: formData.get("decision"),
     expectedStatus: formData.get("expectedStatus"),
@@ -89,6 +98,7 @@ export async function generateReservationAiDraftAction(
   }
 
   const result = await generateReservationDecisionAiDraft({
+    venue,
     decision: parsed.data.decision,
     id: parsed.data.id,
     session,

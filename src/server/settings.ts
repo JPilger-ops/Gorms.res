@@ -1,6 +1,8 @@
-import { inArray, sql } from "drizzle-orm";
-import { appSettings, auditLog } from "@/db/schema";
-import { env } from "@/src/lib/env";
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { appSettings, auditLog, venueSettings } from "@/db/schema";
+import { defaultEnv, env as deploymentEnv } from "@/src/lib/env";
+import { HEIDEKOENIG_VENUE_ID, reservationRetentionDays } from "@/src/lib/venue-defaults.mjs";
+import type { VenueContext } from "@/src/server/venues";
 import type { OpeningHoursInput } from "@/src/lib/opening-hours-validation";
 import type { AdminSettingsInput } from "@/src/lib/settings-validation";
 import type { SmtpSettingsInput } from "@/src/lib/smtp-validation";
@@ -60,6 +62,27 @@ export type SmtpSettings = {
 
 export type SmtpSettingsForUi = Omit<SmtpSettings, "password">;
 
+function getVenueDefaults(venue: VenueContext) {
+  if (venue.id === HEIDEKOENIG_VENUE_ID) return deploymentEnv;
+  return {
+    ...defaultEnv,
+    APP_NAME: venue.name,
+    SMTP_FROM_NAME: venue.name,
+    RESERVATION_NOTIFICATION_EMAIL: "",
+    NEXT_PUBLIC_SITE_URL: "",
+    GUEST_EMAIL_SUBJECT_TEMPLATE: `Ihre Reservierungsanfrage bei ${venue.name}`,
+    AUDIT_LOG_RETENTION_DAYS: deploymentEnv.AUDIT_LOG_RETENTION_DAYS,
+  };
+}
+
+export async function getVenueSettingMap(venue: VenueContext, keys: readonly string[]) {
+  const rows = await db
+    .select({ key: venueSettings.key, value: venueSettings.value })
+    .from(venueSettings)
+    .where(and(eq(venueSettings.venueId, venue.id), inArray(venueSettings.key, [...keys])));
+  return new Map(rows.map((row) => [row.key, row.value]));
+}
+
 const settingKeys = [
   "block_mondays",
   "block_public_holidays",
@@ -89,7 +112,6 @@ const emailTemplateSettingKeys = [
 
 const adminSettingKeys = [
   "app_name",
-  "audit_log_retention_days",
   "imprint_url",
   "privacy_contact_email",
   "privacy_notice_text",
@@ -196,13 +218,9 @@ export function getLatestReservationTimeForDate(date: string, settings: Business
     : seasonalLatest;
 }
 
-export async function getBusinessSettings(): Promise<BusinessSettings> {
-  const rows = await db
-    .select({ key: appSettings.key, value: appSettings.value })
-    .from(appSettings)
-    .where(inArray(appSettings.key, [...settingKeys]));
-
-  const settings = new Map(rows.map((row) => [row.key, row.value]));
+export async function getBusinessSettings(venue: VenueContext): Promise<BusinessSettings> {
+  const env = getVenueDefaults(venue);
+  const settings = await getVenueSettingMap(venue, settingKeys);
   const holidayCountry = settings.get("holiday_country") ?? env.HOLIDAY_COUNTRY;
   const latestReservationBufferMinutes = normalizePositiveInteger(
     settings.get("latest_reservation_buffer_minutes"),
@@ -257,13 +275,11 @@ export async function getBusinessSettings(): Promise<BusinessSettings> {
   };
 }
 
-export async function getEmailTemplateSettings(): Promise<EmailTemplateSettings> {
-  const rows = await db
-    .select({ key: appSettings.key, value: appSettings.value })
-    .from(appSettings)
-    .where(inArray(appSettings.key, [...emailTemplateSettingKeys]));
-
-  const settings = new Map(rows.map((row) => [row.key, row.value]));
+export async function getEmailTemplateSettings(
+  venue: VenueContext,
+): Promise<EmailTemplateSettings> {
+  const env = getVenueDefaults(venue);
+  const settings = await getVenueSettingMap(venue, emailTemplateSettingKeys);
 
   return {
     guestEmailSubjectTemplate:
@@ -275,22 +291,21 @@ export async function getEmailTemplateSettings(): Promise<EmailTemplateSettings>
   };
 }
 
-export async function getAdminSettings(): Promise<AdminSettings> {
-  const rows = await db
-    .select({ key: appSettings.key, value: appSettings.value })
-    .from(appSettings)
-    .where(inArray(appSettings.key, [...adminSettingKeys]));
-
-  const settings = new Map(rows.map((row) => [row.key, row.value]));
-  const businessSettings = await getBusinessSettings();
-  const emailSettings = await getEmailTemplateSettings();
+export async function getAdminSettings(venue: VenueContext): Promise<AdminSettings> {
+  const env = getVenueDefaults(venue);
+  const settings = await getVenueSettingMap(venue, adminSettingKeys);
+  const businessSettings = await getBusinessSettings(venue);
+  const emailSettings = await getEmailTemplateSettings(venue);
+  const auditRetention = await db.query.appSettings.findFirst({
+    where: eq(appSettings.key, "audit_log_retention_days"),
+  });
 
   return {
     ...businessSettings,
     ...emailSettings,
     appName: settings.get("app_name") ?? env.APP_NAME,
     auditLogRetentionDays: normalizePositiveInteger(
-      settings.get("audit_log_retention_days"),
+      auditRetention?.value,
       env.AUDIT_LOG_RETENTION_DAYS,
     ),
     imprintUrl: normalizeOptionalString(settings.get("imprint_url"), env.IMPRINT_URL),
@@ -304,24 +319,21 @@ export async function getAdminSettings(): Promise<AdminSettings> {
       env.PRIVACY_POLICY_URL,
     ),
     publicSiteUrl: settings.get("public_site_url") ?? env.NEXT_PUBLIC_SITE_URL,
-    reservationRetentionDays: normalizePositiveInteger(
+    reservationRetentionDays: reservationRetentionDays(
+      venue.id,
       settings.get("reservation_retention_days"),
-      env.RESERVATION_RETENTION_DAYS,
+      deploymentEnv.RESERVATION_RETENTION_DAYS,
     ),
   };
 }
 
-async function getSmtpSettingMap() {
-  const rows = await db
-    .select({ key: appSettings.key, value: appSettings.value })
-    .from(appSettings)
-    .where(inArray(appSettings.key, [...smtpSettingKeys]));
-
-  return new Map(rows.map((row) => [row.key, row.value]));
+async function getSmtpSettingMap(venue: VenueContext) {
+  return getVenueSettingMap(venue, smtpSettingKeys);
 }
 
-export async function getSmtpSettings(): Promise<SmtpSettings> {
-  const settings = await getSmtpSettingMap();
+export async function getSmtpSettings(venue: VenueContext): Promise<SmtpSettings> {
+  const env = getVenueDefaults(venue);
+  const settings = await getSmtpSettingMap(venue);
   const encryptedPassword = settings.get("smtp_password");
   const password = encryptedPassword ? decryptSecret(encryptedPassword) : env.SMTP_PASSWORD;
   const passwordSource = encryptedPassword
@@ -342,8 +354,9 @@ export async function getSmtpSettings(): Promise<SmtpSettings> {
   };
 }
 
-export async function getSmtpSettingsForUi(): Promise<SmtpSettingsForUi> {
-  const settings = await getSmtpSettingMap();
+export async function getSmtpSettingsForUi(venue: VenueContext): Promise<SmtpSettingsForUi> {
+  const env = getVenueDefaults(venue);
+  const settings = await getSmtpSettingMap(venue);
   const encryptedPassword = settings.get("smtp_password");
   const passwordSource = encryptedPassword
     ? "database"
@@ -362,18 +375,24 @@ export async function getSmtpSettingsForUi(): Promise<SmtpSettingsForUi> {
   };
 }
 
-export async function updateOpeningHours(input: OpeningHoursInput, session: AuthenticatedSession) {
+export async function updateOpeningHours(
+  venue: VenueContext,
+  input: OpeningHoursInput,
+  session: AuthenticatedSession,
+) {
   await db.transaction(async (tx) => {
     await tx
-      .insert(appSettings)
+      .insert(venueSettings)
       .values([
         {
+          venueId: venue.id,
           key: "earliest_reservation_time",
           value: input.earliestReservationTime,
           isSecret: false,
           updatedByUserId: session.userId,
         },
         {
+          venueId: venue.id,
           key: "latest_reservation_time",
           value: input.latestReservationTime,
           isSecret: false,
@@ -381,7 +400,7 @@ export async function updateOpeningHours(input: OpeningHoursInput, session: Auth
         },
       ])
       .onConflictDoUpdate({
-        target: appSettings.key,
+        target: [venueSettings.venueId, venueSettings.key],
         set: {
           updatedByUserId: session.userId,
           updatedAt: new Date(),
@@ -392,6 +411,7 @@ export async function updateOpeningHours(input: OpeningHoursInput, session: Auth
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: "opening_hours.update",
+      venueId: venue.id,
       entityType: "app_settings",
       entityId: "opening_hours",
       metadata: {
@@ -403,12 +423,12 @@ export async function updateOpeningHours(input: OpeningHoursInput, session: Auth
 }
 
 export async function updateAdminSettings(
+  venue: VenueContext,
   input: AdminSettingsInput,
   session: AuthenticatedSession,
 ) {
   const rows = [
     ["app_name", input.appName],
-    ["audit_log_retention_days", String(input.auditLogRetentionDays)],
     ["block_mondays", String(input.blockMondays)],
     ["block_public_holidays", String(input.blockPublicHolidays)],
     ["block_sundays", String(input.blockSundays)],
@@ -440,9 +460,10 @@ export async function updateAdminSettings(
 
   await db.transaction(async (tx) => {
     await tx
-      .insert(appSettings)
+      .insert(venueSettings)
       .values(
         rows.map(([key, value]) => ({
+          venueId: venue.id,
           key,
           value,
           isSecret: false,
@@ -450,7 +471,7 @@ export async function updateAdminSettings(
         })),
       )
       .onConflictDoUpdate({
-        target: appSettings.key,
+        target: [venueSettings.venueId, venueSettings.key],
         set: {
           isSecret: false,
           updatedByUserId: session.userId,
@@ -459,9 +480,26 @@ export async function updateAdminSettings(
         },
       });
 
+    await tx
+      .insert(appSettings)
+      .values({
+        key: "audit_log_retention_days",
+        value: String(input.auditLogRetentionDays),
+        updatedByUserId: session.userId,
+      })
+      .onConflictDoUpdate({
+        target: appSettings.key,
+        set: {
+          value: String(input.auditLogRetentionDays),
+          updatedByUserId: session.userId,
+          updatedAt: new Date(),
+        },
+      });
+
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: "settings.update",
+      venueId: venue.id,
       entityType: "app_settings",
       entityId: "general",
       metadata: {
@@ -471,7 +509,11 @@ export async function updateAdminSettings(
   });
 }
 
-export async function updateSmtpSettings(input: SmtpSettingsInput, session: AuthenticatedSession) {
+export async function updateSmtpSettings(
+  venue: VenueContext,
+  input: SmtpSettingsInput,
+  session: AuthenticatedSession,
+) {
   const rows = [
     ["smtp_from_address", input.smtpFromAddress, false],
     ["smtp_from_name", input.smtpFromName, false],
@@ -486,9 +528,10 @@ export async function updateSmtpSettings(input: SmtpSettingsInput, session: Auth
 
   await db.transaction(async (tx) => {
     await tx
-      .insert(appSettings)
+      .insert(venueSettings)
       .values(
         [...rows, ...secretRows].map(([key, value, isSecret]) => ({
+          venueId: venue.id,
           key,
           value,
           isSecret,
@@ -496,7 +539,7 @@ export async function updateSmtpSettings(input: SmtpSettingsInput, session: Auth
         })),
       )
       .onConflictDoUpdate({
-        target: appSettings.key,
+        target: [venueSettings.venueId, venueSettings.key],
         set: {
           isSecret: sql<boolean>`excluded.is_secret`,
           updatedByUserId: session.userId,
@@ -508,6 +551,7 @@ export async function updateSmtpSettings(input: SmtpSettingsInput, session: Auth
     await tx.insert(auditLog).values({
       userId: session.userId,
       action: "smtp_settings.update",
+      venueId: venue.id,
       entityType: "app_settings",
       entityId: "smtp",
       metadata: {

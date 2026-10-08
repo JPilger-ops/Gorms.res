@@ -8,10 +8,14 @@ import { getAdminSettings } from "@/src/server/settings";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Datenschutz",
-  description: "Datenschutzhinweise für Reservierungsanfragen der Waldwirtschaft Heidekönig.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const venue = await requirePublicHost();
+  const settings = await getAdminSettings(venue);
+  return {
+    title: { absolute: `Datenschutz | ${settings.appName}` },
+    description: `Datenschutzhinweise für Reservierungsanfragen von ${settings.appName}.`,
+  };
+}
 
 function Section({ children, title }: { children: ReactNode; title: string }) {
   return (
@@ -23,9 +27,12 @@ function Section({ children, title }: { children: ReactNode; title: string }) {
 }
 
 export default async function PrivacyPage() {
-  await requirePublicHost();
+  const venue = await requirePublicHost();
 
-  const [branding, settings] = await Promise.all([getBrandingSettings(), getAdminSettings()]);
+  const [branding, settings] = await Promise.all([
+    getBrandingSettings(venue),
+    getAdminSettings(venue),
+  ]);
   const contact = settings.privacyContactEmail;
 
   return (
@@ -58,7 +65,7 @@ export default async function PrivacyPage() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Section title="Verantwortliche Stelle">
-            <p>Verantwortlich ist die Betreiberin der Waldwirtschaft Heidekönig.</p>
+            <p>Verantwortlich ist die Betreiberin von {settings.appName}.</p>
             {contact ? (
               <p>
                 Datenschutz-Kontakt:{" "}

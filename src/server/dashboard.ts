@@ -1,21 +1,33 @@
-import { asc, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, sql } from "drizzle-orm";
 import { blockedDays, reservationRequests } from "@/db/schema";
 import { db } from "@/src/server/db";
+import type { VenueContext } from "@/src/server/venues";
+import { todayInTimeZone } from "@/src/lib/dates";
 
-export async function getAdminDashboardData() {
-  const today = new Date().toISOString().slice(0, 10);
+export async function getAdminDashboardData(venue: VenueContext) {
+  const today = todayInTimeZone(venue.timeZone);
 
   const [pendingReservations, upcomingReservations, blockedDaysCount, recentReservations] =
     await Promise.all([
       db
         .select({ count: count() })
         .from(reservationRequests)
-        .where(eq(reservationRequests.status, "pending")),
+        .where(
+          and(eq(reservationRequests.venueId, venue.id), eq(reservationRequests.status, "pending")),
+        ),
       db
         .select({ count: count() })
         .from(reservationRequests)
-        .where(gte(reservationRequests.requestedDate, today)),
-      db.select({ count: count() }).from(blockedDays).where(gte(blockedDays.date, today)),
+        .where(
+          and(
+            eq(reservationRequests.venueId, venue.id),
+            gte(reservationRequests.requestedDate, today),
+          ),
+        ),
+      db
+        .select({ count: count() })
+        .from(blockedDays)
+        .where(and(eq(blockedDays.venueId, venue.id), gte(blockedDays.date, today))),
       db
         .select({
           createdAt: reservationRequests.createdAt,
@@ -27,6 +39,7 @@ export async function getAdminDashboardData() {
           status: reservationRequests.status,
         })
         .from(reservationRequests)
+        .where(eq(reservationRequests.venueId, venue.id))
         .orderBy(desc(reservationRequests.createdAt))
         .limit(5),
     ]);
@@ -37,7 +50,7 @@ export async function getAdminDashboardData() {
       reason: blockedDays.reason,
     })
     .from(blockedDays)
-    .where(gte(blockedDays.date, today))
+    .where(and(eq(blockedDays.venueId, venue.id), gte(blockedDays.date, today)))
     .orderBy(asc(blockedDays.date))
     .limit(5);
 
@@ -47,7 +60,9 @@ export async function getAdminDashboardData() {
       requestedDate: reservationRequests.requestedDate,
     })
     .from(reservationRequests)
-    .where(gte(reservationRequests.requestedDate, today))
+    .where(
+      and(eq(reservationRequests.venueId, venue.id), gte(reservationRequests.requestedDate, today)),
+    )
     .groupBy(reservationRequests.requestedDate)
     .orderBy(sql`${reservationRequests.requestedDate} asc`)
     .limit(7);

@@ -1,5 +1,7 @@
 "use client";
 
+import { VenueField } from "@/components/admin/venue-context";
+
 import { useActionState, useState } from "react";
 import {
   removeFaviconAction,
@@ -27,7 +29,7 @@ function UploadForm({
   currentUrl?: string;
   label: string;
   name: "favicon" | "logo";
-  removeAction: () => Promise<void>;
+  removeAction: (formData: FormData) => Promise<void>;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -54,6 +56,7 @@ function UploadForm({
       <FormFeedback state={state} />
 
       <form action={formAction} className="space-y-4">
+        <VenueField />
         <label className="block space-y-2">
           <span className="text-sm font-semibold">{label}-Datei auswählen</span>
           <input
@@ -77,6 +80,7 @@ function UploadForm({
 
       {currentUrl ? (
         <form action={removeAction}>
+          <VenueField />
           <button className="secondary-action w-full" type="submit">
             {label} entfernen
           </button>
@@ -102,6 +106,7 @@ export function BrandingForm({ branding }: { branding: BrandingSettings }) {
       </div>
 
       <form action={formAction} className="admin-settings-section">
+        <VenueField />
         <div className="admin-settings-section-header">
           <h4 className="text-lg font-semibold">Akzentfarbe</h4>
           <p className="mt-2 text-sm leading-6 text-muted">

@@ -35,7 +35,9 @@ AUDIT_LOG_RETENTION_DAYS=90
 BACKUP_RETENTION_DAYS=30
 ```
 
-Admins can update reservation and audit retention values in the admin panel.
+Admins can update reservation retention per selected venue and audit retention globally. Migration
+preserves existing reservation retention (including a DB value of 30 despite ENV 90). Missing/invalid
+values retain the Heidekönig ENV fallback or the existing default of 30; audit 90 is never reused.
 
 ## Cleanup And Anonymization
 
@@ -45,8 +47,10 @@ Manual cleanup:
 docker compose exec app node scripts/cleanup-reservations.mjs
 ```
 
-The cleanup anonymizes old reservation requests according to the configured reservation retention
-value. It keeps requested date, time, guest count, status and operational timestamps, but removes
+The runtime cleanup iterates every venue, including inactive venues, and anonymizes old reservation
+requests according to each venue's retention. The server and runtime CLI share one implementation.
+Manual admin cleanup scopes request/mail anonymization to the selected venue; expired global audit
+entries are still deleted installation-wide. It keeps requested date, time, guest count, status and operational timestamps, but removes
 personal fields:
 
 - guest name is replaced with `Anonymisiert`
@@ -77,3 +81,10 @@ reservation status automatically.
 
 Backups include personal data and must be protected with restricted NAS permissions. Do not expose
 backup folders through the reverse proxy.
+
+## Phase 1 Review Boundary
+
+Venue tables store only ownership/configuration, not copies of guest data or AI output. The existing
+anonymization behavior and backup retention are unchanged. Availability snapshots retain their
+existing rule notes; any residual personal context in those notes needs separate review. See
+[Multi-Venue Foundation](multi-venue.md) for tests and remaining limitations.
